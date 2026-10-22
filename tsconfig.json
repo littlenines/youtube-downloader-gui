@@ -1,0 +1,23 @@
+{
+  "//": "Editor/type-check config covering everything. esbuild (scripts/build.ts) produces dist/.",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "node"
+    ],
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "scripts/**/*.ts"
+  ]
+}

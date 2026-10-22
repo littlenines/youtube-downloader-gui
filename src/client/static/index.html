@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>YT Downloader</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='6' width='28' height='20' rx='6' fill='%23ef4444'/%3E%3Cpath d='M16 11v9m-4-4 4 4 4-4' stroke='%23fff' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="module" src="main.js"></script>
+  </head>
+  <body>
+    <header class="top-bar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 4v11m-5-5 5 5 5-5" />
+            <path d="M5 20h14" />
+          </svg>
+        </div>
+        <b>YT Downloader</b>
+      </div>
+      <div class="top-actions">
+        <button class="button ghost" id="openFolderButton" title="Open the download folder">📁 Downloads folder</button>
+        <button class="button ghost icon-only" id="openSettingsButton" title="Settings" aria-label="Settings">⚙</button>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="hero">
+        <h1>Download music and video in high quality</h1>
+        <p class="muted">Paste or drop a link, or search. YouTube, YouTube Music, TikTok, SoundCloud, Vimeo and 1000+ other sites.</p>
+        <form class="link-form" id="linkForm" autocomplete="off">
+          <input
+            id="linkInput"
+            type="text"
+            placeholder="Paste a link, or search: artist – song"
+            spellcheck="false"
+            aria-label="Link or search"
+          />
+          <button class="button" type="button" id="pasteButton" title="Paste from the clipboard">Paste</button>
+          <button class="button primary" type="submit">Get</button>
+        </form>
+        <div class="error-text" id="linkError" hidden></div>
+        <div class="setup-banner" id="setupBanner" hidden>
+          <div class="spinner" id="setupBannerSpinner"></div>
+          <span id="setupBannerText"></span>
+          <button class="button small primary" type="button" id="setupBannerButton">Download tools</button>
+        </div>
+      </section>
+
+      <section id="media" hidden></section>
+      <section id="searchPanel" hidden></section>
+      <section id="batchPanel" hidden></section>
+
+      <section class="downloads">
+        <div class="section-header">
+          <h2>Downloads</h2>
+          <button class="button ghost small" id="clearHistoryButton" hidden>Clear finished</button>
+        </div>
+        <div id="jobs"></div>
+      </section>
+    </main>
+
+    <dialog id="setupDialog">
+      <div class="dialog-content">
+        <h2 id="setupTitle">One-time setup</h2>
+        <div id="setupIntroduction">
+          <p>YT Downloader needs two free tools before it can download anything:</p>
+          <ul class="tool-list">
+            <li><b>yt-dlp</b> finds the video or song and downloads it.</li>
+            <li><b>ffmpeg</b> converts audio to MP3 and joins picture and sound.</li>
+          </ul>
+          <p class="hint">
+            They are downloaded once (<span id="setupSize">about 100 MB</span>) into the app's own
+            <span class="monospace">tools</span> folder. Nothing is installed on your system.
+          </p>
+        </div>
+        <div id="setupProgress" hidden>
+          <div class="progress-track large"><div class="progress-fill" id="setupProgressFill"></div></div>
+          <p class="hint" id="setupProgressText"></p>
+        </div>
+        <p id="setupDone" hidden>Everything is installed. You can use the app now: paste a link to get started.</p>
+        <p class="error-text" id="setupError" hidden></p>
+        <div class="dialog-actions">
+          <button class="button" type="button" id="setupLaterButton">Not now</button>
+          <button class="button primary" type="button" id="setupConfirmButton" autofocus>Download</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="settingsDialog">
+      <form method="dialog" class="dialog-content">
+        <h2>Settings</h2>
+        <label for="downloadFolderInput">Save downloads to</label>
+        <div class="field-row">
+          <input id="downloadFolderInput" type="text" spellcheck="false" />
+          <button class="button" type="button" id="browseFolderButton" hidden>Browse…</button>
+          <button class="button" type="button" id="saveFolderButton">Save</button>
+        </div>
+        <p class="hint">
+          A full folder path, for example <span class="monospace" id="folderExample"></span>. It is created if it doesn't exist.
+        </p>
+        <label for="simultaneousDownloadsSelect">Downloads at the same time</label>
+        <select id="simultaneousDownloadsSelect">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+        <p class="hint" id="versionInfo"></p>
+        <div class="dialog-actions"><button class="button" value="close">Close</button></div>
+      </form>
+    </dialog>
+
+    <div class="drop-overlay" id="dropOverlay" hidden><div class="drop-message">Drop to download</div></div>
+
+    <div class="toast" id="toast" role="status" hidden></div>
+  </body>
+</html>
