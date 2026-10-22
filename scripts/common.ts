@@ -5,6 +5,10 @@ export const DIST_DIRECTORY = join(PROJECT_ROOT, 'dist');
 export const BUILD_DIRECTORY = join(PROJECT_ROOT, 'build');
 export const RELEASE_DIRECTORY = join(PROJECT_ROOT, 'release');
 export const APP_NAME = 'YT Downloader';
+export const COPYRIGHT = 'Copyright (c) 2026 littlenines';
+/** Release folders already contain Electron's own "LICENSE", so the app's license gets a name of its own. */
+export const LICENSE_FILE_NAME = 'YT-Downloader-LICENSE.txt';
+export const LICENSE_SOURCE = join(PROJECT_ROOT, 'LICENSE');
 
 export type ReleaseTarget = 'win-x64' | 'linux-x64' | 'linux-arm64';
 export const ALL_TARGETS: ReleaseTarget[] = ['win-x64', 'linux-x64', 'linux-arm64'];

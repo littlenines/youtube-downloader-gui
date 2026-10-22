@@ -8,8 +8,11 @@ import { WEB_ASSETS } from '../src/server/web-assets.js';
 import {
   APP_NAME,
   BUILD_DIRECTORY,
+  COPYRIGHT,
   DIST_DIRECTORY,
   isLinuxTarget,
+  LICENSE_FILE_NAME,
+  LICENSE_SOURCE,
   PROJECT_ROOT,
   RELEASE_DIRECTORY,
   runScript,
@@ -111,6 +114,7 @@ async function writeLinuxArchive(appFolder: string, target: ReleaseTarget): Prom
   await writeFile(join(appFolder, 'yt-downloader'), LINUX_LAUNCHER);
   await cp(join(PROJECT_ROOT, 'assets', 'icon.png'), join(appFolder, 'icon.png'));
   await writeFile(join(appFolder, 'README.txt'), readme(true));
+  await cp(LICENSE_SOURCE, join(appFolder, LICENSE_FILE_NAME));
   const entries: TarEntry[] = [];
   for await (const file of listFiles(appFolder)) {
     const relativeName = relative(appFolder, file).split(sep).join('/');
@@ -124,6 +128,7 @@ async function writeLinuxArchive(appFolder: string, target: ReleaseTarget): Prom
 
 async function writeWindowsFolder(appFolder: string, target: ReleaseTarget): Promise<void> {
   await writeFile(join(appFolder, 'README.txt'), readme(false).replace(/\n/g, '\r\n'));
+  await writeFile(join(appFolder, LICENSE_FILE_NAME), (await readFile(LICENSE_SOURCE, 'utf8')).replace(/\n/g, '\r\n'));
   const releaseFolder = join(RELEASE_DIRECTORY, `yt-downloader-${target}`);
   await mkdir(releaseFolder, { recursive: true });
   for (const name of await readdir(releaseFolder)) {
@@ -157,7 +162,7 @@ async function main(): Promise<void> {
       name: APP_NAME,
       executableName: 'yt-downloader',
       appVersion,
-      appCopyright: 'MIT License',
+      appCopyright: COPYRIGHT,
       icon: join(PROJECT_ROOT, 'assets', isLinux ? 'icon.png' : 'icon.ico'),
       win32metadata: { CompanyName: APP_NAME, FileDescription: APP_NAME, ProductName: APP_NAME, OriginalFilename: 'yt-downloader.exe' },
       asar: false,

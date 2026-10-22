@@ -12,6 +12,8 @@ import {
   BUILD_DIRECTORY,
   DIST_DIRECTORY,
   isLinuxTarget,
+  LICENSE_FILE_NAME,
+  LICENSE_SOURCE,
   RELEASE_DIRECTORY,
   runScript,
   targetsFromCommandLine,
@@ -122,6 +124,7 @@ async function main(): Promise<void> {
       const entries = [
         { name: 'yt-downloader/yt-downloader', data: binary, mode: 0o755 },
         { name: 'yt-downloader/README.txt', data: Buffer.from(readme(executable, true)) },
+        { name: `yt-downloader/${LICENSE_FILE_NAME}`, data: await readFile(LICENSE_SOURCE) },
       ];
       await writeFile(archive, createTarGz(entries));
       console.log(`✓ ${archive} (${toMegabytes(binary.length)} executable)`);
@@ -131,6 +134,7 @@ async function main(): Promise<void> {
       await mkdir(folder, { recursive: true });
       await writeFile(join(folder, executable), binary);
       await writeFile(join(folder, 'README.txt'), readme(executable, false).replace(/\n/g, '\r\n'));
+      await writeFile(join(folder, LICENSE_FILE_NAME), (await readFile(LICENSE_SOURCE, 'utf8')).replace(/\n/g, '\r\n'));
       console.log(`✓ ${join(folder, executable)} (${toMegabytes(binary.length)})`);
     }
   }

@@ -74,4 +74,10 @@ Anyone who has the link can use the app, so only share it, and the server, on a 
 - [HTTP API](docs/http-api.md): the local API between the page and the engine.
 - [Development](docs/development.md): commands, code conventions, tests and packaging.
 
+## License
+
+YT Downloader is released under the [MIT License](LICENSE). Release packages include it as `YT-Downloader-LICENSE.txt`.
+
+The tools the app downloads on first start come under their own licenses: yt-dlp is in the public domain (Unlicense), and the ffmpeg builds are GPL-licensed. Electron, which the desktop app is built on, is MIT-licensed; its license and Chromium's ship in the release folder as `LICENSE` and `LICENSES.chromium.html`.
+
 Please respect copyright and the sites' terms. Download only what you have the right to.
