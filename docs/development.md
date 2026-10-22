@@ -32,6 +32,10 @@ npm start
 
 If Electron starts and behaves like plain Node (for example `Cannot read properties of undefined (reading 'setPath')`), the environment sets `ELECTRON_RUN_AS_NODE`. VS Code does this for its own processes. Unset it, or use the start scripts, which do.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs `npm run typecheck`, `npm test` and `npm run format:check` on Windows and Linux for every push and pull request. It skips Electron's binary download, which the tests don't need.
+
 ## Code conventions
 
 - **Names are full words.** Use `downloadFolder`, `bytesPerSecond`, `response`, `error`, `findElement`, not `dir`, `bps`, `res`, `e`, `$`. Established technical terms (`url`, `id`, `hdr`, `ffmpeg`) are fine. Field names that come from yt-dlp's JSON (`vcodec`, `abr`, `filesize_approx`) keep yt-dlp's spelling.
@@ -52,8 +56,11 @@ Tests live in `test/` and cover:
 | `archive.test.ts` | Zip and tar.gz reading and writing, including refusing zip entries and symbolic links that escape the target folder. |
 | `json-file.test.ts` | Validation on load, concurrent saves keeping the last value, and keeping a copy of a damaged file. |
 | `stores.test.ts` | Defaults and reading settings and history saved by earlier versions. |
-| `queue.test.ts` | The download queue with a fake download engine: cancel then retry while the old process is still exiting, failures, success, partial-folder cleanup. |
+| `queue.test.ts` | The download queue with a fake download engine: cancel then retry while the old process is still exiting, failures, success, playlists that skip videos, partial-folder cleanup and stale folders. |
 | `request-guard.test.ts` | Refusing cross-site requests and DNS rebinding, and allowing the app's own page. |
+| `access.test.ts` | The access key (cookie, access link, refusals), the Content-Security-Policy, and malformed addresses answering 400. |
+| `verified-download.test.ts` | Checksum match and mismatch, stalled downloads, reading checksum files and release tags (against a local test server). |
+| `tool-setup.test.ts` | The setup states with fake tools: missing, installing, ready, a tool lost later, failed installs, and the update-check schedule. |
 
 Everything that needs yt-dlp, the network or a window is checked by running the app. A useful end-to-end pass:
 

@@ -1,9 +1,11 @@
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import postject from 'postject';
 import { createTarGz, extractTarGzEntry, extractZipEntry } from '../src/server/lib/archive.js';
+import { parseSha256 } from '../src/server/lib/verified-download.js';
 import { WEB_ASSETS } from '../src/server/web-assets.js';
 import {
   APP_NAME,
@@ -29,17 +31,28 @@ async function downloadToMemory(url: string): Promise<Buffer> {
   return Buffer.from(await response.arrayBuffer());
 }
 
-/** This machine's Node binary, or the official build from nodejs.org (cached in build/cache). */
+/** Checks the archive against the SHASUMS256.txt that nodejs.org publishes for each version. */
+async function downloadVerifiedNodeArchive(fileName: string): Promise<Buffer> {
+  const releaseUrl = `https://nodejs.org/dist/${NODE_VERSION}`;
+  const expectedSha256 = parseSha256((await downloadToMemory(`${releaseUrl}/SHASUMS256.txt`)).toString('utf8'), fileName);
+  if (!expectedSha256) throw new Error(`nodejs.org lists no checksum for ${fileName}.`);
+  const archive = await downloadToMemory(`${releaseUrl}/${fileName}`);
+  if (createHash('sha256').update(archive).digest('hex') !== expectedSha256)
+    throw new Error(`${fileName} did not match its published checksum.`);
+  return archive;
+}
+
+/** This machine's Node binary, or the official build from nodejs.org (verified, then cached in build/cache). */
 async function nodeBinary(target: ReleaseTarget): Promise<Buffer> {
   if (target === currentTarget) return readFile(process.execPath);
   const isWindows = !isLinuxTarget(target);
-  const cachedFile = join(NODE_CACHE_DIRECTORY, `node-${NODE_VERSION}-${target}${isWindows ? '.exe' : ''}`);
+  const cachedFile = join(NODE_CACHE_DIRECTORY, `node-${NODE_VERSION}-${target}-verified${isWindows ? '.exe' : ''}`);
   if (existsSync(cachedFile)) return readFile(cachedFile);
   console.log(`Downloading Node ${NODE_VERSION} for ${target}…`);
-  const archiveUrl = `https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-${target}`;
+  const archiveName = `node-${NODE_VERSION}-${target}`;
   const binary = isWindows
-    ? extractZipEntry(await downloadToMemory(`${archiveUrl}.zip`), (name) => name.endsWith('/node.exe'))
-    : extractTarGzEntry(await downloadToMemory(`${archiveUrl}.tar.gz`), (name) => name.endsWith('/bin/node'));
+    ? extractZipEntry(await downloadVerifiedNodeArchive(`${archiveName}.zip`), (name) => name.endsWith('/node.exe'))
+    : extractTarGzEntry(await downloadVerifiedNodeArchive(`${archiveName}.tar.gz`), (name) => name.endsWith('/bin/node'));
   await mkdir(NODE_CACHE_DIRECTORY, { recursive: true });
   await writeFile(cachedFile, binary);
   return binary;

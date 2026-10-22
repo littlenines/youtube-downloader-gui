@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { cp, mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
+import { flipFuses, FuseV1Options, FuseVersion } from '@electron/fuses';
 import { packager } from '@electron/packager';
 import { createTarGz, type TarEntry } from '../src/server/lib/archive.js';
 import { WEB_ASSETS } from '../src/server/web-assets.js';
@@ -23,6 +24,20 @@ const APP_FILES = ['desktop.cjs', 'preload.cjs', 'icon.png', ...WEB_ASSETS.map((
 /** Folders the app creates next to itself; kept when a release folder is rebuilt. */
 const USER_DATA_FOLDERS = new Set(['data', 'tools', 'downloads']);
 const LINUX_EXECUTABLES = new Set(['yt-downloader', 'yt-downloader.bin', 'chrome-sandbox', 'chrome_crashpad_handler']);
+
+/**
+ * Stops the running app from being opened to a debugger (--inspect, NODE_OPTIONS). RunAsNode stays on because
+ * yt-dlp uses the app's binary as its JavaScript runtime; that mode starts a separate plain Node process without the app's data.
+ */
+async function lockDownElectron(executable: string): Promise<void> {
+  await flipFuses(executable, {
+    version: FuseVersion.V1,
+    [FuseV1Options.RunAsNode]: true,
+    [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
+    [FuseV1Options.EnableNodeCliInspectArguments]: false,
+    [FuseV1Options.GrantFileProtocolExtraPrivileges]: false,
+  });
+}
 
 // Chromium's sandbox needs unprivileged user namespaces or a setuid-root chrome-sandbox. Several
 // distributions restrict the first, and an app run from a folder can't have the second, so the
@@ -151,6 +166,7 @@ async function main(): Promise<void> {
       quiet: true,
     });
     if (!appFolder) throw new Error(`Packaging ${target} produced nothing.`);
+    await lockDownElectron(join(appFolder, isLinux ? 'yt-downloader' : 'yt-downloader.exe'));
     if (isLinux) await writeLinuxArchive(appFolder, target);
     else await writeWindowsFolder(appFolder, target);
   }

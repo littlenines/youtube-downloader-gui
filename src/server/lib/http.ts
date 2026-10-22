@@ -48,7 +48,7 @@ export class Router {
       const match = route.pattern.exec(url.pathname);
       if (!match) continue;
       try {
-        const result = await route.handler({ request, response, url, parameters: match.slice(1).map(decodeURIComponent) });
+        const result = await route.handler({ request, response, url, parameters: match.slice(1).map(decodePathPart) });
         if (!response.headersSent) sendJson(response, 200, result ?? { ok: true });
       } catch (error) {
         const status = error instanceof HttpError ? error.status : 500;
@@ -62,6 +62,15 @@ export class Router {
   private add(method: string, path: string, handler: RouteHandler): this {
     this.routes.push({ method, pattern: new RegExp(`^${path.replace(/:[a-z]+/gi, '([^/]+)')}$`), handler });
     return this;
+  }
+}
+
+/** A malformed "%" sequence in the address is the client's mistake (400), not a server error. */
+export function decodePathPart(part: string): string {
+  try {
+    return decodeURIComponent(part);
+  } catch {
+    throw new HttpError(400, 'The address is malformed.');
   }
 }
 

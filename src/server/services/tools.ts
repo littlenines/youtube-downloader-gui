@@ -1,14 +1,11 @@
 import { execFile } from 'node:child_process';
-import { createWriteStream, existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import { chmod, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { Readable, Transform } from 'node:stream';
-import { pipeline } from 'node:stream/promises';
-import type { ReadableStream as WebReadableStream } from 'node:stream/web';
-import { createGunzip } from 'node:zlib';
 import type { SetupStatus } from '../../shared/types.js';
 import { IS_ELECTRON, IS_SINGLE_EXECUTABLE, IS_WINDOWS, TOOLS_DIRECTORY } from '../config.js';
 import { extractZip, extractZipEntry } from '../lib/archive.js';
+import { downloadText, downloadVerifiedFile, latestReleaseTag, parseSha256 } from '../lib/verified-download.js';
 
 const executableName = (name: string) => (IS_WINDOWS ? `${name}.exe` : name);
 
@@ -18,6 +15,20 @@ const FFMPEG_RELEASE = 'https://github.com/eugeneware/ffmpeg-static/releases/dow
 const ONE_DAY_MILLISECONDS = 24 * 3600 * 1000;
 const ONE_WEEK_MILLISECONDS = 7 * ONE_DAY_MILLISECONDS;
 const UPDATE_TIMEOUT_MILLISECONDS = 120_000;
+
+/** That release publishes no checksums, so these were taken from GitHub's asset digests and checked against a download. */
+const FFMPEG_SHA256: Record<string, string> = {
+  'ffmpeg-win32-x64': '8883a3dffbd0a16cf4ef95206ea05283f78908dbfb118f73c83f4951dcc06d77',
+  'ffprobe-win32-x64': 'f309e6223ad89d2fe54bccd420a7709b66fd27540674e92309578ed491a43c8d',
+  'ffmpeg-linux-x64': 'bfe8a8fc511530457b528c48d77b5737527b504a3797a9bc4866aeca69c2dffa',
+  'ffprobe-linux-x64': '25d9b6ccb05e3d9de9e04e31e2506d8dd7f9f0418981965ac6df12e8d3afd067',
+  'ffmpeg-linux-arm64': '754a678672298bc68156adff58aa7385a592c2b30b1d0ae8750c45c915c4bac0',
+  'ffprobe-linux-arm64': '2ab6aba60ee84412dff9188720703376cb4e7aaf7e0b5e43aa8249f2acae5bf8',
+  'ffmpeg-darwin-x64': '929b375c1182d956c51f7ac25e0b2b0411fb01f6f407aa15c9758efeb4242106',
+  'ffprobe-darwin-x64': 'd4da574d6e2e197bd259b47d69cf262df9e312af24ad960444f6d806d3d4c186',
+  'ffmpeg-darwin-arm64': '8923876afa8db5585022d7860ec7e589af192f441c56793971276d450ed3bbfa',
+  'ffprobe-darwin-arm64': 'd986a8ec7b030899fe66a8a288ed809a3543338705a3ce178cfb85869c5d80be',
+};
 
 export const toolPaths = {
   ffmpegDirectory: join(TOOLS_DIRECTORY, 'ffmpeg'),
@@ -58,11 +69,11 @@ function ytdlpReleaseAsset(): string {
   throw new Error(`No yt-dlp build for ${platform}.`);
 }
 
-function ffmpegReleaseTarget(): string {
-  const target = `${process.platform}-${process.arch}`;
-  const supportedTargets = ['win32-x64', 'linux-x64', 'linux-arm64', 'darwin-x64', 'darwin-arm64'];
-  if (!supportedTargets.includes(target)) throw new Error(`No ffmpeg build for ${target}.`);
-  return target;
+function ffmpegReleaseAsset(name: 'ffmpeg' | 'ffprobe'): { asset: string; sha256: string } {
+  const key = `${name}-${process.platform}-${process.arch}`;
+  const sha256 = FFMPEG_SHA256[key];
+  if (!sha256) throw new Error(`No ffmpeg build for ${process.platform}/${process.arch}.`);
+  return { asset: `${key}.gz`, sha256 };
 }
 
 function denoReleaseTarget(): string {
@@ -98,134 +109,74 @@ export function commonArguments(): string[] {
   ];
 }
 
-async function downloadFile(url: string, destination: string, onProgress: (fraction: number) => void, gunzip = false): Promise<void> {
-  const response = await fetch(url, { redirect: 'follow' });
-  if (!response.ok || !response.body) throw new Error(`A download failed (HTTP ${response.status}). Check the internet connection.`);
-  const totalBytes = Number(response.headers.get('content-length')) || 0;
-  let receivedBytes = 0;
-  const progressMeter = new Transform({
-    transform(chunk: Buffer, _encoding, callback) {
-      receivedBytes += chunk.length;
-      if (totalBytes) onProgress(receivedBytes / totalBytes);
-      callback(null, chunk);
-    },
-  });
-  const partialFile = `${destination}.part`;
-  const source = Readable.fromWeb(response.body as unknown as WebReadableStream);
-  if (gunzip) await pipeline(source, progressMeter, createGunzip(), createWriteStream(partialFile));
-  else await pipeline(source, progressMeter, createWriteStream(partialFile));
-  await rename(partialFile, destination);
-  if (!IS_WINDOWS) await chmod(destination, 0o755);
-}
-
-interface InstallStep {
+export interface InstallStep {
   name: string;
   downloadSizeMegabytes: number;
   isInstalled(): boolean;
   install(onProgress: (fraction: number) => void): Promise<void>;
 }
 
+async function installYtdlp(onProgress: (fraction: number) => void): Promise<void> {
+  const asset = ytdlpReleaseAsset();
+  const releaseUrl = `https://github.com/yt-dlp/yt-dlp/releases/download/${await latestReleaseTag('yt-dlp/yt-dlp')}`;
+  const expectedSha256 = parseSha256(await downloadText(`${releaseUrl}/SHA2-256SUMS`), asset);
+  if (!expectedSha256) throw new Error(`The yt-dlp release lists no checksum for ${asset}.`);
+  const zipFile = join(TOOLS_DIRECTORY, 'yt-dlp.zip');
+  const temporaryDirectory = `${YTDLP_DIRECTORY}.tmp`;
+  await downloadVerifiedFile(`${releaseUrl}/${asset}`, zipFile, {
+    label: 'yt-dlp',
+    expectedSha256,
+    onProgress: (fraction) => onProgress(fraction * 0.9),
+  });
+  await rm(temporaryDirectory, { recursive: true, force: true });
+  await extractZip(await readFile(zipFile), temporaryDirectory);
+  // Also removes the single-file build that earlier versions kept at tools/yt-dlp(.exe).
+  await rm(YTDLP_DIRECTORY, { recursive: true, force: true });
+  await rm(join(TOOLS_DIRECTORY, 'yt-dlp.exe'), { force: true });
+  await rename(temporaryDirectory, YTDLP_DIRECTORY);
+  await rm(zipFile, { force: true });
+  ytdlpExecutable = null;
+  await writeFile(UPDATE_CHECK_MARKER, '');
+}
+
+async function installFfmpegTool(name: 'ffmpeg' | 'ffprobe', onProgress: (fraction: number) => void): Promise<void> {
+  const { asset, sha256 } = ffmpegReleaseAsset(name);
+  await downloadVerifiedFile(`${FFMPEG_RELEASE}/${asset}`, toolPaths[name], {
+    label: name,
+    expectedSha256: sha256,
+    onProgress,
+    gunzip: true,
+  });
+  if (!IS_WINDOWS) await chmod(toolPaths[name], 0o755);
+}
+
+async function installDeno(onProgress: (fraction: number) => void): Promise<void> {
+  const asset = `deno-${denoReleaseTarget()}.zip`;
+  const releaseUrl = `https://github.com/denoland/deno/releases/download/${await latestReleaseTag('denoland/deno')}`;
+  const expectedSha256 = parseSha256(await downloadText(`${releaseUrl}/${asset}.sha256sum`));
+  if (!expectedSha256) throw new Error(`The Deno release lists no checksum for ${asset}.`);
+  const zipFile = join(TOOLS_DIRECTORY, 'deno.zip');
+  await downloadVerifiedFile(`${releaseUrl}/${asset}`, zipFile, { label: 'Deno', expectedSha256, onProgress });
+  const partialFile = `${toolPaths.deno}.part`;
+  await writeFile(
+    partialFile,
+    extractZipEntry(await readFile(zipFile), (name) => name === executableName('deno')),
+  );
+  if (!IS_WINDOWS) await chmod(partialFile, 0o755);
+  await rename(partialFile, toolPaths.deno);
+  await rm(zipFile, { force: true });
+}
+
 const INSTALL_STEPS: InstallStep[] = [
-  {
-    name: 'yt-dlp',
-    downloadSizeMegabytes: IS_WINDOWS ? 17 : 38,
-    isInstalled: () => existsSync(ytdlpPath()),
-    async install(onProgress) {
-      const zipFile = join(TOOLS_DIRECTORY, 'yt-dlp.zip');
-      const temporaryDirectory = `${YTDLP_DIRECTORY}.tmp`;
-      const asset = ytdlpReleaseAsset();
-      await downloadFile(`https://github.com/yt-dlp/yt-dlp/releases/latest/download/${asset}`, zipFile, (fraction) =>
-        onProgress(fraction * 0.9),
-      );
-      await rm(temporaryDirectory, { recursive: true, force: true });
-      await extractZip(await readFile(zipFile), temporaryDirectory);
-      // Also removes the single-file build that earlier versions kept at tools/yt-dlp(.exe).
-      await rm(YTDLP_DIRECTORY, { recursive: true, force: true });
-      await rm(join(TOOLS_DIRECTORY, 'yt-dlp.exe'), { force: true });
-      await rename(temporaryDirectory, YTDLP_DIRECTORY);
-      await rm(zipFile, { force: true });
-      ytdlpExecutable = null;
-      await writeFile(UPDATE_CHECK_MARKER, '');
-    },
-  },
+  { name: 'yt-dlp', downloadSizeMegabytes: IS_WINDOWS ? 17 : 38, isInstalled: () => existsSync(ytdlpPath()), install: installYtdlp },
   ...(['ffmpeg', 'ffprobe'] as const).map((name): InstallStep => ({
     name,
     downloadSizeMegabytes: 28,
     isInstalled: () => existsSync(toolPaths[name]),
-    install: (onProgress) => downloadFile(`${FFMPEG_RELEASE}/${name}-${ffmpegReleaseTarget()}.gz`, toolPaths[name], onProgress, true),
+    install: (onProgress) => installFfmpegTool(name, onProgress),
   })),
-  {
-    name: 'Deno',
-    downloadSizeMegabytes: 45,
-    isInstalled: () => !needsDeno() || existsSync(toolPaths.deno),
-    async install(onProgress) {
-      const zipFile = join(TOOLS_DIRECTORY, 'deno.zip');
-      await downloadFile(`https://github.com/denoland/deno/releases/latest/download/deno-${denoReleaseTarget()}.zip`, zipFile, onProgress);
-      const partialFile = `${toolPaths.deno}.part`;
-      await writeFile(
-        partialFile,
-        extractZipEntry(await readFile(zipFile), (name) => name === executableName('deno')),
-      );
-      if (!IS_WINDOWS) await chmod(partialFile, 0o755);
-      await rename(partialFile, toolPaths.deno);
-      await rm(zipFile, { force: true });
-    },
-  },
+  { name: 'Deno', downloadSizeMegabytes: 45, isInstalled: () => !needsDeno() || existsSync(toolPaths.deno), install: installDeno },
 ];
-
-const missingSteps = () => INSTALL_STEPS.filter((step) => !step.isInstalled());
-export const toolsInstalled = () => missingSteps().length === 0;
-
-const setupState: Omit<SetupStatus, 'installed' | 'downloadSizeMegabytes'> = { state: 'missing', message: null, progress: null };
-
-export function setupStatus(): SetupStatus {
-  const steps = missingSteps();
-  const installed = steps.length === 0;
-  return {
-    ...setupState,
-    // A tool can disappear after setup, for example when antivirus software removes it.
-    state: setupState.state === 'ready' && !installed ? 'missing' : setupState.state,
-    installed,
-    downloadSizeMegabytes: steps.reduce((sum, step) => sum + step.downloadSizeMegabytes, 0),
-  };
-}
-
-let ytdlpVersionText: string | null = null;
-export const ytdlpVersion = (): string | null => ytdlpVersionText;
-
-let setupTask: Promise<void> | null = null;
-let setupSucceeded = false;
-let lastUpdateAttempt = 0;
-
-/** Installs what is missing, or checks for a yt-dlp update when one is due. Concurrent callers share one run. */
-export function ensureTools(): Promise<void> {
-  if (setupSucceeded && !toolsInstalled()) setupTask = null;
-  setupTask ??= runSetup().then(
-    () => {
-      setupSucceeded = true;
-      Object.assign(setupState, { state: 'ready', message: null, progress: null });
-    },
-    (error: unknown) => {
-      setupTask = null;
-      setupSucceeded = false;
-      Object.assign(setupState, { state: 'error', message: error instanceof Error ? error.message : String(error), progress: null });
-      throw error;
-    },
-  );
-  return setupTask;
-}
-
-/** For an app left running for weeks: called while no download runs, so the update can't replace yt-dlp mid-download. */
-export function checkForToolUpdate(): void {
-  if (!setupSucceeded || !toolsInstalled() || !isUpdateDue()) return;
-  setupTask = null;
-  ensureTools().catch(() => {});
-}
-
-/** Gets ready at start-up when everything is installed; otherwise the user is asked first. */
-export function initializeTools(): void {
-  if (toolsInstalled()) ensureTools().catch(() => {});
-}
 
 export class ToolsMissingError extends Error {
   constructor() {
@@ -233,49 +184,140 @@ export class ToolsMissingError extends Error {
   }
 }
 
-export function requireTools(): Promise<void> {
-  if (setupState.state === 'running' || toolsInstalled()) return ensureTools();
-  return Promise.reject(new ToolsMissingError());
+/** Everything the setup touches outside its own state, so tests can replace it. */
+export interface ToolSetupDependencies {
+  steps: InstallStep[];
+  prepareFolders(): Promise<void>;
+  /** Runs `yt-dlp -U`; resolves to whether it succeeded. */
+  updateYtdlp(): Promise<boolean>;
+  readYtdlpVersion(): Promise<string | null>;
+  lastSuccessfulUpdateCheck(): number;
+  recordSuccessfulUpdateCheck(): Promise<void>;
+  now(): number;
 }
 
-async function runSetup(): Promise<void> {
-  setupState.state = 'running';
-  await mkdir(toolPaths.ffmpegDirectory, { recursive: true });
-  const steps = missingSteps();
-  for (const [stepIndex, step] of steps.entries()) {
-    const reportProgress = (fraction: number) => {
-      setupState.message = `Downloading ${step.name} (${stepIndex + 1} of ${steps.length})…`;
-      setupState.progress = (stepIndex + Math.min(1, fraction)) / steps.length;
-    };
-    reportProgress(0);
-    await step.install(reportProgress);
+type SetupState = Omit<SetupStatus, 'installed' | 'downloadSizeMegabytes'>;
+
+export class ToolSetup {
+  private readonly state: SetupState = { state: 'missing', message: null, progress: null };
+  private task: Promise<void> | null = null;
+  private succeeded = false;
+  private lastUpdateAttempt = Number.NEGATIVE_INFINITY;
+  private version: string | null = null;
+
+  constructor(private readonly dependencies: ToolSetupDependencies) {}
+
+  get ytdlpVersion(): string | null {
+    return this.version;
   }
-  await updateYtdlpIfDue();
-  ytdlpVersionText = await readYtdlpVersion();
-}
 
-/** A failed attempt is retried a day later; a successful check counts for a week. */
-function isUpdateDue(): boolean {
-  const lastCheck = existsSync(UPDATE_CHECK_MARKER) ? statSync(UPDATE_CHECK_MARKER).mtimeMs : 0;
-  const now = Date.now();
-  return now - lastCheck >= ONE_WEEK_MILLISECONDS && now - lastUpdateAttempt >= ONE_DAY_MILLISECONDS;
-}
+  installed(): boolean {
+    return this.missingSteps().length === 0;
+  }
 
-/** YouTube changes often, and an outdated yt-dlp is the usual reason downloads break. */
-async function updateYtdlpIfDue(): Promise<void> {
-  if (!isUpdateDue()) return;
-  lastUpdateAttempt = Date.now();
-  Object.assign(setupState, { message: 'Checking for a yt-dlp update…', progress: null });
-  const succeeded = await new Promise<boolean>((resolve) => {
-    execFile(ytdlpPath(), ['-U'], { windowsHide: true, env: toolEnvironment(), timeout: UPDATE_TIMEOUT_MILLISECONDS }, (error) =>
-      resolve(!error),
+  status(): SetupStatus {
+    const steps = this.missingSteps();
+    const installed = steps.length === 0;
+    return {
+      ...this.state,
+      // A tool can disappear after setup, for example when antivirus software removes it.
+      state: this.state.state === 'ready' && !installed ? 'missing' : this.state.state,
+      installed,
+      downloadSizeMegabytes: steps.reduce((sum, step) => sum + step.downloadSizeMegabytes, 0),
+    };
+  }
+
+  /** Installs what is missing, or checks for a yt-dlp update when one is due. Concurrent callers share one run. */
+  ensure(): Promise<void> {
+    if (this.succeeded && !this.installed()) this.task = null;
+    this.task ??= this.run().then(
+      () => {
+        this.succeeded = true;
+        Object.assign(this.state, { state: 'ready', message: null, progress: null });
+      },
+      (error: unknown) => {
+        this.task = null;
+        this.succeeded = false;
+        Object.assign(this.state, { state: 'error', message: error instanceof Error ? error.message : String(error), progress: null });
+        throw error;
+      },
     );
-  });
-  if (succeeded) await writeFile(UPDATE_CHECK_MARKER, '');
+    return this.task;
+  }
+
+  /** Gets ready at start-up when everything is installed; otherwise the user is asked first. */
+  initialize(): void {
+    if (this.installed()) this.ensure().catch(() => {});
+  }
+
+  /** For reading links and downloading: waits for a running setup, and refuses if the tools are missing. */
+  require(): Promise<void> {
+    if (this.state.state === 'running' || this.installed()) return this.ensure();
+    return Promise.reject(new ToolsMissingError());
+  }
+
+  /** For an app left running for weeks: called while no download runs, so the update can't replace yt-dlp mid-download. */
+  checkForUpdate(): void {
+    if (!this.succeeded || !this.installed() || !this.isUpdateDue()) return;
+    this.task = null;
+    this.ensure().catch(() => {});
+  }
+
+  private missingSteps(): InstallStep[] {
+    return this.dependencies.steps.filter((step) => !step.isInstalled());
+  }
+
+  private async run(): Promise<void> {
+    this.state.state = 'running';
+    await this.dependencies.prepareFolders();
+    const steps = this.missingSteps();
+    for (const [stepIndex, step] of steps.entries()) {
+      const reportProgress = (fraction: number) => {
+        this.state.message = `Downloading ${step.name} (${stepIndex + 1} of ${steps.length})…`;
+        this.state.progress = (stepIndex + Math.min(1, fraction)) / steps.length;
+      };
+      reportProgress(0);
+      await step.install(reportProgress);
+    }
+    await this.updateIfDue();
+    this.version = await this.dependencies.readYtdlpVersion();
+  }
+
+  /** A failed attempt is retried a day later; a successful check counts for a week. */
+  private isUpdateDue(): boolean {
+    const now = this.dependencies.now();
+    return (
+      now - this.dependencies.lastSuccessfulUpdateCheck() >= ONE_WEEK_MILLISECONDS && now - this.lastUpdateAttempt >= ONE_DAY_MILLISECONDS
+    );
+  }
+
+  /** YouTube changes often, and an outdated yt-dlp is the usual reason downloads break. */
+  private async updateIfDue(): Promise<void> {
+    if (!this.isUpdateDue()) return;
+    this.lastUpdateAttempt = this.dependencies.now();
+    Object.assign(this.state, { message: 'Checking for a yt-dlp update…', progress: null });
+    if (await this.dependencies.updateYtdlp()) await this.dependencies.recordSuccessfulUpdateCheck();
+  }
 }
 
-function readYtdlpVersion(): Promise<string | null> {
-  return new Promise((resolve) => {
-    execFile(ytdlpPath(), ['--version'], { windowsHide: true, encoding: 'utf8' }, (error, output) => resolve(error ? null : output.trim()));
-  });
-}
+export const toolSetup = new ToolSetup({
+  steps: INSTALL_STEPS,
+  prepareFolders: async () => {
+    await mkdir(toolPaths.ffmpegDirectory, { recursive: true });
+  },
+  updateYtdlp: () =>
+    new Promise((resolve) => {
+      execFile(ytdlpPath(), ['-U'], { windowsHide: true, env: toolEnvironment(), timeout: UPDATE_TIMEOUT_MILLISECONDS }, (error) =>
+        resolve(!error),
+      );
+    }),
+  readYtdlpVersion: () =>
+    new Promise((resolve) => {
+      execFile(ytdlpPath(), ['--version'], { windowsHide: true, encoding: 'utf8' }, (error, output) =>
+        resolve(error ? null : output.trim()),
+      );
+    }),
+  lastSuccessfulUpdateCheck: () => (existsSync(UPDATE_CHECK_MARKER) ? statSync(UPDATE_CHECK_MARKER).mtimeMs : 0),
+  recordSuccessfulUpdateCheck: () => writeFile(UPDATE_CHECK_MARKER, ''),
+  now: () => Date.now(),
+});

@@ -1,16 +1,17 @@
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, describe, it } from 'node:test';
 import type { Settings } from '../src/shared/types.js';
 import { normalizeRequest } from '../src/server/services/formats.js';
-import { DownloadQueue, PARTIAL_FOLDER_NAME, type DownloadEngine } from '../src/server/services/queue.js';
+import { DownloadQueue, PARTIAL_FOLDER_NAME, removeStalePartialFolders, type DownloadEngine } from '../src/server/services/queue.js';
 import type { HistoryStore, SettingsStore } from '../src/server/services/stores.js';
+import type { DownloadResult } from '../src/server/services/ytdlp.js';
 
 interface FakeRun {
-  finish(): void;
+  finish(skippedItems?: string[]): void;
   fail(message: string): void;
   cancelled: boolean;
 }
@@ -21,13 +22,17 @@ function createFakeEngine() {
   const engine: DownloadEngine = {
     requireTools: async () => {},
     startDownload: () => {
-      let finish!: () => void;
+      let finish!: (result: DownloadResult) => void;
       let fail!: (error: Error) => void;
-      const finished = new Promise<void>((resolve, reject) => {
+      const finished = new Promise<DownloadResult>((resolve, reject) => {
         finish = resolve;
         fail = reject;
       });
-      const run: FakeRun = { finish, fail: (message) => fail(new Error(message)), cancelled: false };
+      const run: FakeRun = {
+        finish: (skippedItems = []) => finish({ skippedItems }),
+        fail: (message) => fail(new Error(message)),
+        cancelled: false,
+      };
       runs.push(run);
       return { finished, cancel: () => (run.cancelled = true) };
     },
@@ -47,7 +52,9 @@ async function waitUntil(condition: () => boolean): Promise<void> {
 describe('DownloadQueue', async () => {
   const downloadFolder = await mkdtemp(join(tmpdir(), 'queue-test-'));
   after(() => rm(downloadFolder, { recursive: true, force: true }));
-  const settings = { get: (): Settings => ({ downloadFolder, simultaneousDownloads: 2 }) } as unknown as SettingsStore;
+  const settings = {
+    get: (): Settings => ({ downloadFolder, simultaneousDownloads: 2, lowLatencyRendering: true }),
+  } as unknown as SettingsStore;
   const history = { add: async () => {} } as unknown as HistoryStore;
   const options = normalizeRequest({ url: 'https://example.com/video' });
 
@@ -98,5 +105,38 @@ describe('DownloadQueue', async () => {
     await waitUntil(() => job.finishedAt !== null);
     assert.equal(job.status, 'done');
     assert.equal(job.progress, 1);
+    assert.equal(job.warning, null);
+  });
+
+  it('finishes a playlist that had to skip videos, with a warning instead of an error', async () => {
+    const { engine, runs } = createFakeEngine();
+    const queue = new DownloadQueue(settings, history, engine);
+    const job = queue.add(normalizeRequest({ url: 'https://example.com/playlist', playlist: true }), { videoCount: 10 });
+    await waitUntil(() => runs.length === 1);
+    runs[0]?.finish(['This video is private.', 'This video is unavailable.']);
+    await waitUntil(() => job.finishedAt !== null);
+    assert.equal(job.status, 'done');
+    assert.equal(job.warning, '2 videos could not be downloaded. This video is private.');
+  });
+});
+
+describe('removeStalePartialFolders', async () => {
+  const downloadFolder = await mkdtemp(join(tmpdir(), 'stale-test-'));
+  after(() => rm(downloadFolder, { recursive: true, force: true }));
+
+  it('removes folders a crashed app left hours ago and keeps ones still in use', async () => {
+    const staleFolder = join(downloadFolder, PARTIAL_FOLDER_NAME, 'crashed-job');
+    const activeFolder = join(downloadFolder, PARTIAL_FOLDER_NAME, 'running-job');
+    await mkdir(staleFolder, { recursive: true });
+    await mkdir(activeFolder, { recursive: true });
+    await writeFile(join(staleFolder, 'song.webm.part'), 'old');
+    await writeFile(join(activeFolder, 'video.mp4.part'), 'new');
+    const yesterday = new Date(Date.now() - 24 * 3600 * 1000);
+    await utimes(join(staleFolder, 'song.webm.part'), yesterday, yesterday);
+    await utimes(staleFolder, yesterday, yesterday);
+
+    await removeStalePartialFolders(downloadFolder);
+    assert.equal(existsSync(staleFolder), false);
+    assert.equal(existsSync(join(activeFolder, 'video.mp4.part')), true);
   });
 });

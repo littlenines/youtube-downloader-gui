@@ -1,12 +1,12 @@
 import type { SearchResult } from '../../shared/types.js';
-import { api, ApiError, TOOLS_MISSING_STATUS } from '../api.js';
+import { api, ApiError, isAbortError, TOOLS_MISSING_STATUS } from '../api.js';
 import { errorMessage, findElement } from '../utils/dom.js';
 import { escapeHtml, formatCount, formatDuration } from '../utils/format.js';
 import { loadMediaInfo } from './media.js';
 import { showPanel } from './panels.js';
 import { requestSetup } from './setup.js';
 
-let latestSearchNumber = 0;
+let currentSearch: AbortController | null = null;
 
 const panel = () => findElement('#searchPanel');
 
@@ -39,14 +39,16 @@ function render(query: string, results: SearchResult[]): void {
 }
 
 export async function search(query: string): Promise<void> {
-  const searchNumber = ++latestSearchNumber;
+  currentSearch?.abort();
+  const request = new AbortController();
+  currentSearch = request;
   panel().innerHTML = `<div class="card loading"><div class="spinner"></div>Searching for “${escapeHtml(query)}”…</div>`;
   showPanel('search');
   try {
-    const results = await api.search(query);
-    if (searchNumber === latestSearchNumber) render(query, results);
+    const results = await api.search(query, request.signal);
+    if (!request.signal.aborted) render(query, results);
   } catch (error) {
-    if (searchNumber !== latestSearchNumber) return;
+    if (request.signal.aborted || isAbortError(error)) return;
     if (error instanceof ApiError && error.status === TOOLS_MISSING_STATUS) {
       showPanel(null);
       requestSetup(() => void search(query));

@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
+import type { ServerResponse } from 'node:http';
 import { dirname } from 'node:path';
 import { isWebLink } from '../../shared/links.js';
 import type { DownloadRequest, DownloadsResponse, Settings, StatusResponse } from '../../shared/types.js';
@@ -9,7 +10,7 @@ import { normalizeRequest } from '../services/formats.js';
 import { streamPreview } from '../services/preview.js';
 import type { DownloadQueue } from '../services/queue.js';
 import type { HistoryStore, SettingsStore } from '../services/stores.js';
-import { ensureTools, setupStatus, ToolsMissingError, ytdlpVersion } from '../services/tools.js';
+import { toolSetup, ToolsMissingError } from '../services/tools.js';
 import { fetchMediaInfo, searchVideos } from '../services/ytdlp.js';
 
 export interface RouteDependencies {
@@ -28,6 +29,15 @@ function asHttpError(error: unknown): HttpError {
   return new HttpError(400, error instanceof Error ? error.message : String(error));
 }
 
+/** Aborts when the page stops waiting (it moved on to another link), so yt-dlp doesn't keep working for nothing. */
+function abortWhenClientLeaves(response: ServerResponse): AbortSignal {
+  const controller = new AbortController();
+  response.on('close', () => {
+    if (!response.writableFinished) controller.abort();
+  });
+  return controller.signal;
+}
+
 function noSuchDownload(): never {
   throw new HttpError(404, 'No such download.');
 }
@@ -43,32 +53,32 @@ async function showInFileManager(file: string | undefined, downloadFolder: strin
 export function registerRoutes(router: Router, { settings, history, queue }: RouteDependencies): void {
   router.get('/api/status', (): StatusResponse => ({
     ...settings.get(),
-    ytdlpVersion: ytdlpVersion(),
+    ytdlpVersion: toolSetup.ytdlpVersion,
     platform: `${process.platform}/${process.arch}`,
-    setup: setupStatus(),
+    setup: toolSetup.status(),
   }));
 
   router.post('/api/setup', () => {
-    ensureTools().catch(() => {});
-    return setupStatus();
+    toolSetup.ensure().catch(() => {});
+    return toolSetup.status();
   });
 
-  router.post('/api/info', async ({ request }) => {
+  router.post('/api/info', async ({ request, response }) => {
     const body = await readJsonBody<{ url: string; playlist: boolean }>(request);
     if (!isLinkValue(body.url)) throw new HttpError(400, 'Paste a full link that starts with https://');
     try {
-      return await fetchMediaInfo(body.url.trim(), { playlist: Boolean(body.playlist) });
+      return await fetchMediaInfo(body.url.trim(), { playlist: Boolean(body.playlist), signal: abortWhenClientLeaves(response) });
     } catch (error) {
       throw asHttpError(error);
     }
   });
 
-  router.post('/api/search', async ({ request }) => {
+  router.post('/api/search', async ({ request, response }) => {
     const { query } = await readJsonBody<{ query: string }>(request);
     const cleanQuery = typeof query === 'string' ? query.trim().slice(0, MAXIMUM_QUERY_LENGTH) : '';
     if (!cleanQuery) throw new HttpError(400, 'Type something to search for.');
     try {
-      return await searchVideos(cleanQuery);
+      return await searchVideos(cleanQuery, abortWhenClientLeaves(response));
     } catch (error) {
       throw asHttpError(error);
     }

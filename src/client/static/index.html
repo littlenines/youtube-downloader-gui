@@ -88,7 +88,16 @@
           </p>
         </div>
         <div id="setupProgress" hidden>
-          <div class="progress-track large"><div class="progress-fill" id="setupProgressFill"></div></div>
+          <div
+            class="progress-track large"
+            role="progressbar"
+            aria-label="Setup progress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <div class="progress-fill" id="setupProgressFill"></div>
+          </div>
           <p class="hint" id="setupProgressText"></p>
         </div>
         <p id="setupDone" hidden>Everything is installed. You can use the app now: paste a link to get started.</p>
@@ -119,6 +128,12 @@
           <option value="3">3</option>
           <option value="4">4</option>
         </select>
+        <div id="renderingSetting" hidden>
+          <label class="checkbox-label settings-checkbox">
+            <input type="checkbox" id="lowLatencyRenderingCheckbox" /> Faster screen updates
+          </label>
+          <p class="hint">Turn this off if the window shows drawing glitches. Takes effect after restarting the app.</p>
+        </div>
         <p class="hint" id="versionInfo"></p>
         <div class="dialog-actions"><button class="button" value="close">Close</button></div>
       </form>

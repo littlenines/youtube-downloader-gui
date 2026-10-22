@@ -1,10 +1,12 @@
-import { mkdir, rm, rmdir, stat } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { mkdir, readdir, rm, rmdir, stat } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type { DownloadOptions, Job } from '../../shared/types.js';
 import { describeOptions } from './formats.js';
 import type { HistoryStore, SettingsStore } from './stores.js';
-import { checkForToolUpdate, requireTools } from './tools.js';
-import { startDownload, type DownloadEvent } from './ytdlp.js';
+import { IS_WINDOWS } from '../config.js';
+import { toolSetup } from './tools.js';
+import { startDownload, type DownloadEvent, type DownloadResult } from './ytdlp.js';
 
 export interface JobDisplayDetails {
   title?: string | undefined;
@@ -20,7 +22,11 @@ export interface DownloadEngine {
   whenIdle(): void;
 }
 
-const defaultEngine: DownloadEngine = { requireTools, startDownload, whenIdle: checkForToolUpdate };
+const defaultEngine: DownloadEngine = {
+  requireTools: () => toolSetup.require(),
+  startDownload,
+  whenIdle: () => toolSetup.checkForUpdate(),
+};
 
 /** Share of the progress bar for the picture stream of a video; the sound stream gets the rest. */
 const PICTURE_SHARE = 0.85;
@@ -74,6 +80,7 @@ export class DownloadQueue {
       files: [],
       sizeBytes: null,
       error: null,
+      warning: null,
       playlistPosition: null,
     };
     this.jobs.set(id, job);
@@ -101,7 +108,16 @@ export class DownloadQueue {
   retry(id: string): Job | undefined {
     const job = this.jobs.get(id);
     if (!job || isActive(job)) return job;
-    Object.assign(job, { status: 'queued', error: null, progress: 0, files: [], stage: null, finishedAt: null, sizeBytes: null });
+    Object.assign(job, {
+      status: 'queued',
+      error: null,
+      warning: null,
+      progress: 0,
+      files: [],
+      stage: null,
+      finishedAt: null,
+      sizeBytes: null,
+    });
     this.startQueuedJobs();
     return job;
   }
@@ -141,14 +157,14 @@ export class DownloadQueue {
     job.stage = 'Waiting for the download tools';
     try {
       await this.engine.requireTools();
-      await mkdir(partialFolder, { recursive: true });
+      await createPartialFolder(partialFolder);
       if (run.cancelled) return;
       job.stage = 'Starting';
       const download = this.engine.startDownload(job.options, downloadFolder, partialFolder, (event) => this.handleEvent(job, event));
       run.cancel = download.cancel;
-      await download.finished;
+      const result = await download.finished;
       if (run.cancelled) return;
-      await this.finishJob(job);
+      await this.finishJob(job, result);
     } catch (error) {
       if (run.cancelled) return;
       job.status = 'error';
@@ -164,8 +180,9 @@ export class DownloadQueue {
     }
   }
 
-  private async finishJob(job: Job): Promise<void> {
+  private async finishJob(job: Job, { skippedItems }: DownloadResult): Promise<void> {
     job.status = 'done';
+    job.warning = skippedItems.length ? skippedWarning(skippedItems) : null;
     job.progress = 1;
     job.stage = null;
     job.sizeBytes = await totalFileSize(job.files);
@@ -215,6 +232,44 @@ export class DownloadQueue {
     else if (event.stream === 'picture') job.stage = streamFinished ? 'Getting the sound' : 'Downloading video';
     else job.stage = streamFinished ? 'Merging picture and sound' : 'Downloading audio';
   }
+}
+
+function skippedWarning(skippedItems: string[]): string {
+  const count = skippedItems.length;
+  return `${count} ${count === 1 ? 'video' : 'videos'} could not be downloaded. ${skippedItems[0]}`;
+}
+
+/** The shared parent is hidden on Windows, where a leading dot doesn't hide a folder. */
+async function createPartialFolder(folder: string): Promise<void> {
+  const createdRoot = await mkdir(folder, { recursive: true });
+  const root = dirname(folder);
+  if (IS_WINDOWS && createdRoot !== undefined && createdRoot.length <= root.length)
+    execFile('attrib', ['+h', root], { windowsHide: true }, () => {});
+}
+
+const STALE_PARTIAL_FOLDER_MILLISECONDS = 6 * 3600 * 1000;
+
+async function newestChange(path: string): Promise<number> {
+  const information = await stat(path);
+  if (!information.isDirectory()) return information.mtimeMs;
+  const entries = await readdir(path);
+  const times = await Promise.all(entries.map((entry) => newestChange(join(path, entry)).catch(() => 0)));
+  return Math.max(information.mtimeMs, ...times);
+}
+
+/**
+ * Removes partial folders left by a crash or a killed app. Only folders untouched for hours go,
+ * because another copy of the app (the browser mode, say) may be downloading into the same folder.
+ */
+export async function removeStalePartialFolders(downloadFolder: string): Promise<void> {
+  const root = join(downloadFolder, PARTIAL_FOLDER_NAME);
+  const jobFolders = await readdir(root).catch(() => [] as string[]);
+  const cutoff = Date.now() - STALE_PARTIAL_FOLDER_MILLISECONDS;
+  for (const name of jobFolders) {
+    const folder = join(root, name);
+    if ((await newestChange(folder).catch(() => 0)) < cutoff) await removePartialFolder(folder);
+  }
+  await rmdir(root).catch(() => {});
 }
 
 /** Retries cover Windows keeping a stopped process's files locked for a moment. */

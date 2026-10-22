@@ -63,10 +63,10 @@ Playlists work too: paste a playlist link, or choose "Download the whole playlis
 
 For a server without a screen, `npm run package:server` builds a version that runs as a small web server:
 
-1. Start it with `HOST=0.0.0.0 ./yt-downloader --no-open`.
-2. Open `http://<server-ip>:5190` from another computer.
+1. Start it with `HOST=0.0.0.0 ./yt-downloader --no-open`. It prints a link containing an access key.
+2. On another computer, open that link with `localhost` replaced by the server's address. The key is remembered, so afterwards `http://<server-address>:5190` is enough.
 
-Only do this on a network you trust: there is no login.
+Anyone who has the link can use the app, so only share it, and the server, on a network you trust.
 
 ## Documentation
 

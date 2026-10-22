@@ -21,7 +21,9 @@ function launchDetached(command: string, commandArguments: string[], options: Sp
 
 const systemShell: DesktopShell = {
   openUrl(url) {
-    if (IS_WINDOWS) launchDetached('cmd', ['/c', 'start', '', url], { windowsHide: true });
+    if (!/^https?:\/\//i.test(url)) return;
+    // Not "cmd /c start": cmd would treat an "&" in the link as the start of another command.
+    if (IS_WINDOWS) launchDetached('explorer.exe', [url]);
     else launchDetached(IS_MAC ? 'open' : 'xdg-open', [url]);
   },
   reveal(target) {

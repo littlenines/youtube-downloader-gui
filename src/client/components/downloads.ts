@@ -42,7 +42,9 @@ function jobStatusText(job: Job): string {
       return parts.filter(Boolean).join(' · ');
     }
     case 'done':
-      return ['Done', formatBytes(job.sizeBytes), job.files.length > 1 ? `${job.files.length} files` : ''].filter(Boolean).join(' · ');
+      return ['Done', formatBytes(job.sizeBytes), job.files.length > 1 ? `${job.files.length} files` : '', job.warning ?? '']
+        .filter(Boolean)
+        .join(' · ');
     case 'cancelled':
       return 'Cancelled';
     default:
@@ -70,7 +72,7 @@ function rowHtml(options: {
   return `<div class="card job-row ${options.status}">${thumbnail}
     <div class="job-details"><div class="job-title" title="${escapeHtml(options.title)}">${escapeHtml(options.title)}</div>
       <div class="${statusClass}"><span class="chip">${escapeHtml(options.label)}</span> <span class="job-status-text"></span></div>
-      ${options.showProgress ? '<div class="progress-track"><div class="progress-fill"></div></div>' : ''}</div>
+      ${options.showProgress ? `<div class="progress-track" role="progressbar" aria-label="Download progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill"></div></div>` : ''}</div>
     <div class="job-actions">${options.actions}</div></div>`;
 }
 
@@ -157,7 +159,10 @@ function upsertRow(content: RowContent): HTMLElement {
     title.title = content.title;
   }
   const statusText = row.element.querySelector('.job-status-text');
-  if (statusText && statusText.textContent !== content.statusText) statusText.textContent = content.statusText;
+  if (statusText && statusText.textContent !== content.statusText) {
+    statusText.textContent = content.statusText;
+    statusText.setAttribute('title', content.statusText);
+  }
   const progressFill = row.element.querySelector<HTMLElement>('.progress-fill');
   if (progressFill && content.progressPercent !== null) setProgress(progressFill, content.progressPercent / 100);
   return row.element;

@@ -1,6 +1,6 @@
 import { suggestTags } from '../../shared/tags.js';
 import type { AudioFormat, AudioTags, MediaInfo, VideoInfo, VideoQuality } from '../../shared/types.js';
-import { api, ApiError, TOOLS_MISSING_STATUS } from '../api.js';
+import { api, ApiError, isAbortError, TOOLS_MISSING_STATUS } from '../api.js';
 import { state } from '../state.js';
 import { errorMessage, findElement, showToast } from '../utils/dom.js';
 import { escapeHtml, formatBytes, formatCount, formatDuration } from '../utils/format.js';
@@ -13,6 +13,7 @@ import {
   checkboxHtml,
   containerControlHtml,
   generalResolutionListHtml,
+  pressedAttribute,
   selectedClass,
   tabsHtml,
 } from './choice-controls.js';
@@ -26,7 +27,7 @@ const TAG_FIELDS: { field: keyof AudioTags; label: string; placeholder: string }
   { field: 'album', label: 'Album', placeholder: 'Optional' },
 ];
 
-let latestRequestNumber = 0;
+let currentRequest: AbortController | null = null;
 
 const panel = () => findElement('#media');
 const isTagField = (value: string | undefined): value is keyof AudioTags => TAG_FIELDS.some(({ field }) => field === value);
@@ -172,7 +173,7 @@ const selectedResolution = (info: VideoInfo) => state.choices.resolution ?? info
 function qualityOptionHtml(quality: VideoQuality, isSelected: boolean): string {
   const tag = quality.tag ? `<span class="chip ${quality.resolution >= 2160 ? 'accent' : ''}">${quality.tag}</span>` : '';
   const hdr = quality.hdr ? '<span class="chip accent">HDR</span>' : '';
-  return `<button class="quality-option ${selectedClass(isSelected)}" data-resolution="${quality.resolution}">
+  return `<button class="quality-option ${selectedClass(isSelected)}" ${pressedAttribute(isSelected)} data-resolution="${quality.resolution}">
     <b>${escapeHtml(quality.label)}</b>
     <span class="quality-codecs">${tag}${hdr}<span>${quality.codecs.map(escapeHtml).join(' · ')}</span></span>
     <span class="quality-size">${quality.estimatedBytes ? `~${formatBytes(quality.estimatedBytes)}` : ''}</span></button>`;
@@ -221,13 +222,16 @@ function videoLabel(info: MediaInfo): string {
 }
 
 export async function loadMediaInfo(url: string, playlist = false, { fromSearch = false } = {}): Promise<void> {
-  const requestNumber = ++latestRequestNumber;
+  // Cancelling the previous request also stops its yt-dlp process on the server.
+  currentRequest?.abort();
+  const request = new AbortController();
+  currentRequest = request;
   state.url = url;
   state.openedFromSearch = fromSearch;
   showLoading();
   try {
-    const info = await api.mediaInfo(url, playlist);
-    if (requestNumber !== latestRequestNumber) return;
+    const info = await api.mediaInfo(url, playlist, request.signal);
+    if (request.signal.aborted) return;
     state.info = info;
     state.tags = info.kind === 'video' ? suggestTags(info) : null;
     if (info.kind === 'video' && !info.qualities.some((quality) => quality.resolution === state.choices.resolution)) {
@@ -235,7 +239,7 @@ export async function loadMediaInfo(url: string, playlist = false, { fromSearch 
     }
     render(info);
   } catch (error) {
-    if (requestNumber !== latestRequestNumber) return;
+    if (request.signal.aborted || isAbortError(error)) return;
     state.info = null;
     showPanel(fromSearch ? 'search' : null);
     if (error instanceof ApiError && error.status === TOOLS_MISSING_STATUS) {

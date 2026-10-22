@@ -6,7 +6,7 @@ import { IS_WINDOWS } from '../config.js';
 import { killProcessTree } from '../lib/os.js';
 import { buildDownloadArguments, OUTPUT_MARKERS } from './formats.js';
 import { registerPreview } from './preview.js';
-import { commonArguments, requireTools, toolEnvironment, ytdlpPath } from './tools.js';
+import { commonArguments, toolEnvironment, toolSetup, ytdlpPath } from './tools.js';
 import { hasAudio, hasVideo, type YtdlpEntry, type YtdlpFormat, type YtdlpInfo } from './ytdlp-output.js';
 
 const INFO_TIMEOUT_MILLISECONDS = 120_000;
@@ -30,15 +30,23 @@ export function friendlyErrorMessage(errorOutput: string): string {
   return FRIENDLY_ERRORS.find(([pattern]) => pattern.test(message))?.[1] ?? (message || 'yt-dlp failed.');
 }
 
-function runYtdlpForJson(ytdlpArguments: string[]): Promise<unknown> {
+/** `signal` stops yt-dlp, for example when the page has moved on to another link. */
+function runYtdlpForJson(ytdlpArguments: string[], signal?: AbortSignal): Promise<unknown> {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(new Error('Cancelled.'));
     const child = spawn(ytdlpPath(), [...commonArguments(), ...ytdlpArguments], { windowsHide: true, env: toolEnvironment() });
     const outputChunks: Buffer[] = [];
     let errorOutput = '';
-    const timeout = setTimeout(() => {
+    const stop = (message: string) => {
       killProcessTree(child.pid);
-      reject(new Error('Reading the link took too long. Check the internet connection and try again.'));
-    }, INFO_TIMEOUT_MILLISECONDS);
+      reject(new Error(message));
+    };
+    const timeout = setTimeout(
+      () => stop('Reading the link took too long. Check the internet connection and try again.'),
+      INFO_TIMEOUT_MILLISECONDS,
+    );
+    const onAbort = () => stop('Cancelled.');
+    signal?.addEventListener('abort', onAbort, { once: true });
     child.stdout.on('data', (chunk: Buffer) => outputChunks.push(chunk));
     child.stderr.on('data', (chunk: Buffer) => {
       errorOutput = (errorOutput + chunk.toString('utf8')).slice(-KEPT_ERROR_OUTPUT_CHARACTERS);
@@ -46,6 +54,7 @@ function runYtdlpForJson(ytdlpArguments: string[]): Promise<unknown> {
     child.on('error', reject);
     child.on('close', (exitCode) => {
       clearTimeout(timeout);
+      signal?.removeEventListener('abort', onAbort);
       if (exitCode !== 0) return reject(new Error(friendlyErrorMessage(errorOutput)));
       try {
         resolve(JSON.parse(Buffer.concat(outputChunks).toString('utf8')));
@@ -164,10 +173,13 @@ export function parseMediaInfo(ytdlpOutput: unknown, requestedUrl: string): Medi
   };
 }
 
-export async function fetchMediaInfo(url: string, { playlist = false } = {}): Promise<MediaInfo> {
-  await requireTools();
+export async function fetchMediaInfo(
+  url: string,
+  { playlist = false, signal }: { playlist?: boolean; signal?: AbortSignal } = {},
+): Promise<MediaInfo> {
+  await toolSetup.require();
   const playlistArguments = playlist ? ['--yes-playlist', '--flat-playlist'] : ['--no-playlist'];
-  const output = await runYtdlpForJson(['-J', ...playlistArguments, '--', url]);
+  const output = await runYtdlpForJson(['-J', ...playlistArguments, '--', url], signal);
   const info = parseMediaInfo(output, url);
   if (info.kind === 'video') info.preview = registerPreview((output as YtdlpInfo).formats ?? []);
   return info;
@@ -185,9 +197,9 @@ export function parseSearchResults(ytdlpOutput: unknown): SearchResult[] {
   }));
 }
 
-export async function searchVideos(query: string): Promise<SearchResult[]> {
-  await requireTools();
-  return parseSearchResults(await runYtdlpForJson(['-J', '--flat-playlist', '--', `ytsearch${SEARCH_RESULT_COUNT}:${query}`]));
+export async function searchVideos(query: string, signal?: AbortSignal): Promise<SearchResult[]> {
+  await toolSetup.require();
+  return parseSearchResults(await runYtdlpForJson(['-J', '--flat-playlist', '--', `ytsearch${SEARCH_RESULT_COUNT}:${query}`], signal));
 }
 
 /** `other` covers downloads without codecs, such as subtitles. */
@@ -215,8 +227,13 @@ export function streamKind(videoCodec: string | undefined, audioCodec: string | 
   return hasSound ? 'sound' : 'other';
 }
 
+export interface DownloadResult {
+  /** Readable reasons for the items a playlist had to skip, such as private or removed videos. */
+  skippedItems: string[];
+}
+
 export interface RunningDownload {
-  finished: Promise<void>;
+  finished: Promise<DownloadResult>;
   cancel(): void;
 }
 
@@ -257,21 +274,31 @@ export function startDownload(
     env: toolEnvironment(),
   });
   let errorOutput = '';
+  const itemErrors: string[] = [];
+  let savedFiles = 0;
 
   const handleLine = (line: string) => {
     const event = parseOutputLine(line);
+    if (event?.type === 'file') savedFiles++;
     if (event) onEvent(event);
   };
 
   forEachLine(child.stdout, handleLine);
   forEachLine(child.stderr, (line) => {
     errorOutput = `${errorOutput}${line}\n`.slice(-KEPT_ERROR_OUTPUT_CHARACTERS);
+    if (line.startsWith('ERROR:')) itemErrors.push(friendlyErrorMessage(line));
     handleLine(line);
   });
 
-  const finished = new Promise<void>((resolve, reject) => {
+  // yt-dlp skips a playlist item it can't download and carries on, but then exits with an error code.
+  const finished = new Promise<DownloadResult>((resolve, reject) => {
     child.on('error', reject);
-    child.on('close', (exitCode) => (exitCode === 0 ? resolve() : reject(new Error(friendlyErrorMessage(errorOutput)))));
+    child.on('close', (exitCode) => {
+      if (exitCode === 0) resolve({ skippedItems: itemErrors });
+      else if (options.playlist && savedFiles > 0)
+        resolve({ skippedItems: itemErrors.length ? itemErrors : [friendlyErrorMessage(errorOutput)] });
+      else reject(new Error(friendlyErrorMessage(errorOutput)));
+    });
   });
   return { finished, cancel: () => killProcessTree(child.pid) };
 }

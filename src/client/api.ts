@@ -26,15 +26,19 @@ export class ApiError extends Error {
 
 export const TOOLS_MISSING_STATUS = 409;
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+export const isAbortError = (error: unknown): boolean => error instanceof DOMException && error.name === 'AbortError';
+
+async function request<T>(method: string, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, {
       method,
       headers: body === undefined ? {} : { 'content-type': 'application/json' },
       body: body === undefined ? null : JSON.stringify(body),
+      signal: signal ?? null,
     });
-  } catch {
+  } catch (error) {
+    if (isAbortError(error)) throw error;
     throw new OfflineError();
   }
   const data = (await response.json().catch(() => ({}))) as T & { error?: string };
@@ -47,8 +51,8 @@ const downloadPath = (id: string, action = '') => `/api/downloads/${encodeURICom
 export const api = {
   status: () => request<StatusResponse>('GET', '/api/status'),
   startSetup: () => request<SetupStatus>('POST', '/api/setup'),
-  mediaInfo: (url: string, playlist = false) => request<MediaInfo>('POST', '/api/info', { url, playlist }),
-  search: (query: string) => request<SearchResult[]>('POST', '/api/search', { query }),
+  mediaInfo: (url: string, playlist: boolean, signal: AbortSignal) => request<MediaInfo>('POST', '/api/info', { url, playlist }, signal),
+  search: (query: string, signal: AbortSignal) => request<SearchResult[]>('POST', '/api/search', { query }, signal),
   previewUrl: (token: string) => `/api/preview/${encodeURIComponent(token)}`,
   startDownload: (download: DownloadRequest) => request<Job>('POST', '/api/downloads', download),
   downloads: () => request<DownloadsResponse>('GET', '/api/downloads'),

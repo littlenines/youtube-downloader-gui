@@ -1,5 +1,6 @@
 import { mkdir } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { homedir } from 'node:os';
+import { isAbsolute, join, resolve } from 'node:path';
 import type { HistoryEntry, Settings } from '../../shared/types.js';
 import { DATA_DIRECTORY, DEFAULT_DOWNLOAD_FOLDER } from '../config.js';
 import { HttpError } from '../lib/http.js';
@@ -21,7 +22,16 @@ export function parseSettings(content: unknown): Settings {
   return {
     downloadFolder: stringOrDefault(stored.downloadFolder ?? stored.outDir, '') || DEFAULT_DOWNLOAD_FOLDER,
     simultaneousDownloads: isValidSimultaneousDownloads(simultaneousDownloads) ? simultaneousDownloads : 2,
+    lowLatencyRendering: stored.lowLatencyRendering !== false,
   };
+}
+
+/** A relative path would depend on the folder the app happened to be started from, so it is refused. "~" means the home folder. */
+export function absoluteFolder(input: string): string {
+  const unquoted = input.trim().replace(/^["']|["']$/g, '');
+  const expanded = /^~(?=$|[\\/])/.test(unquoted) ? join(homedir(), unquoted.slice(1)) : unquoted;
+  if (!isAbsolute(expanded)) throw new HttpError(400, 'Enter a full folder path, for example D:\\Music or /home/you/Music.');
+  return resolve(expanded);
 }
 
 export function parseHistory(content: unknown): HistoryEntry[] {
@@ -53,7 +63,7 @@ export class SettingsStore {
 
   async update(changes: Partial<Settings>): Promise<Settings> {
     if (typeof changes.downloadFolder === 'string' && changes.downloadFolder.trim()) {
-      const folder = resolve(changes.downloadFolder.trim().replace(/^["']|["']$/g, ''));
+      const folder = absoluteFolder(changes.downloadFolder);
       try {
         await mkdir(folder, { recursive: true });
       } catch {
@@ -63,6 +73,7 @@ export class SettingsStore {
     }
     const simultaneousDownloads = Number(changes.simultaneousDownloads);
     if (isValidSimultaneousDownloads(simultaneousDownloads)) this.settings.simultaneousDownloads = simultaneousDownloads;
+    if (typeof changes.lowLatencyRendering === 'boolean') this.settings.lowLatencyRendering = changes.lowLatencyRendering;
     await this.file.save(this.settings);
     return this.get();
   }

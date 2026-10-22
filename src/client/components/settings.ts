@@ -6,6 +6,7 @@ export function initialize(): void {
   const dialog = findElement<HTMLDialogElement>('#settingsDialog');
   const folderInput = findElement<HTMLInputElement>('#downloadFolderInput');
   const simultaneousSelect = findElement<HTMLSelectElement>('#simultaneousDownloadsSelect');
+  const renderingCheckbox = findElement<HTMLInputElement>('#lowLatencyRenderingCheckbox');
 
   findElement('#openSettingsButton').addEventListener('click', () => {
     dialog.showModal();
@@ -13,6 +14,8 @@ export function initialize(): void {
       (status) => {
         folderInput.value = status.downloadFolder;
         simultaneousSelect.value = String(status.simultaneousDownloads);
+        renderingCheckbox.checked = status.lowLatencyRendering;
+        findElement('#renderingSetting').hidden = !desktopBridge || !status.platform.startsWith('win32');
         findElement('#folderExample').textContent = status.platform.startsWith('win') ? 'D:\\Music\\YouTube' : '/home/you/Music/YouTube';
         findElement('#versionInfo').textContent = `yt-dlp ${status.ytdlpVersion ?? '(not installed yet)'} · ${status.platform}`;
       },
@@ -43,6 +46,11 @@ export function initialize(): void {
   simultaneousSelect.addEventListener('change', async () => {
     await api.saveSettings({ simultaneousDownloads: Number(simultaneousSelect.value) }).catch(() => {});
     showToast('Saved.');
+  });
+
+  renderingCheckbox.addEventListener('change', async () => {
+    await api.saveSettings({ lowLatencyRendering: renderingCheckbox.checked }).catch(() => {});
+    showToast('Saved. Restart the app to apply it.');
   });
 
   findElement('#openFolderButton').addEventListener('click', () => {

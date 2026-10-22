@@ -57,12 +57,26 @@ When running from source, the project root plays this role (these folders are gi
 
 ## First run: installing the tools
 
-No tools are bundled. On start-up, `initializeTools()` checks what is installed:
+No tools are bundled. The `ToolSetup` class in `tools.ts` owns this state. Everything it touches outside itself (install steps, `yt-dlp -U`, the clock, the update-check marker) is passed in, so `tool-setup.test.ts` drives every state with fakes. On start-up, `toolSetup.initialize()` checks what is installed:
 
 1. **Everything present:** setup runs right away in the background and only checks whether a yt-dlp update is due. A successful check counts for a week (recorded in `tools/.yt-dlp-checked`); a failed one is retried a day later. An app left running checks again whenever no download is running, so an update never replaces yt-dlp mid-download.
 2. **Something missing:** setup waits. The page opens the setup dialog, which explains what will be downloaded and how much, and starts the install through `POST /api/setup` when the user agrees. It then polls `GET /api/status` for progress and ends with "You're all set".
 
 While the tools are missing, reading a link answers with status `409`, and the page opens the setup dialog instead of showing an error. Downloads already queued wait for a running setup. This also covers a tool that disappears while the app runs (for example, removed by antivirus software): the status turns back to `missing` and the same dialog reinstalls it.
+
+### Verified downloads
+
+Every tool is checked before it is installed (`lib/verified-download.ts`). The file is written as `<name>.part`, its SHA-256 is computed while it downloads, and it is renamed into place only if the hash matches. A download that receives nothing for 30 seconds is aborted with a clear message instead of hanging the setup.
+
+| Tool | Where the expected checksum comes from |
+|---|---|
+| yt-dlp | `SHA2-256SUMS` of the same release. "latest" is first resolved to a fixed tag, so the file and its checksum can't come from different releases. |
+| Deno | The `.sha256sum` file published next to each download, from the same resolved tag. |
+| ffmpeg, ffprobe | Pinned in `FFMPEG_SHA256`. The pinned release publishes no checksums, so the values were taken from GitHub's asset digests and one was checked against an independent download. |
+| Node (server builds) | `SHASUMS256.txt` on nodejs.org, checked by `scripts/package-server.ts`. |
+| Electron (desktop builds) | Checked by `@electron/packager` against Electron's own checksums. |
+
+Checksums from the same release protect against corrupted or swapped downloads. They don't protect against a compromised release itself; the pinned ffmpeg hashes do.
 
 yt-dlp is installed as its **folder build** (`yt-dlp_win.zip`, `yt-dlp_linux.zip`, …), not the single-file build. The single-file build unpacks a Python runtime on every launch, which costs about one second per link read and per download. The folder build starts in about a third of that and still updates itself with `-U`.
 
@@ -90,6 +104,12 @@ YouTube requires yt-dlp to run JavaScript. The runtime depends on how the app ru
 7. When the job ends in any way, its partial folder is deleted. On success the job is added to the history. On cancel the process tree is stopped (process group on Linux and macOS, `taskkill /T` on Windows), so nothing unfinished reaches the download folder at any stage.
 
 A job keeps its slot until its yt-dlp process has exited, even after it was cancelled. Retrying a cancelled job queues it, and it starts only once the previous run has fully ended, so two runs never write the same file.
+
+**Playlists with unavailable videos.** yt-dlp skips a private or removed video and carries on, but then exits with an error code. When a playlist saved at least one file, the job counts as done, and `Job.warning` says how many videos were skipped and why (for example "2 videos could not be downloaded. This video is private."). Only a playlist that saved nothing is a failure.
+
+**Partial folders.** The shared `.yt-downloader-partial` folder is marked hidden on Windows, where a leading dot doesn't hide anything. At start-up, job folders left by a crash or a killed app are removed once nothing in them has changed for six hours. The delay is because another copy of the app (the browser mode, say) may be downloading into the same folder.
+
+**Abandoned requests.** Reading a link and searching stop their yt-dlp process when the page stops waiting. The page aborts the previous request when a new link or search replaces it, and the server notices the closed connection.
 
 ## Finding and choosing what to download
 
@@ -147,7 +167,7 @@ The page is plain TypeScript with no framework, bundled by esbuild:
 Measured on a 180 Hz display with a second monitor and a game running, three things made the window feel slow. Each is now avoided.
 
 1. **Animating the progress bar.** Any continuous animation, including a cheap `transform` transition, kept the window producing frames, and with the graphics card busy those frames stalled. Scrolling during a download dropped 11–20 frames beyond 33 ms per few seconds; without the animation, none. The bar is set with `transform: scaleX()` (no page layout) and jumps to each new value without a transition.
-2. **DirectComposition on Windows.** It added 25–30 ms before every frame reached the screen, so a click took 40–48 ms to show; without it, one frame (16 ms or less). The desktop app starts Chromium with `--disable-direct-composition`. Starting it with `--enable-direct-composition` keeps the default.
+2. **DirectComposition on Windows.** It added 25–30 ms before every frame reached the screen, so a click took 40–48 ms to show; without it, one frame (16 ms or less). The desktop app starts Chromium with `--disable-direct-composition` unless **Settings → Faster screen updates** is turned off. The setting is read from `settings.json` before the app is ready, because graphics switches only apply at start-up.
 3. **Taskbar progress.** Every update makes Windows redraw the taskbar, so it is only sent when the percentage changes.
 
 To measure again, start the app with `--remote-debugging-port=9333` and record frame gaps with `requestAnimationFrame`, or event timing (`PerformanceObserver` with `type: 'event'`) for clicks. Compare with and without a change in the same session, because the graphics load of other programs changes the absolute numbers.
@@ -155,13 +175,22 @@ To measure again, start the app with `--remote-debugging-port=9333` and record f
 ## Security
 
 - The API listens on `127.0.0.1` only (the headless mode can opt into `HOST=0.0.0.0`).
+- **An access key guards the API.** Other programs and other user accounts on the same computer can reach `127.0.0.1` too, so every `/api/` request must carry the key in an `HttpOnly`, `SameSite=Strict` cookie.
+  - The key is random, created once and kept in `data/access-key`.
+  - The desktop app gives its own window the cookie before loading the page.
+  - The browser mode opens, and prints, a link with `?access=<key>`. The server turns that into the cookie and redirects to the clean address, so a bookmark keeps working afterwards.
+  - The page itself (HTML, script, styles) loads without the key; it contains nothing private.
 - Requests with an `Origin` from another site are refused, so a website open in the user's browser can't drive the local API.
 - While the server is local only, every request must name a loopback host (`127.0.0.1`, `localhost`, `[::1]`). This stops DNS rebinding, where a website points its own name at `127.0.0.1` so that its requests look same-origin.
 - Links are passed to yt-dlp after `--`.
-- Static files are served only from inside the page's folder.
+- The page is served with a Content-Security-Policy that allows only the app's own scripts and styles. The page builds parts of itself from website text with `innerHTML`; escaping handles that, and the policy is the second line of defense. Every response also carries `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`.
+- Static files are served only from inside the page's folder. A malformed address answers 400, not 500.
+- Opening a link in the browser never goes through a shell: `cmd /c start` would treat an `&` in the link as another command.
 - Zip extraction refuses entries, and symbolic links, that would point outside the target folder.
 - A settings or history file that can't be parsed is kept as `<name>.broken-<time>` before the defaults are used, so the next save can't destroy it.
 - The desktop window loads only the app's own page. Other links open in the system browser, and the renderer runs sandboxed with context isolation.
+- The desktop window gets no permissions except reading and writing the clipboard (for the Paste button). The folder picker answers only requests from the app's own page.
+- Release builds have Electron's `EnableNodeCliInspectArguments` and `EnableNodeOptionsEnvironmentVariable` fuses turned off, so the running app can't be opened to a debugger. A release build started with `--remote-debugging-port` exits. `RunAsNode` stays on because yt-dlp uses the binary as its JavaScript runtime; that mode starts a separate, empty Node process.
 - On Linux, the release launcher keeps Chromium's sandbox when user namespaces or a setuid `chrome-sandbox` are available, and otherwise starts without it. That is acceptable only because the window never loads outside content.
 
 ## Compatibility with older data

@@ -1,13 +1,14 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, screen, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, screen, session, shell } from 'electron';
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Job } from '../shared/types.js';
-import { createApp } from '../server/app.js';
-import { DATA_DIRECTORY, IS_WINDOWS } from '../server/config.js';
+import { ACCESS_COOKIE, createApp } from '../server/app.js';
+import { DATA_DIRECTORY, IS_PACKAGED, IS_WINDOWS } from '../server/config.js';
 import { useDesktopShell } from '../server/lib/os.js';
-import { createServices, listen, type Services } from '../server/server.js';
-import { initializeTools } from '../server/services/tools.js';
+import { createServices, listen, loadAccessKey, type Services } from '../server/server.js';
+import { parseSettings } from '../server/services/stores.js';
+import { toolSetup } from '../server/services/tools.js';
 
 const APP_NAME = 'YT Downloader';
 const moduleDirectory = dirname(fileURLToPath(import.meta.url));
@@ -15,6 +16,8 @@ const moduleDirectory = dirname(fileURLToPath(import.meta.url));
 const PREFERRED_PORT = 5199;
 const WINDOW_STATE_FILE = join(DATA_DIRECTORY, 'window.json');
 const DEFAULT_WINDOW_SIZE = { width: 1120, height: 860 };
+const ALLOWED_PERMISSIONS = new Set(['clipboard-read', 'clipboard-sanitized-write']);
+const ACCESS_COOKIE_LIFETIME_SECONDS = 365 * 24 * 3600;
 
 interface WindowState {
   x?: number;
@@ -30,10 +33,22 @@ app.setPath('userData', join(DATA_DIRECTORY, 'window'));
 app.setName(APP_NAME);
 app.setAppUserModelId(APP_NAME);
 
+/** Read before the app is ready, because graphics switches only apply at start-up. */
+function readStoredSettings() {
+  try {
+    return parseSettings(JSON.parse(readFileSync(join(DATA_DIRECTORY, 'settings.json'), 'utf8')));
+  } catch {
+    return parseSettings(undefined);
+  }
+}
+
 // Windows' DirectComposition added 25-30 ms before each frame reached the screen in testing (high refresh rate,
-// two monitors, a game running), which made clicks feel slow. Start with --enable-direct-composition to keep it.
-if (IS_WINDOWS && !app.commandLine.hasSwitch('enable-direct-composition')) {
-  app.commandLine.appendSwitch('disable-direct-composition');
+// two monitors, a game running), which made clicks feel slow. Settings can turn this back off.
+if (IS_WINDOWS && readStoredSettings().lowLatencyRendering) app.commandLine.appendSwitch('disable-direct-composition');
+
+// A release build must not be remotely controllable through Chromium's debugging switches.
+if (IS_PACKAGED && (app.commandLine.hasSwitch('remote-debugging-port') || app.commandLine.hasSwitch('remote-debugging-pipe'))) {
+  app.exit(1);
 }
 
 let mainWindow: BrowserWindow | null = null;
@@ -60,17 +75,32 @@ function focusMainWindow(): void {
 async function start(): Promise<void> {
   Menu.setApplicationMenu(null);
   const services = await createServices();
-  const server = createApp(services, { loopbackOnly: true });
+  const accessKey = await loadAccessKey();
+  const server = createApp(services, { loopbackOnly: true, accessKey });
   const port = await listen(server, PREFERRED_PORT, '127.0.0.1').catch(() => listen(server, 0, '127.0.0.1'));
+  const origin = `http://127.0.0.1:${port}`;
+
+  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => callback(ALLOWED_PERMISSIONS.has(permission)));
+  session.defaultSession.setPermissionCheckHandler((_webContents, permission) => ALLOWED_PERMISSIONS.has(permission));
+  await session.defaultSession.cookies.set({
+    url: origin,
+    name: ACCESS_COOKIE,
+    value: accessKey,
+    httpOnly: true,
+    sameSite: 'strict',
+    expirationDate: Date.now() / 1000 + ACCESS_COOKIE_LIFETIME_SECONDS,
+  });
 
   useDesktopShell({
     openUrl: (url) => void shell.openExternal(url),
     reveal: (target) => (statSync(target).isFile() ? shell.showItemInFolder(target) : void shell.openPath(target)),
   });
 
-  const window = createMainWindow(`http://127.0.0.1:${port}`);
+  const window = createMainWindow(origin);
   mainWindow = window;
-  ipcMain.handle('pick-folder', (_event, currentFolder: unknown) => pickFolder(window, currentFolder));
+  ipcMain.handle('pick-folder', (event, currentFolder: unknown) =>
+    event.senderFrame?.url.startsWith(`${origin}/`) ? pickFolder(window, currentFolder) : null,
+  );
   showProgressOnTaskbar(window, services);
   confirmCloseWhileDownloading(window, services);
   window.on('closed', () => (mainWindow = null));
@@ -80,7 +110,7 @@ async function start(): Promise<void> {
     void services.queue.stopAll().finally(() => app.quit());
   });
 
-  initializeTools();
+  toolSetup.initialize();
 }
 
 function createMainWindow(origin: string): BrowserWindow {

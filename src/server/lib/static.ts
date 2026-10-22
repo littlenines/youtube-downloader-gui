@@ -45,13 +45,34 @@ export function embeddedSource(names: readonly string[]): StaticFileSource {
   };
 }
 
+/**
+ * The page builds parts of itself from website-provided text (titles, channel names). Escaping covers
+ * that; this policy is the second line of defense, allowing only the app's own scripts and styles.
+ */
+export const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "img-src 'self' https: data:",
+  "media-src 'self'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
+
 export async function serveStaticFile(response: ServerResponse, source: StaticFileSource, pathname: string): Promise<boolean> {
-  const name = pathname === '/' ? 'index.html' : decodeURIComponent(pathname.replace(/^\/+/, ''));
+  let name: string;
+  try {
+    name = pathname === '/' ? 'index.html' : decodeURIComponent(pathname.replace(/^\/+/, ''));
+  } catch {
+    return false;
+  }
   const body = await source.read(name);
   if (!body) return false;
+  const extension = extname(name).toLowerCase();
   response.writeHead(200, {
-    'content-type': CONTENT_TYPES[extname(name).toLowerCase()] ?? 'application/octet-stream',
+    'content-type': CONTENT_TYPES[extension] ?? 'application/octet-stream',
     'cache-control': 'no-cache',
+    ...(extension === '.html' ? { 'content-security-policy': CONTENT_SECURITY_POLICY } : {}),
   });
   response.end(body);
   return true;

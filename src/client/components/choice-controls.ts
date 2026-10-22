@@ -61,6 +61,9 @@ type CheckboxChoice = (typeof CHECKBOX_CHOICES)[number];
 
 export const selectedClass = (isSelected: boolean): string => (isSelected ? 'selected' : '');
 
+/** Screen readers announce choice buttons as toggles that are on or off. */
+export const pressedAttribute = (isSelected: boolean): string => `aria-pressed="${isSelected}"`;
+
 export const audioFormatCard = (format: AudioFormat): AudioFormatCard =>
   AUDIO_FORMAT_CARDS.find((card) => card.format === format) ?? AUDIO_FORMAT_CARDS[0]!;
 
@@ -74,9 +77,9 @@ export function resolutionTag(resolution: number): string {
 
 export function tabsHtml(): string {
   const kind = state.choices.kind;
-  return `<div class="tabs">
-    <button class="tab ${selectedClass(kind === 'audio')}" data-kind="audio">🎵 Audio</button>
-    <button class="tab ${selectedClass(kind === 'video')}" data-kind="video">🎬 Video</button></div>`;
+  return `<div class="tabs" role="tablist" aria-label="Download as">
+    <button class="tab ${selectedClass(kind === 'audio')}" role="tab" aria-selected="${kind === 'audio'}" data-kind="audio">🎵 Audio</button>
+    <button class="tab ${selectedClass(kind === 'video')}" role="tab" aria-selected="${kind === 'video'}" data-kind="video">🎬 Video</button></div>`;
 }
 
 export function checkboxHtml(choice: CheckboxChoice, label: string, disabled = false, title = ''): string {
@@ -88,7 +91,7 @@ export function checkboxHtml(choice: CheckboxChoice, label: string, disabled = f
 export function audioFormatCardsHtml(): string {
   const cards = AUDIO_FORMAT_CARDS.map((card) => {
     const badge = card.badge ? `<span class="chip ${card.format === 'opus' ? 'success' : ''}">${card.badge}</span>` : '';
-    return `<button class="format-card ${selectedClass(state.choices.format === card.format)}" data-format="${card.format}">
+    return `<button class="format-card ${selectedClass(state.choices.format === card.format)}" ${pressedAttribute(state.choices.format === card.format)} data-format="${card.format}">
       ${badge}<b>${card.title}</b><span class="format-description">${card.description}</span></button>`;
   }).join('');
   return `<div class="format-cards">${cards}</div>`;
@@ -105,7 +108,7 @@ export function audioOptionsHtml(): string {
 export function generalResolutionListHtml(): string {
   const options = GENERAL_RESOLUTIONS.map((resolution) => {
     const description = resolution ? resolutionTag(resolution) : 'Highest available for each video';
-    return `<button class="quality-option ${selectedClass(state.choices.resolution === resolution)}" data-resolution="${resolution ?? ''}">
+    return `<button class="quality-option ${selectedClass(state.choices.resolution === resolution)}" ${pressedAttribute(state.choices.resolution === resolution)} data-resolution="${resolution ?? ''}">
       <b>${resolution ? `${resolution}p` : 'Best'}</b><span class="quality-codecs">${description}</span><span></span></button>`;
   }).join('');
   return `<div class="section-label">Quality (each video gets the closest it has)</div><div class="quality-list">${options}</div>`;
@@ -114,7 +117,8 @@ export function generalResolutionListHtml(): string {
 export function containerControlHtml(): string {
   const current = CONTAINER_OPTIONS.find((option) => option.container === state.choices.container) ?? CONTAINER_OPTIONS[0]!;
   const buttons = CONTAINER_OPTIONS.map(
-    (option) => `<button data-container="${option.container}" class="${selectedClass(option === current)}">${option.label}</button>`,
+    (option) =>
+      `<button data-container="${option.container}" class="${selectedClass(option === current)}" ${pressedAttribute(option === current)}>${option.label}</button>`,
   ).join('');
   return `<div class="section-label">Format</div><div class="segmented-control">${buttons}</div><p class="note">${current.note}</p>`;
 }

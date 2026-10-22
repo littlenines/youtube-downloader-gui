@@ -1,0 +1,5 @@
+# Prettier and .editorconfig expect LF; without this, Windows checkouts (including CI) get CRLF and fail format:check.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.png binary
+*.ico binary

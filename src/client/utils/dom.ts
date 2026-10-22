@@ -12,8 +12,11 @@ export function createElement(html: string): HTMLElement {
 
 /** Uses a transform, which changes the bar without re-laying out the rest of the page. */
 export function setProgress(fill: HTMLElement, fraction: number): void {
-  const transform = `scaleX(${Math.min(1, Math.max(0, fraction)).toFixed(3)})`;
-  if (fill.style.transform !== transform) fill.style.transform = transform;
+  const clamped = Math.min(1, Math.max(0, fraction));
+  const transform = `scaleX(${clamped.toFixed(3)})`;
+  if (fill.style.transform === transform) return;
+  fill.style.transform = transform;
+  fill.parentElement?.setAttribute('aria-valuenow', String(Math.round(clamped * 100)));
 }
 
 export const errorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error));

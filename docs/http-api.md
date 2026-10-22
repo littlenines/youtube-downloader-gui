@@ -3,6 +3,7 @@
 The page talks to the local server through this JSON API. The types are defined in `src/shared/types.ts`.
 
 - **Address:** `http://127.0.0.1:5199` in the desktop app (another free port if 5199 is taken), `http://localhost:5190` in browser mode.
+- **Access key:** every `/api/` request needs the `yt-downloader-access` cookie, or it gets `401`. Opening any page address with `?access=<key>` sets the cookie (`303` to the same address without the key). The key is in `data/access-key`, and the browser mode prints the link at start-up. The desktop window has the cookie already.
 - **Errors:** every endpoint answers errors as `{ "error": "message" }` with a 4xx or 5xx status.
 - **Cross-site requests:** requests that are not `GET` and carry an `Origin` from another site are refused with `403`. So is any request whose `Host` isn't `127.0.0.1`, `localhost` or `[::1]`, unless the headless server was started with a non-local `HOST`.
 
@@ -14,6 +15,7 @@ The page talks to the local server through this JSON API. The types are defined 
 {
   "downloadFolder": "D:\\yt-downloader\\downloads",
   "simultaneousDownloads": 2,
+  "lowLatencyRendering": true,
   "ytdlpVersion": "2026.10.21",
   "platform": "win32/x64",
   "setup": { "state": "ready", "installed": true, "message": null, "progress": null, "downloadSizeMegabytes": 0 }
@@ -36,6 +38,8 @@ The page talks to the local server through this JSON API. The types are defined 
 Starts installing the missing tools. Returns immediately; poll `GET /api/status` for progress. Calling it while setup runs is harmless.
 
 ## Reading a link
+
+Reading a link and searching stop their yt-dlp process when the client disconnects, so a client that moves on should abort its previous request.
 
 ### `POST /api/info` → `MediaInfo`
 
@@ -126,6 +130,7 @@ A `Job` has:
 - `bytesPerSecond` and `secondsLeft`.
 - `files` and `sizeBytes`.
 - `error`.
+- `warning`: for a playlist that finished but had to skip videos, how many and why.
 - `playlistPosition` for playlists.
 
 ### Actions on one download
@@ -148,6 +153,7 @@ Request: any of:
 
 - `downloadFolder`: an absolute path. It is created if missing; answers `400` if that isn't possible.
 - `simultaneousDownloads`: 1 to 4.
+- `lowLatencyRendering`: `true` or `false`. The desktop app on Windows reads it at start-up (see architecture.md, Smooth rendering).
 
 ### `POST /api/open-folder`
 

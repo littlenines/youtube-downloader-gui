@@ -137,6 +137,8 @@ export interface Job {
   files: string[];
   sizeBytes: number | null;
   error: string | null;
+  /** Set when a playlist finished but some of its videos could not be downloaded. */
+  warning: string | null;
   playlistPosition: PlaylistPosition | null;
 }
 
@@ -159,6 +161,8 @@ export interface DownloadsResponse {
 export interface Settings {
   downloadFolder: string;
   simultaneousDownloads: number;
+  /** Desktop app on Windows: draw without DirectComposition, which delays every frame on some systems. Applies after a restart. */
+  lowLatencyRendering: boolean;
 }
 
 export interface SetupStatus {
