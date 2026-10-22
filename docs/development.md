@@ -36,6 +36,25 @@ If Electron starts and behaves like plain Node (for example `Cannot read propert
 
 `.github/workflows/ci.yml` runs `npm run typecheck`, `npm test` and `npm run format:check` on Windows and Linux for every push and pull request. It skips Electron's binary download, which the tests don't need.
 
+## Releasing
+
+Releases are built and published by `.github/workflows/release.yml` when a version tag is pushed:
+
+```sh
+npm version 1.1.0          # sets the version in package.json, commits it and creates the tag v1.1.0
+git push --follow-tags     # pushes the commit and the tag; the workflow does the rest
+```
+
+The workflow (on a Windows runner):
+
+1. Stops if the tag doesn't match the version in `package.json`.
+2. Runs the typecheck and tests.
+3. Builds all three packages and zips the Windows folder.
+4. Writes `SHA256SUMS.txt` and a build attestation for each file, so anyone can verify where a file came from with `gh attestation verify <file> --repo littlenines/youtube-downloader-gui`.
+5. Publishes the release with download instructions and notes generated from the commits since the last release.
+
+If a release run fails, delete the tag (`git push --delete origin v1.1.0` and `git tag -d v1.1.0`), fix the problem, and tag again.
+
 ## Code conventions
 
 - **Names are full words.** Use `downloadFolder`, `bytesPerSecond`, `response`, `error`, `findElement`, not `dir`, `bps`, `res`, `e`, `$`. Established technical terms (`url`, `id`, `hdr`, `ffmpeg`) are fine. Field names that come from yt-dlp's JSON (`vcodec`, `abr`, `filesize_approx`) keep yt-dlp's spelling.

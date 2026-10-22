@@ -9,11 +9,11 @@ It works with YouTube, YouTube Music and 1000+ other sites supported by [yt-dlp]
 
 ## Getting started
 
-Get the build for your system from `release/`, or build it yourself (see [Development](docs/development.md)):
+Download the file for your system from the [latest release](https://github.com/littlenines/youtube-downloader-gui/releases/latest), or build it yourself (see [Development](docs/development.md)):
 
-| System | Get | Start it |
+| System | Download | Start it |
 |---|---|---|
-| Windows x64 | the `yt-downloader-win-x64` folder | Double-click `yt-downloader.exe` |
+| Windows 10/11 (64-bit) | `yt-downloader-win-x64.zip` | Unzip it, then double-click `yt-downloader.exe` |
 | Linux x64 | `yt-downloader-linux-x64.tar.gz` | `tar xzf yt-downloader-linux-x64.tar.gz && ./yt-downloader/yt-downloader` |
 | Linux ARM64 (e.g. Raspberry Pi 4/5) | `yt-downloader-linux-arm64.tar.gz` | same as above |
 
