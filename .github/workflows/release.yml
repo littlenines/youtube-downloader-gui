@@ -14,8 +14,8 @@ jobs:
   release:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -44,7 +44,7 @@ jobs:
         run: sha256sum yt-downloader-win-x64.zip yt-downloader-linux-x64.tar.gz yt-downloader-linux-arm64.tar.gz > SHA256SUMS.txt
 
       # Lets anyone confirm a file was built by this workflow from this repository: gh attestation verify <file> --repo <owner>/<repo>
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest@v4
         with:
           subject-path: |
             release/yt-downloader-win-x64.zip
@@ -74,7 +74,6 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             --title "YT Downloader $GITHUB_REF_NAME" \
             --notes-file release-notes.md \
-            --generate-notes \
             release/yt-downloader-win-x64.zip \
             release/yt-downloader-linux-x64.tar.gz \
             release/yt-downloader-linux-arm64.tar.gz \

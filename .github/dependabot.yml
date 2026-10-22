@@ -1,0 +1,20 @@
+version: 2
+
+# Opens pull requests once a week. Minor and patch updates come grouped in one pull request per ecosystem,
+# major updates (which can break the build) each get their own.
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions-minor-and-patch:
+        update-types: [minor, patch]
