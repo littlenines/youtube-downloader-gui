@@ -9,7 +9,7 @@ import { showInFileManager } from './route-helpers.js'
 
 const ignoreFailure = () => {}
 
-export const registerSettingsRoutes = (router: Router, { settings, queue }: RouteDependencies): void => {
+export const registerSettingsRoutes = (router: Router, { settings, queue, subscriptions }: RouteDependencies): void => {
   router.get('/api/status', (): StatusResponse => ({
     ...settings.get(),
     appVersion: APP_VERSION,
@@ -33,6 +33,7 @@ export const registerSettingsRoutes = (router: Router, { settings, queue }: Rout
     const updatedSettings = await settings.update(await readJsonBody<Settings>(request))
 
     queue.startQueuedJobs()
+    subscriptions.restartSchedule()
 
     return updatedSettings
   })

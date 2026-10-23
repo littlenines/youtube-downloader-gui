@@ -49,6 +49,7 @@ export interface PlaylistEntry {
 
 export interface PlaylistInfo {
   kind: 'playlist'
+  isChannel: boolean
   title: string
   uploader: string | null
   url: string

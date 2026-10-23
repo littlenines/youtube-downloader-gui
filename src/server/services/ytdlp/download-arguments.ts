@@ -78,7 +78,7 @@ const reportingArguments = ({ downloadFolder, partialFolder }: DownloadFolders):
   `after_move:${OUTPUT_MARKERS.file}%(filepath)s`,
 ]
 
-const audioArguments = (options: DownloadOptions, playlistFolder: string): string[] => {
+const audioArguments = (options: DownloadOptions, outputFolder: string): string[] => {
   const preset = AUDIO_PRESETS[options.format]
   const clipSuffix = options.clip ? clipFileSuffix(options.clip) : ''
   const commandArguments = [...preset.ytdlpArguments, '--embed-metadata']
@@ -91,10 +91,10 @@ const audioArguments = (options: DownloadOptions, playlistFolder: string): strin
       ...setTagArguments('title', title),
       ...setTagArguments('album', album),
       '-o',
-      `%(meta_artist,artist&{} - |)s%(meta_title,track,title)s${clipSuffix}.%(ext)s`,
+      `${outputFolder}%(meta_artist,artist&{} - |)s%(meta_title,track,title)s${clipSuffix}.%(ext)s`,
     )
   } else {
-    commandArguments.push('-o', `${playlistFolder}%(artist&{} - |)s%(track,title)s${clipSuffix}.%(ext)s`)
+    commandArguments.push('-o', `${outputFolder}%(artist&{} - |)s%(track,title)s${clipSuffix}.%(ext)s`)
   }
 
   if (options.coverArt && preset.supportsCoverArt) {
@@ -108,7 +108,7 @@ const audioArguments = (options: DownloadOptions, playlistFolder: string): strin
   return commandArguments
 }
 
-const videoArguments = (options: DownloadOptions, playlistFolder: string): string[] => {
+const videoArguments = (options: DownloadOptions, outputFolder: string): string[] => {
   const canEmbedExtras = options.container !== 'webm'
   const maximumResolution = options.resolution ?? UNLIMITED_RESOLUTION
   const resolutionLabel = options.resolution ? ` [${options.resolution}p]` : ''
@@ -129,15 +129,24 @@ const videoArguments = (options: DownloadOptions, playlistFolder: string): strin
     commandArguments.push('--embed-subs', '--sub-langs', 'en', '--write-auto-subs')
   }
 
-  commandArguments.push('-o', `${playlistFolder}%(title)s${resolutionLabel}${clipSuffix}.%(ext)s`)
+  commandArguments.push('-o', `${outputFolder}%(title)s${resolutionLabel}${clipSuffix}.%(ext)s`)
 
   return commandArguments
 }
 
-export const buildDownloadArguments = (options: DownloadOptions, folders: DownloadFolders): string[] => {
+const escapeOutputTemplate = (text: string): string => text.replaceAll('%', '%%')
+
+const outputFolderTemplate = (options: DownloadOptions): string => {
+  const chosenFolder = options.folder ? `${escapeOutputTemplate(options.folder)}/` : ''
   const playlistFolder = options.playlist ? '%(playlist_title)s/%(playlist_index)03d - ' : ''
+
+  return `${chosenFolder}${playlistFolder}`
+}
+
+export const buildDownloadArguments = (options: DownloadOptions, folders: DownloadFolders): string[] => {
+  const outputFolder = outputFolderTemplate(options)
   const formatArguments =
-    options.kind === 'audio' ? audioArguments(options, playlistFolder) : videoArguments(options, playlistFolder)
+    options.kind === 'audio' ? audioArguments(options, outputFolder) : videoArguments(options, outputFolder)
 
   return [
     ...reportingArguments(folders),

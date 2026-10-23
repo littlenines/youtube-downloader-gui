@@ -17,7 +17,7 @@ const detailsHtml = (info: MediaInfo): string =>
     info.uploader ? escapeHtml(info.uploader) : '',
     info.durationSeconds ? formatDuration(info.durationSeconds) : '',
     info.kind === 'video' && info.viewCount ? `${formatCount(info.viewCount)} views` : '',
-    info.kind === 'playlist' ? `${info.videoCount} videos` : '',
+    info.kind === 'playlist' && !info.isChannel ? `${info.videoCount} videos` : '',
   ]
     .filter(Boolean)
     .map((detail) => `<span>${detail}</span>`)
@@ -28,7 +28,7 @@ const chipsHtml = (info: MediaInfo): string => {
   const bestQualityTag = bestQuality?.tag ? ` · ${bestQuality.tag}` : ''
 
   return [
-    info.kind === 'playlist' ? '<span class="chip accent">Playlist</span>' : '',
+    info.kind === 'playlist' ? `<span class="chip accent">${info.isChannel ? 'Channel' : 'Playlist'}</span>` : '',
     info.kind === 'video' && info.isLive ? '<span class="chip accent">LIVE</span>' : '',
     bestQuality ? `<span class="chip">up to ${escapeHtml(bestQuality.label)}${bestQualityTag}</span>` : '',
   ].join(' ')
@@ -45,3 +45,6 @@ export const playlistLinkNoteHtml = (info: MediaInfo): string => {
   return `<div class="playlist-note"><span>This video is part of a playlist.</span>
       <button class="button small" data-action="load-playlist">Open the playlist to pick videos</button></div>`
 }
+
+export const channelNoteHtml = (): string =>
+  `<p class="note channel-note">This is a channel. Subscribe to download its new videos automatically with the settings below, or open one of its videos or playlists to download it now.</p>`

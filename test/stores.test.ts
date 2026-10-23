@@ -14,11 +14,13 @@ describe('parseSettings', () => {
       downloadFolder: DEFAULT_DOWNLOAD_FOLDER,
       simultaneousDownloads: 2,
       lowLatencyRendering: true,
+      subscriptionCheckHours: 0,
     })
     assert.deepEqual(parseSettings({ downloadFolder: 42, simultaneousDownloads: 9 }), {
       downloadFolder: DEFAULT_DOWNLOAD_FOLDER,
       simultaneousDownloads: 2,
       lowLatencyRendering: true,
+      subscriptionCheckHours: 0,
     })
   })
 
@@ -27,7 +29,15 @@ describe('parseSettings', () => {
       downloadFolder: '/music',
       simultaneousDownloads: 3,
       lowLatencyRendering: true,
+      subscriptionCheckHours: 0,
     })
+  })
+
+  it('accepts only the offered subscription check intervals', () => {
+    assert.equal(parseSettings({ subscriptionCheckHours: 6 }).subscriptionCheckHours, 6)
+    assert.equal(parseSettings({ subscriptionCheckHours: 0 }).subscriptionCheckHours, 0)
+    assert.equal(parseSettings({ subscriptionCheckHours: 5 }).subscriptionCheckHours, 0)
+    assert.equal(parseSettings({ subscriptionCheckHours: '24' }).subscriptionCheckHours, 24)
   })
 })
 

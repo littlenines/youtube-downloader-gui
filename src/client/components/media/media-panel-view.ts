@@ -2,7 +2,7 @@ import type { MediaInfo } from '@shared/types/media.js'
 import { state } from '@client/state.js'
 import { findElement } from '@client/utils/dom.js'
 import { panelBarHtml, showPanel } from '@client/components/panels.js'
-import { mediaHeaderHtml, playlistLinkNoteHtml } from './media-header-html.js'
+import { channelNoteHtml, mediaHeaderHtml, playlistLinkNoteHtml } from './media-header-html.js'
 import { mediaOptionsHtml } from './media-options-html.js'
 import { playlistPickerHtml } from './playlist-picker.js'
 
@@ -34,10 +34,14 @@ const mediaPanelBarHtml = (): string =>
       : '',
   )
 
-export const renderMediaPanel = (info: MediaInfo): void => {
-  const playlistHtml = info.kind === 'playlist' ? playlistPickerHtml(info) : playlistLinkNoteHtml(info)
+const linkDetailsHtml = (info: MediaInfo): string => {
+  if (info.kind === 'video') return playlistLinkNoteHtml(info)
 
-  mediaPanel().innerHTML = `${mediaPanelBarHtml()}<div class="card">${mediaHeaderHtml(info)}${playlistHtml}<div class="media-options"></div></div>`
+  return info.isChannel ? channelNoteHtml() : playlistPickerHtml(info)
+}
+
+export const renderMediaPanel = (info: MediaInfo): void => {
+  mediaPanel().innerHTML = `${mediaPanelBarHtml()}<div class="card">${mediaHeaderHtml(info)}${linkDetailsHtml(info)}<div class="media-options"></div></div>`
   renderMediaOptions()
   showPanel('media')
 }

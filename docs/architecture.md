@@ -37,8 +37,9 @@ Each file has one job, and its name says what that job is. Folders group files b
 | `src/server/services/ytdlp/` | Everything that talks to yt-dlp: shared arguments, reading a link (`media-info.ts`, `video-qualities.ts`), search, readable error messages, download arguments and audio presets, running a download and reading its output lines (`download-process.ts`, `download-events.ts`), and the shapes of its JSON output (`ytdlp-json.ts`). |
 | `src/server/services/downloads/` | The download queue (`download-queue.ts`), which decides what runs, with its parts: running one download (`job-runner.ts`), the runs in progress and how they were stopped (`active-runs.ts`), the folder each job started in (`job-folders.ts`), converting to and from `queue.json` (`saved-jobs.ts`) and the real yt-dlp engine (`download-engine.ts`). Also validating requests (`download-options.ts`), creating and resetting jobs (`jobs.ts`), turning yt-dlp events into job progress (`job-progress.ts`) and partial folders (`partial-folders.ts`). |
 | `src/server/services/preview/` | Choosing a playable preview stream and relaying it to the page. |
-| `src/server/services/stores/` | Settings and history, stored as JSON in `data/`. |
-| `src/server/lib/` | Building blocks with no app knowledge: HTTP router and JSON helpers, static files, JSON files, zip and tar, checksums, GitHub releases, verified downloads, the desktop shell (open a link, show a file) and stopping a process tree. |
+| `src/server/services/stores/` | Settings, history, the saved queue and subscriptions, stored as JSON in `data/`. |
+| `src/server/services/subscriptions/` | Following channels and playlists (see *Subscriptions*): the service that subscribes and checks on a schedule (`subscription-service.ts`), what a link subscribes to (`subscription-target.ts`), listing a channel's or playlist's videos (`listed-videos.ts`), deciding which are new and what to remember (`new-videos.ts`) and whether a new video can be downloaded yet (`video-availability.ts`). |
+| `src/server/lib/` | Building blocks with no app knowledge: HTTP router, JSON helpers and fetching text from the web (`http/download-text.ts`), static files, JSON files, zip and tar, checksums, GitHub releases, verified downloads, the desktop shell (open a link, show a file) and stopping a process tree. |
 | `src/desktop/` | The Electron main process: `main.ts` starts it; the window, saved window position, taskbar progress, quit confirmation and start-up switches each have their own file. `preload.ts` exposes `window.desktop` to the page: the native folder picker, and the system locale (passed in by `system-locale.ts`) for formatting dates. |
 | `src/client/` | The page. `main.ts` starts every part; `link-input.ts` and `drag-and-drop.ts` take links, searches and drops; `components/` holds the media panel, choice controls, search results, batch panel, downloads list, settings and setup. |
 | `src/client/styles/` | The stylesheet in parts, imported in order by `index.css` and bundled into one `styles.css`. |
@@ -51,7 +52,7 @@ Everything the app creates lives next to it, so deleting the folder removes the 
 | Folder | Contents |
 |---|---|
 | `tools/` | `yt-dlp/` (the folder build), `ffmpeg/ffmpeg`, `ffmpeg/ffprobe`, and `deno` for the single-executable server. |
-| `data/` | `settings.json`, `history.json`, `queue.json` (downloads that haven't finished), `window.json` (window size and position) and `window/` (the desktop window's browser data). |
+| `data/` | `settings.json`, `history.json`, `queue.json` (downloads that haven't finished), `subscriptions.json` (followed channels and playlists, with the videos already seen), `window.json` (window size and position) and `window/` (the desktop window's browser data). |
 | `downloads/` | The default download folder; changeable in Settings. |
 
 When running from source, the project root plays this role (these folders are git-ignored).
@@ -132,6 +133,7 @@ Everything typed, pasted, or dropped on the window goes through one function, `h
 
 - **Links in text:** `extractLinks` finds every distinct link in the text, so a pasted list, a chat message or a dropped `text/uri-list` all work.
 - **Drag and drop:** the window cancels the browser's default drag handling. Without that, the window would navigate to the dropped link.
+- **Reading a link:** runs `yt-dlp -J --flat-playlist` with `--no-playlist` (or `--yes-playlist` for **Open the playlist**). `--flat-playlist` lists a playlist's entries without reading each video, so a 180-video playlist opens in about two seconds instead of timing out; it has no effect on a single video. Some sites list fewer details this way (SoundCloud lists titles but no lengths), so the playlist picker may show no durations for them. A YouTube channel link (`/@name`, `/channel/…`, `/c/…`, `/user/…`, with or without one tab segment like `/videos` or `/shorts`) also gets `--playlist-items 1`, because only the channel's name and picture are needed. Whether a link is a channel is decided from the link alone (`isYoutubeChannelLink`), for both the arguments and the panel, so an album or other playlist page that yt-dlp also tags with its owner's channel stays a playlist: the media panel shows it as a channel, with **Subscribe** as its action instead of a video list and **Download**.
 - **Search:** runs `yt-dlp -J --flat-playlist "ytsearch12:<query>"`. A flat search lists results without reading each video, so it answers in about a second. Choosing a result opens it in the media panel, which then offers **Back to results**.
 
 ### Tags
@@ -182,6 +184,29 @@ Measured on a 180 Hz display with a second monitor and a game running, three thi
 3. **Taskbar progress.** Every update makes Windows redraw the taskbar, so it is only sent when the percentage changes.
 
 To measure again, start the app with `--remote-debugging-port=9333` and record frame gaps with `requestAnimationFrame`, or event timing (`PerformanceObserver` with `type: 'event'`) for clicks. Compare with and without a change in the same session, because the graphics load of other programs changes the absolute numbers.
+
+## Subscriptions
+
+A channel or playlist can be followed, so its new videos download automatically with the choices made when subscribing.
+
+- **Managing:** the **🔔 Subscriptions** button in the header shows how many there are and opens the list, with **Check now** and ✕ to unsubscribe.
+- **Subscribing:** the media panel for a channel or playlist has **Subscribe**, which sends the current choices (and, for channels, **Skip Shorts**) to `POST /api/subscriptions`. The server reads the link with `yt-dlp -J --flat-playlist --playlist-items 1`:
+  - A YouTube channel, in any link form, becomes `https://www.youtube.com/channel/<id>`. From the Shorts tab (`/@name/shorts`) it follows only Shorts; from anywhere else, **Skip Shorts** decides. The whole channel and its Shorts can be followed separately.
+  - Anything else that yt-dlp reads as a playlist becomes that playlist, on any site.
+  - A single video is refused.
+  - Everything listed at that moment is marked as seen, so subscribing never downloads the back catalogue. Subscribing to the same channel or playlist twice is refused, checked again after listing so two requests at once can't both succeed.
+- **Where files go:** each subscription's downloads go into a folder named after the channel or playlist inside the download folder. `DownloadOptions.folder` carries the name; it is reduced to one safe folder name (no path separators, no `..`, no Windows device names) and its `%` signs are escaped for yt-dlp's output template.
+- **Listing new videos:**
+  - **Channels** use YouTube's feed (`/feeds/videos.xml?channel_id=…`). It lists the latest 15 uploads, newest first, needs no tools and answers in a fraction of a second. Shorts are recognized by their `/shorts/` link. A channel only counts videos published at or after the newest upload it had when subscribing. That date comes from YouTube, not the computer's clock, so a wrong clock can't hide new uploads, and a video that drops out of the remembered list can't come back as new.
+  - **Playlists** use `yt-dlp -J --flat-playlist`, because a playlist's feed lists its *first* 15 items, not the newest, and items added to the end of a long playlist would never appear.
+- **Before downloading** a new video, the app reads it once (`yt-dlp -J --no-playlist`):
+  - **Ready:** it goes into the normal download queue, so pause, resume, retry and history work as for any download.
+  - **Premieres, live streams and just-ended streams** (`live_status` upcoming, live or post-live, or the matching errors) are not marked as seen. They are checked again next time and download once they're over. After 14 days of waiting (for example a 24/7 live stream), they are skipped.
+  - **Private, members-only, age-restricted or removed** videos are marked as seen and skipped.
+  - **Any other failure** is retried at the next checks, up to six times, then skipped. Temporary refusals (rate limiting, timeouts, and YouTube's "Video unavailable … try again later") always count as this kind, never as a removed video; `error-messages.ts` gives that refusal its own message so the "try again" isn't lost.
+- **Remembering:** `data/subscriptions.json` keeps the IDs of seen videos. For channels, the most recent 200. For playlists, up to 5,000, with the ones still in the playlist kept first. A video missing from one listing is not forgotten, because yt-dlp can return a cut-off playlist without an error, and forgetting would make every old video look new.
+- **When:** checks run only while the app (or the browser-mode server) is open: 5 seconds after start-up, and then, if chosen in Settings (**Check subscriptions for new videos**), every 1, 2, 3, 6, 12 or 24 hours. The default is **Only when the app starts**, so an app left open never checks again until it is restarted. Changing the setting moves the next check to that long after the last one, or runs it at once if that time has passed; switching to **Only when the app starts** cancels the next check. **Check now** starts one at any time. Only one check runs at a time. With no subscriptions a check does nothing at all, and nothing is checked while the tools are missing. A failed check shows its message on the subscription and is cleared by the next good one. After a check with a failure, one more check runs 10 minutes later (or at the interval, if that is sooner), so a connection that wasn't up yet at start-up doesn't cost the whole session. If saving `subscriptions.json` fails, the check carries on with the other subscriptions and the state is saved after the next one.
+- **Unsubscribing** (✕) stops future checks. Files already downloaded stay, and a check that is running stops queuing videos for it.
 
 ## New app versions
 

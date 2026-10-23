@@ -4,8 +4,13 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 
 ## Unreleased
 
+### Added
+
+- **Subscriptions.** Open a channel or playlist and click **🔔 Subscribe**: its new videos then download automatically, with the format you chose, into a folder named after it. Videos already there are skipped, Shorts can be skipped, and premieres and live streams wait until they can be downloaded. The app checks when it starts; in Settings it can also check every 1 to 24 hours while it's open. **Check now** checks at once. The **🔔 Subscriptions** button in the header lists them, with ✕ to unsubscribe.
+
 ### Fixed
 
+- **Playlist and channel links open in seconds.** Pasting a playlist or channel link used to read every video in it and gave up after two minutes. Channels now get their own panel with **Subscribe**.
 - **Search results and the video panel can be closed.** A **✕** button closes them, and so do <kbd>Esc</kbd> and clearing the link box. Closing also stops a search or link that is still loading.
 - **No more jumping panels.** Searching while a link is still loading, or opening a link while a search is still loading, used to swap the screen back when the older one finished.
 - **The preview stops when you leave it.** Going back to the results or starting a new search used to leave the preview playing out of sight.

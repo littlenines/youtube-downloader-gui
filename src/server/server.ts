@@ -4,11 +4,14 @@ import { removeStalePartialFolders } from './services/downloads/partial-folders.
 import { HistoryStore } from './services/stores/history-store.js'
 import { QueueStore } from './services/stores/queue-store.js'
 import { SettingsStore } from './services/stores/settings-store.js'
+import { subscriptionsFile } from './services/stores/subscription-store.js'
+import { SubscriptionService } from './services/subscriptions/subscription-service.js'
 
 export interface Services {
   settings: SettingsStore
   history: HistoryStore
   queue: DownloadQueue
+  subscriptions: SubscriptionService
 }
 
 export const createServices = async (): Promise<Services> => {
@@ -19,10 +22,17 @@ export const createServices = async (): Promise<Services> => {
   const savedJobIds = new Set(savedJobs.map((savedJob) => savedJob.id))
   const queue = new DownloadQueue({ settings, history, savedQueue })
 
+  const subscriptions = await new SubscriptionService({
+    storage: subscriptionsFile(),
+    addDownload: (options, details) => queue.add(options, details),
+    checkIntervalHours: () => settings.get().subscriptionCheckHours,
+  }).load()
+
   queue.restoreJobs(savedJobs)
   removeStalePartialFolders(settings.get().downloadFolder, savedJobIds).catch(() => {})
+  subscriptions.startSchedule()
 
-  return { settings, history, queue }
+  return { settings, history, queue, subscriptions }
 }
 
 export const listen = (server: Server, port: number, host: string): Promise<number> =>

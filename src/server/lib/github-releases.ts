@@ -1,14 +1,4 @@
-const REQUEST_TIMEOUT_MILLISECONDS = 30_000
-
-export const downloadText = async (url: string): Promise<string> => {
-  const response = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MILLISECONDS) })
-
-  if (!response.ok) {
-    throw new Error(`Downloading ${url} failed (HTTP ${response.status}). Check the internet connection.`)
-  }
-
-  return response.text()
-}
+import { REQUEST_TIMEOUT_MILLISECONDS } from './http/download-text.js'
 
 export const releaseTagFromLocation = (location: string | null): string | null => {
   const tag = /\/releases\/tag\/([^/?#]+)$/.exec(location ?? '')?.[1]

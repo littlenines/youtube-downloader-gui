@@ -1,6 +1,7 @@
 import type { StatusResponse } from '@shared/types/app.js'
 import { api } from '@client/api.js'
 import { desktopBridge } from '@client/desktop.js'
+import { announceSubscriptionsChanged } from '@client/events.js'
 import { errorMessage, findElement, showToast } from '@client/utils/dom.js'
 
 const ERROR_TOAST_MILLISECONDS = 6000
@@ -9,6 +10,7 @@ const settingsDialog = () => findElement<HTMLDialogElement>('#settingsDialog')
 const downloadFolderInput = () => findElement<HTMLInputElement>('#downloadFolderInput')
 const simultaneousDownloadsSelect = () => findElement<HTMLSelectElement>('#simultaneousDownloadsSelect')
 const lowLatencyRenderingCheckbox = () => findElement<HTMLInputElement>('#lowLatencyRenderingCheckbox')
+const subscriptionCheckSelect = () => findElement<HTMLSelectElement>('#subscriptionCheckSelect')
 
 const fillSettingsDialog = (status: StatusResponse): void => {
   const isWindows = status.platform.startsWith('win32')
@@ -16,6 +18,7 @@ const fillSettingsDialog = (status: StatusResponse): void => {
   downloadFolderInput().value = status.downloadFolder
   simultaneousDownloadsSelect().value = String(status.simultaneousDownloads)
   lowLatencyRenderingCheckbox().checked = status.lowLatencyRendering
+  subscriptionCheckSelect().value = String(status.subscriptionCheckHours)
   findElement('#renderingSetting').hidden = !desktopBridge || !isWindows
   findElement('#folderExample').textContent = isWindows ? 'D:\\Music\\YouTube' : '/home/you/Music/YouTube'
   findElement('#versionInfo').textContent =
@@ -59,6 +62,12 @@ export const initializeSettings = (): void => {
   simultaneousDownloadsSelect().addEventListener('change', async () => {
     await api.saveSettings({ simultaneousDownloads: Number(simultaneousDownloadsSelect().value) }).catch(() => {})
     showToast('Saved.')
+  })
+
+  subscriptionCheckSelect().addEventListener('change', async () => {
+    await api.saveSettings({ subscriptionCheckHours: Number(subscriptionCheckSelect().value) }).catch(() => {})
+    showToast('Saved.')
+    announceSubscriptionsChanged()
   })
 
   lowLatencyRenderingCheckbox().addEventListener('change', async () => {

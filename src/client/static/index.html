@@ -32,6 +32,10 @@
         <b>YT Downloader</b>
       </div>
       <div class="top-actions">
+        <button class="button ghost" id="openSubscriptionsButton" title="Channels and playlists you follow">
+          🔔 <span class="subscriptions-label">Subscriptions</span>
+          <span class="count-badge" id="subscriptionCount" hidden></span>
+        </button>
         <button class="button ghost" id="openFolderButton" title="Open the download folder">📁 Downloads folder</button>
         <button class="button ghost icon-only" id="openSettingsButton" title="Settings" aria-label="Settings">⚙</button>
       </div>
@@ -120,6 +124,18 @@
       </div>
     </dialog>
 
+    <dialog id="subscriptionsDialog">
+      <form method="dialog" class="dialog-content">
+        <div class="dialog-title-row">
+          <h2>Subscriptions</h2>
+          <button class="button ghost small" type="button" id="checkSubscriptionsButton">Check now</button>
+        </div>
+        <p class="hint" id="subscriptionScheduleText"></p>
+        <div id="subscriptionList"></div>
+        <div class="dialog-actions"><button class="button" value="close">Close</button></div>
+      </form>
+    </dialog>
+
     <dialog id="settingsDialog">
       <form method="dialog" class="dialog-content">
         <h2>Settings</h2>
@@ -140,6 +156,19 @@
           <option value="3">3</option>
           <option value="4">4</option>
         </select>
+        <label for="subscriptionCheckSelect">Check subscriptions for new videos</label>
+        <select id="subscriptionCheckSelect">
+          <option value="0">Only when the app starts</option>
+          <option value="1">Every hour</option>
+          <option value="2">Every 2 hours</option>
+          <option value="3">Every 3 hours</option>
+          <option value="6">Every 6 hours</option>
+          <option value="12">Every 12 hours</option>
+          <option value="24">Every 24 hours</option>
+        </select>
+        <p class="hint">
+          Every choice also checks right after the app starts. Checks only happen while the app is open.
+        </p>
         <div id="renderingSetting" hidden>
           <label class="checkbox-label settings-checkbox">
             <input type="checkbox" id="lowLatencyRenderingCheckbox" /> Faster screen updates

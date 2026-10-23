@@ -56,6 +56,24 @@ export const normalizeClip = (value: unknown): ClipRange | null => {
   return { startSeconds: roundToMilliseconds(startSeconds), endSeconds: roundToMilliseconds(endSeconds) }
 }
 
+const MAXIMUM_FOLDER_NAME_LENGTH = 100
+const UNSAFE_FOLDER_CHARACTERS = /[<>:"/\\|?*\p{Cc}]/gu
+const WINDOWS_RESERVED_NAME = /^(con|prn|aux|nul|com\d|lpt\d)(?=\.|$)/i
+
+export const sanitizeFolderName = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null
+
+  const cleanName = value.replace(UNSAFE_FOLDER_CHARACTERS, ' ').replace(/\s+/g, ' ').trim()
+  const folderName = Array.from(cleanName)
+    .slice(0, MAXIMUM_FOLDER_NAME_LENGTH)
+    .join('')
+    .replace(/[. ]+$/, '')
+
+  if (!folderName) return null
+
+  return folderName.replace(WINDOWS_RESERVED_NAME, '$1_')
+}
+
 export const normalizeDownloadRequest = (request: Partial<DownloadRequest>): DownloadOptions => ({
   url: String(request.url ?? '').trim(),
   kind: request.kind === 'video' ? 'video' : 'audio',
@@ -70,6 +88,7 @@ export const normalizeDownloadRequest = (request: Partial<DownloadRequest>): Dow
   removeNonMusic: Boolean(request.removeNonMusic),
   subtitles: Boolean(request.subtitles),
   tags: request.kind !== 'video' && !request.playlist ? normalizeTags(request.tags) : null,
+  folder: sanitizeFolderName(request.folder),
 })
 
 const describeFormat = (options: DownloadOptions): string => {

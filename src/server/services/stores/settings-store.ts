@@ -9,13 +9,19 @@ import { asRecord, stringOrDefault } from './stored-values.js'
 
 const DEFAULT_SIMULTANEOUS_DOWNLOADS = 2
 const MAXIMUM_SIMULTANEOUS_DOWNLOADS = 4
+const ONLY_AT_START_UP = 0
+
+export const SUBSCRIPTION_CHECK_HOURS = [ONLY_AT_START_UP, 1, 2, 3, 6, 12, 24]
 
 const isValidSimultaneousDownloads = (value: number) =>
   Number.isInteger(value) && value >= 1 && value <= MAXIMUM_SIMULTANEOUS_DOWNLOADS
 
+const isValidSubscriptionCheckHours = (value: number) => SUBSCRIPTION_CHECK_HOURS.includes(value)
+
 export const parseSettings = (content: unknown): Settings => {
   const stored = asRecord(content)
   const simultaneousDownloads = Number(stored.simultaneousDownloads ?? stored.concurrent)
+  const subscriptionCheckHours = Number(stored.subscriptionCheckHours ?? ONLY_AT_START_UP)
 
   return {
     downloadFolder: stringOrDefault(stored.downloadFolder ?? stored.outDir, '') || DEFAULT_DOWNLOAD_FOLDER,
@@ -23,6 +29,9 @@ export const parseSettings = (content: unknown): Settings => {
       ? simultaneousDownloads
       : DEFAULT_SIMULTANEOUS_DOWNLOADS,
     lowLatencyRendering: stored.lowLatencyRendering !== false,
+    subscriptionCheckHours: isValidSubscriptionCheckHours(subscriptionCheckHours)
+      ? subscriptionCheckHours
+      : ONLY_AT_START_UP,
   }
 }
 
@@ -69,10 +78,14 @@ export class SettingsStore {
     }
 
     const simultaneousDownloads = Number(changes.simultaneousDownloads)
+    const subscriptionCheckHours = Number(changes.subscriptionCheckHours)
 
     if (isValidSimultaneousDownloads(simultaneousDownloads)) this.settings.simultaneousDownloads = simultaneousDownloads
     if (typeof changes.lowLatencyRendering === 'boolean')
       this.settings.lowLatencyRendering = changes.lowLatencyRendering
+    if (isValidSubscriptionCheckHours(subscriptionCheckHours)) {
+      this.settings.subscriptionCheckHours = subscriptionCheckHours
+    }
 
     await this.file.save(this.settings)
 

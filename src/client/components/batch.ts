@@ -12,6 +12,7 @@ import {
   kindTabsHtml,
 } from './choices/choice-html.js'
 import { audioFormatCard } from './choices/choice-options.js'
+import { chosenFormat } from './choices/chosen-format.js'
 import { showPanel } from './panels.js'
 import { requestSetup, toolsAvailable } from './setup/setup.js'
 
@@ -64,23 +65,14 @@ const removeLink = (index: number): void => {
   else showPanel(null)
 }
 
-const startBatchDownload = (url: string): Promise<unknown> => {
-  const { choices } = state
-
-  return api.startDownload({
+const startBatchDownload = (url: string): Promise<unknown> =>
+  api.startDownload({
+    ...chosenFormat(state.choices.resolution),
     url,
-    kind: choices.kind,
-    format: choices.format,
-    resolution: choices.kind === 'video' ? choices.resolution : null,
-    container: choices.container,
     playlist: isPlaylistLink(url),
-    coverArt: choices.coverArt,
-    squareCoverArt: true,
-    removeNonMusic: choices.removeNonMusic,
     title: url,
     thumbnailUrl: youtubeThumbnailUrl(url),
   })
-}
 
 const downloadAll = async (button: HTMLButtonElement): Promise<void> => {
   if (!toolsAvailable()) return requestSetup(() => void downloadAll(button))

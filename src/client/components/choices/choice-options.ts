@@ -71,7 +71,7 @@ export const CONTAINER_OPTIONS: ContainerOption[] = [
 
 export const GENERAL_RESOLUTIONS = [null, 2160, 1440, 1080, 720, 480, 360]
 
-export const CHECKBOX_CHOICES = ['coverArt', 'removeNonMusic', 'subtitles'] as const
+export const CHECKBOX_CHOICES = ['coverArt', 'removeNonMusic', 'subtitles', 'skipShorts'] as const
 
 export type CheckboxChoice = (typeof CHECKBOX_CHOICES)[number]
 

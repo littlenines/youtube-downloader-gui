@@ -31,6 +31,7 @@ export interface DownloadRequest {
   removeNonMusic?: boolean
   subtitles?: boolean
   tags?: AudioTags | null
+  folder?: string | null
   title?: string
   thumbnailUrl?: string | null
   videoCount?: number
@@ -50,6 +51,7 @@ export interface DownloadOptions {
   removeNonMusic: boolean
   subtitles: boolean
   tags: AudioTags | null
+  folder: string | null
 }
 
 export interface PlaylistPosition {

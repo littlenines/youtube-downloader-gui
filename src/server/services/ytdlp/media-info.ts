@@ -3,18 +3,11 @@ import { registerPreview } from '@server/services/preview/preview-streams.js'
 import { toolSetup } from '@server/services/tools/app-tool-setup.js'
 import { runYtdlpForJson } from './run-ytdlp-json.js'
 import { bestAudioSource, isUsableFormat, videoQualities } from './video-qualities.js'
+import { isYoutubeChannel, isYoutubeChannelLink, playlistIdFromUrl } from './youtube-links.js'
 import type { YtdlpEntry, YtdlpInfo } from './ytdlp-json.js'
 
 const MAXIMUM_PLAYLIST_ENTRIES = 500
 const UNTITLED = '(untitled)'
-
-const playlistIdFromUrl = (url: string): string | null => {
-  try {
-    return new URL(url).searchParams.get('list')
-  } catch {
-    return null
-  }
-}
 
 interface PositionedEntry {
   entry: YtdlpEntry
@@ -25,12 +18,14 @@ const withPlaylistPositions = (entries: (YtdlpEntry | null)[]): PositionedEntry[
   entries.flatMap((entry, index) => (entry ? [{ entry, position: index + 1 }] : []))
 
 const parsePlaylistInfo = (info: YtdlpInfo, requestedUrl: string): PlaylistInfo => {
-  const positionedEntries = withPlaylistPositions(info.entries ?? [])
+  const isChannel = isYoutubeChannel(info, requestedUrl)
+  const positionedEntries = isChannel ? [] : withPlaylistPositions(info.entries ?? [])
   const totalSeconds = positionedEntries.reduce((sum, { entry }) => sum + (entry.duration ?? 0), 0)
 
   return {
     kind: 'playlist',
-    title: info.title ?? 'Playlist',
+    isChannel,
+    title: (isChannel ? info.channel : null) ?? info.title ?? 'Playlist',
     uploader: info.uploader ?? info.channel ?? null,
     url: info.webpage_url ?? requestedUrl,
     videoCount: positionedEntries.length,
@@ -84,8 +79,12 @@ export const fetchMediaInfo = async (
 ): Promise<MediaInfo> => {
   await toolSetup.requireInstalled()
 
-  const playlistArguments = playlist ? ['--yes-playlist', '--flat-playlist'] : ['--no-playlist']
-  const ytdlpOutput = await runYtdlpForJson(['-J', ...playlistArguments, '--', url], signal)
+  const playlistArgument = playlist ? '--yes-playlist' : '--no-playlist'
+  const channelArguments = isYoutubeChannelLink(url) ? ['--playlist-items', '1'] : []
+  const ytdlpOutput = await runYtdlpForJson(
+    ['-J', '--flat-playlist', playlistArgument, ...channelArguments, '--', url],
+    signal,
+  )
   const mediaInfo = parseMediaInfo(ytdlpOutput, url)
 
   if (mediaInfo.kind === 'video') mediaInfo.preview = registerPreview((ytdlpOutput as YtdlpInfo).formats ?? [])

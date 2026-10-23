@@ -4,7 +4,8 @@ import { join } from 'node:path'
 import { IS_WINDOWS, TOOLS_DIRECTORY } from '@server/config.js'
 import { extractZip, extractZipEntry } from '@server/lib/archive/zip.js'
 import { parseSha256 } from '@server/lib/checksums.js'
-import { downloadText, latestReleaseTag, releaseDownloadUrl } from '@server/lib/github-releases.js'
+import { latestReleaseTag, releaseDownloadUrl } from '@server/lib/github-releases.js'
+import { downloadText } from '@server/lib/http/download-text.js'
 import { downloadVerifiedFile } from '@server/lib/verified-download.js'
 import {
   denoReleaseAsset,

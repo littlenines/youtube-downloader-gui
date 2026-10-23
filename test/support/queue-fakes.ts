@@ -76,7 +76,12 @@ export const createRecordingQueue = () => {
 export const createQueueTestSetup = async (folderPrefix: string) => {
   const downloadFolder = await mkdtemp(join(tmpdir(), folderPrefix))
   const settings = {
-    get: (): Settings => ({ downloadFolder, simultaneousDownloads: 2, lowLatencyRendering: true }),
+    get: (): Settings => ({
+      downloadFolder,
+      simultaneousDownloads: 2,
+      lowLatencyRendering: true,
+      subscriptionCheckHours: 1,
+    }),
   } as unknown as SettingsStore
   const history = { add: async () => {} } as unknown as HistoryStore
   const options = normalizeDownloadRequest({ url: 'https://example.com/video' })

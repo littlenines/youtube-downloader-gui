@@ -24,6 +24,7 @@ import {
   showLoading,
 } from './media-panel-view.js'
 import { startPreview } from './media-preview.js'
+import { subscribeToMedia } from './media-subscribe.js'
 import {
   applyPlaylistCheckbox,
   isPlaylistCheckbox,
@@ -100,6 +101,7 @@ const handleMediaPanelClick = (event: Event): void => {
 
   if (action === 'load-playlist') void loadMediaInfo(state.url, true, { fromSearch: state.openedFromSearch })
   else if (action === 'download' && state.info) void startMediaDownload(state.info, button)
+  else if (action === 'subscribe' && state.info?.kind === 'playlist') void subscribeToMedia(state.info, button)
   else if (action === 'preview' && state.info?.kind === 'video') startPreview(mediaPanel(), state.info)
   else if (action === 'back-to-results') showPanel('search')
   else if ((action === 'clip-start-from-preview' || action === 'clip-end-from-preview') && canTrim(state.info)) {

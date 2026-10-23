@@ -61,7 +61,7 @@ The response is either a `VideoInfo` or a `PlaylistInfo`:
   - `audio`: the best audio stream.
   - `subtitleLanguages`.
   - `playlistId`, when the link points into a playlist.
-- **`PlaylistInfo`** (`kind: "playlist"`) has `videoCount`, the total duration and up to 500 `entries`. Each entry has its `position` in the playlist (counting from 1), `title`, `durationSeconds` and `url`.
+- **`PlaylistInfo`** (`kind: "playlist"`) has `videoCount`, the total duration and up to 500 `entries`. Each entry has its `position` in the playlist (counting from 1), `title`, `durationSeconds` and `url`. `isChannel` is `true` for a YouTube channel link; then `entries` is empty and `videoCount` is `0`, because only the channel's name and picture are read.
 
 | Status | When |
 |---|---|
@@ -119,6 +119,7 @@ Request (`DownloadRequest`):
 | `removeNonMusic` | Cut non-music parts using SponsorBlock data | `false` |
 | `subtitles` | Embed English subtitles (not for WebM) | `false` |
 | `tags` | `{ artist, title, album }` written into the file and used as its name (`Artist - Title.mp3`). Single audio downloads only; empty fields are left as found. | `null` |
+| `folder` | A folder inside the download folder to save into. Reduced to one safe folder name; `null` saves directly in the download folder. Subscriptions use it for their channel or playlist folder. | `null` |
 
 Unknown values fall back to the defaults.
 
@@ -154,6 +155,34 @@ A `Job` has:
 
 `pause`, `resume`, `cancel` and `retry` answer `404` for unknown ids.
 
+## Subscriptions
+
+### `GET /api/subscriptions` → `SubscriptionsResponse`
+
+`{ subscriptions, isChecking, checkIntervalHours }`. Each `Subscription` has:
+
+- `source` (`channel` or `playlist`), `url`, `channelId`, `title` and `thumbnailUrl`.
+- `options`: the download choices for its new videos, with `folder` set to its title.
+- `label`, for example `MP3 · 320 kbps · no Shorts`, `skipShorts`, and `onlyShorts` (subscribed from a channel's Shorts tab).
+- `createdAt`, `lastCheckedAt`, `lastError` (the last check's failure, or `null`) and `downloadedCount`.
+
+### `POST /api/subscriptions` → `Subscription`
+
+Request: the same fields as `POST /api/downloads`, with a channel or playlist `url`, plus `skipShorts` (channels only, default `true`; ignored when subscribing from a Shorts tab, which follows only Shorts). Playlist, clip and tag fields are ignored.
+
+| Status | When |
+|---|---|
+| `400` | The link is a single video, it is already followed, or yt-dlp failed. |
+| `409` | The download tools are not installed yet. |
+
+### `POST /api/subscriptions/check` → `SubscriptionsResponse`
+
+Starts checking every subscription now and answers right away with `isChecking: true`. New videos appear in `GET /api/downloads` as they are queued.
+
+### `DELETE /api/subscriptions/:id`
+
+Unsubscribes. Files already downloaded stay. Answers `404` for unknown ids.
+
 ## Settings
 
 ### `POST /api/settings` → `Settings`
@@ -163,6 +192,7 @@ Request: any of:
 - `downloadFolder`: an absolute path. It is created if missing; answers `400` if that isn't possible.
 - `simultaneousDownloads`: 1 to 4.
 - `lowLatencyRendering`: `true` or `false`. The desktop app on Windows reads it at start-up (see architecture.md, Smooth rendering).
+- `subscriptionCheckHours`: 0, 1, 2, 3, 6, 12 or 24. How often subscriptions are checked after the start-up check; `0` (the default) means only at start-up. The next check moves at once.
 
 ### `POST /api/open-folder`
 

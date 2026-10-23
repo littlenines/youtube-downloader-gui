@@ -5,6 +5,7 @@ import { initializeDownloadsPanel } from './components/downloads/downloads-panel
 import { initializeMediaPanel } from './components/media/media-panel.js'
 import { initializeSearchPanel } from './components/search.js'
 import { initializeSettings } from './components/settings.js'
+import { initializeSubscriptions } from './components/subscriptions.js'
 import { initializeSetup } from './components/setup/setup.js'
 import { initializeUpdateNotice } from './components/update-notice.js'
 import { desktopBridge } from './desktop.js'
@@ -33,6 +34,7 @@ initializeSearchPanel()
 initializeBatchPanel()
 initializeClosingPanels()
 initializeDownloadsPanel()
+initializeSubscriptions()
 initializeUpdateNotice()
 initializeLinkInput()
 initializeDragAndDrop()

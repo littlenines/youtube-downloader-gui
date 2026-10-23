@@ -145,8 +145,27 @@ const footerHtml = (info: MediaInfo): string =>
   `<div class="media-footer"><span class="download-summary">${summaryHtml(info)}</span>
     <button class="button primary large" data-action="download" ${isNothingSelected(info) ? 'disabled' : ''}>⬇ Download</button></div>`
 
+const SHORTS_TAB_PATTERN = /\/shorts\/?(?:[?#]|$)/i
+
+const subscribeRowHtml = (info: MediaInfo): string => {
+  if (info.kind !== 'playlist') return ''
+
+  const isShortsTab = info.isChannel && SHORTS_TAB_PATTERN.test(info.url)
+  const followedThing = info.isChannel ? 'this channel' : 'this playlist'
+  const newVideosText = isShortsTab ? 'new Shorts' : 'new videos'
+  const skipShortsOption = info.isChannel && !isShortsTab ? checkboxHtml('skipShorts', 'Skip Shorts') : ''
+
+  const buttonClass = info.isChannel ? 'button primary large' : 'button'
+
+  return `<div class="subscribe-row"><span class="subscribe-text">Download ${newVideosText} from ${followedThing} automatically, with these settings.</span>
+    ${skipShortsOption}<button class="${buttonClass}" data-action="subscribe">🔔 Subscribe</button></div>`
+}
+
+const actionsHtml = (info: MediaInfo): string =>
+  info.kind === 'playlist' && info.isChannel ? subscribeRowHtml(info) : `${footerHtml(info)}${subscribeRowHtml(info)}`
+
 export const mediaOptionsHtml = (info: MediaInfo): string => {
   const panelHtml = state.choices.kind === 'audio' ? audioPanelHtml(info) : videoPanelHtml(info)
 
-  return `${kindTabsHtml()}<div class="tab-panel">${panelHtml}${clipEditorHtml(info)}</div>${footerHtml(info)}`
+  return `${kindTabsHtml()}<div class="tab-panel">${panelHtml}${clipEditorHtml(info)}</div>${actionsHtml(info)}`
 }

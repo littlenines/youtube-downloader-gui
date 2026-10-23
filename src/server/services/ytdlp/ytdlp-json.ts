@@ -19,10 +19,12 @@ export interface YtdlpFormat {
 }
 
 export interface YtdlpThumbnail {
+  id?: string
   url?: string
 }
 
 export interface YtdlpEntry {
+  _type?: string
   id?: string
   title?: string
   duration?: number
@@ -40,6 +42,10 @@ export interface YtdlpInfo {
   title?: string
   uploader?: string
   channel?: string
+  channel_id?: string
+  extractor_key?: string
+  live_status?: string
+  availability?: string
   webpage_url?: string
   thumbnail?: string
   thumbnails?: YtdlpThumbnail[]

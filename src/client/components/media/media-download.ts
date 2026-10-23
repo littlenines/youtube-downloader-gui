@@ -3,6 +3,7 @@ import { api } from '@client/api.js'
 import { announceDownloadsChanged } from '@client/events.js'
 import { state } from '@client/state.js'
 import { errorMessage, showToast } from '@client/utils/dom.js'
+import { chosenFormat } from '@client/components/choices/chosen-format.js'
 import { selectedVideoResolution } from './media-options-html.js'
 import { selectedPlaylistItems, selectedVideoCount } from './playlist-picker.js'
 
@@ -20,27 +21,19 @@ const requestedResolution = (info: MediaInfo): number | null => {
 }
 
 export const startMediaDownload = async (info: MediaInfo, button: HTMLButtonElement): Promise<void> => {
-  const { choices } = state
   const isPlaylist = info.kind === 'playlist'
   const videoCount = info.kind === 'playlist' ? selectedVideoCount(info) : 1
-  const tags = choices.kind === 'audio' && !isPlaylist ? state.tags : null
+  const tags = state.choices.kind === 'audio' && !isPlaylist ? state.tags : null
 
   button.disabled = true
 
   try {
     await api.startDownload({
+      ...chosenFormat(requestedResolution(info)),
       url: info.url,
-      kind: choices.kind,
-      format: choices.format,
-      resolution: requestedResolution(info),
-      container: choices.container,
       playlist: isPlaylist,
       playlistItems: info.kind === 'playlist' ? selectedPlaylistItems(info) : null,
       clip: info.kind === 'video' ? state.clip : null,
-      coverArt: choices.coverArt,
-      squareCoverArt: true,
-      removeNonMusic: choices.removeNonMusic,
-      subtitles: choices.subtitles,
       tags,
       title: displayTitle(info, tags),
       thumbnailUrl: info.thumbnailUrl,

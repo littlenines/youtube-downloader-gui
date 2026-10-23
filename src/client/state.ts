@@ -9,6 +9,7 @@ export interface Choices {
   coverArt: boolean
   removeNonMusic: boolean
   subtitles: boolean
+  skipShorts: boolean
 }
 
 export interface AppState {
@@ -30,6 +31,7 @@ const DEFAULT_CHOICES: Choices = {
   coverArt: true,
   removeNonMusic: false,
   subtitles: false,
+  skipShorts: true,
 }
 
 const loadChoices = (): Choices => {

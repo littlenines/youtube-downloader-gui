@@ -1,6 +1,7 @@
 import type { AppUpdateResponse, Settings, SetupStatus, StatusResponse } from '@shared/types/app.js'
 import type { DownloadRequest, DownloadsResponse, Job } from '@shared/types/downloads.js'
 import type { MediaInfo, SearchResult } from '@shared/types/media.js'
+import type { Subscription, SubscriptionRequest, SubscriptionsResponse } from '@shared/types/subscriptions.js'
 
 export class OfflineError extends Error {
   constructor() {
@@ -50,6 +51,8 @@ const sendRequest = async <ResponseBody>(
 
 const downloadPath = (id: string, action = '') => `/api/downloads/${encodeURIComponent(id)}${action}`
 
+const subscriptionPath = (id: string) => `/api/subscriptions/${encodeURIComponent(id)}`
+
 export const api = {
   status: () => sendRequest<StatusResponse>('GET', '/api/status'),
   appUpdate: () => sendRequest<AppUpdateResponse>('GET', '/api/app-update'),
@@ -69,4 +72,9 @@ export const api = {
   clearFinished: () => sendRequest<{ ok: true }>('DELETE', '/api/downloads'),
   saveSettings: (changes: Partial<Settings>) => sendRequest<Settings>('POST', '/api/settings', changes),
   openDownloadFolder: () => sendRequest<{ ok: true }>('POST', '/api/open-folder'),
+  subscriptions: () => sendRequest<SubscriptionsResponse>('GET', '/api/subscriptions'),
+  subscribe: (subscription: SubscriptionRequest) =>
+    sendRequest<Subscription>('POST', '/api/subscriptions', subscription),
+  unsubscribe: (id: string) => sendRequest<{ ok: true }>('DELETE', subscriptionPath(id)),
+  checkSubscriptions: () => sendRequest<SubscriptionsResponse>('POST', '/api/subscriptions/check'),
 }

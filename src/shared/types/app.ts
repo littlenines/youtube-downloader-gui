@@ -2,6 +2,7 @@ export interface Settings {
   downloadFolder: string
   simultaneousDownloads: number
   lowLatencyRendering: boolean
+  subscriptionCheckHours: number
 }
 
 export interface SetupStatus {

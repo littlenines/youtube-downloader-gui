@@ -5,6 +5,10 @@ const FRIENDLY_ERRORS: [pattern: RegExp, message: string][] = [
   ],
   [/Private video/i, 'This video is private.'],
   [/members-only|Join this channel/i, 'This video is for channel members only.'],
+  [
+    /try again later|isn't available, try again/i,
+    'YouTube is refusing this request for now (not the video itself). Try again in a few minutes.',
+  ],
   [/Video unavailable/i, 'This video is unavailable (removed, blocked in your country, or the link is wrong).'],
   [/Unsupported URL/i, 'That link is not a video yt-dlp supports.'],
   [/live event will begin|is upcoming/i, 'This live stream has not started yet.'],
