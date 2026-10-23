@@ -18,6 +18,7 @@
     "icon": "tsx scripts/make-icon.ts",
     "typecheck": "tsc -p tsconfig.server.json --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.json",
     "test": "tsx --test test/*.test.ts",
+    "version": "tsx scripts/release-notes.ts",
     "lint": "oxlint --deny-warnings && stylelint \"src/**/*.css\"",
     "lint:fix": "oxlint --fix && stylelint \"src/**/*.css\" --fix",
     "format": "prettier --write \"src/**/*.{ts,html,css}\" \"test/**/*.ts\" \"scripts/**/*.ts\"",

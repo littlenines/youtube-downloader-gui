@@ -25,6 +25,9 @@
       ],
       "@desktop/*": [
         "./src/desktop/*"
+      ],
+      "@scripts/*": [
+        "./scripts/*"
       ]
     }
   }

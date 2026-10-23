@@ -34,6 +34,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Write the release notes from CHANGELOG.md
+        run: npx tsx scripts/release-notes.ts release-notes.md
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -74,21 +77,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cat > release-notes.md <<'EOF'
-          ## Download
-
-          | System | File | Start it |
-          |---|---|---|
-          | Windows 10/11 (64-bit) | `yt-downloader-win-x64.zip` | Unzip it, then double-click `yt-downloader.exe` |
-          | Linux (64-bit) | `yt-downloader-linux-x64.tar.gz` | `tar xzf yt-downloader-linux-x64.tar.gz && ./yt-downloader/yt-downloader` |
-          | Linux ARM64 (e.g. Raspberry Pi 4/5) | `yt-downloader-linux-arm64.tar.gz` | same as above |
-
-          On the first start the app offers to download yt-dlp and ffmpeg (about 75–90 MB).
-
-          Windows may say "Windows protected your PC" because the app isn't code-signed yet: click **More info**, then **Run anyway**.
-
-          `SHA256SUMS.txt` lists the checksums of the files.
-          EOF
           gh release create "$GITHUB_REF_NAME" \
             --title "YT Downloader $GITHUB_REF_NAME" \
             --notes-file release-notes.md \

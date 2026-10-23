@@ -1,0 +1,44 @@
+# Changelog
+
+Everything that changed in YT Downloader, newest first. Download any version from the [releases page](https://github.com/littlenines/youtube-downloader-gui/releases).
+
+## 1.2.0
+
+### Added
+
+- **Pause and resume.** Pause a download and continue it later from where it stopped, without starting over.
+- **Downloads survive a restart.** Unfinished and paused downloads are still in the list when you open the app again. Quitting while something is downloading pauses it, and it continues the next time you start the app.
+
+### Changed
+
+- **Smaller download.** The Windows zip is about 22 MB smaller. The app no longer ships Chromium's 54 unused interface translations or the WebGPU shader compiler.
+- **Dates follow your system settings.** The time a download finished now uses your computer's date and time format, for example `23/10/2026, 17:00:00` instead of `10/23/2026, 5:00:00 PM`.
+
+## 1.1.0
+
+### Added
+
+- **Pick videos from a playlist.** Choose exactly which videos to download instead of the whole playlist, with **Select all** and **Select none**.
+- **Download only part of a video.** Set a start and end time to save just a clip. While the preview is paused, **Use preview time** fills in the time where it stopped. The file name shows which part it is, for example `Song (1m05s-2m30s).mp3`.
+- **New version notice.** When a newer version is out, the app says so once when it starts, with a link to download it. **Not now** hides the notice until the next version comes out.
+
+### Changed
+
+- Release pages are shorter: they no longer list every commit.
+
+## 1.0.0
+
+The first release.
+
+- **Music:** MP3 320 kbps, original Opus, M4A, FLAC and WAV, with album art and tags.
+- **Video:** every resolution the video has, up to 4K/8K and HDR, as MP4, MKV or WebM.
+- **Finding things:** paste a link, search by typing, or drag and drop a link onto the window.
+- **Several links at once:** paste a list of links and download them all with one click.
+- **Preview** a video right in the app before downloading it.
+- **Tags:** Artist and Title filled in from the video title, editable before downloading.
+- **Cut out non-music parts** (intros, talking) using SponsorBlock data.
+- **Playlists,** each saved in its own numbered folder.
+- **One-time setup** that downloads yt-dlp and ffmpeg for you and checks them before use.
+- **Taskbar progress** on Windows, and a warning before closing while downloads are running.
+- **Browser mode** for servers without a screen, protected by an access key.
+- **Checksums** (`SHA256SUMS.txt`) and build provenance with every release, so you can check that a file wasn't changed.

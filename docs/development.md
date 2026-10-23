@@ -39,20 +39,26 @@ If Electron starts and behaves like plain Node (for example `Cannot read propert
 
 ## Releasing
 
-Releases are built and published by `.github/workflows/release.yml` when a version tag is pushed:
+Releases are built and published by `.github/workflows/release.yml` when a version tag is pushed.
+
+1. In `CHANGELOG.md`, rename `## Unreleased` to the new version (for example `## 1.2.0`), and commit it.
+2. Tag and push:
 
 ```sh
-npm version 1.1.0          # sets the version in package.json, commits it and creates the tag v1.1.0
+npm version 1.2.0          # checks CHANGELOG.md, sets the version in package.json, commits it and creates the tag v1.2.0
 git push --follow-tags     # pushes the commit and the tag; the workflow does the rest
 ```
+
+`npm version` runs `scripts/release-notes.ts` before it commits, so it stops if `CHANGELOG.md` has no section for the new version. In that case `package.json` is already changed: undo it with `git checkout package.json package-lock.json`, add the section, and run `npm version` again.
 
 The workflow (on a Windows runner):
 
 1. Stops if the tag doesn't match the version in `package.json`.
-2. Runs the typecheck and tests.
-3. Builds all three packages and zips the Windows folder.
-4. Writes `SHA256SUMS.txt` and a build attestation for each file, so anyone can verify where a file came from with `gh attestation verify <file> --repo littlenines/youtube-downloader-gui`.
-5. Publishes the release with download instructions.
+2. Writes the release notes: that version's section of `CHANGELOG.md` under **What's new**, then a download table linking to this release's files (`releaseNotes` in `scripts/release-texts.ts`). It stops if the section is missing or empty.
+3. Runs the typecheck and tests.
+4. Builds all three packages and zips the Windows folder.
+5. Writes `SHA256SUMS.txt` and a build attestation for each file, so anyone can verify where a file came from with `gh attestation verify <file> --repo littlenines/youtube-downloader-gui`.
+6. Publishes the release with those notes.
 
 If a release run fails, delete the tag (`git push --delete origin v1.1.0` and `git tag -d v1.1.0`), fix the problem, and tag again.
 
@@ -61,7 +67,7 @@ If a release run fails, delete the tag (`git push --delete origin v1.1.0` and `g
 - **Names are full words.** Use `downloadFolder`, `bytesPerSecond`, `response`, `error`, `findElement`, not `dir`, `bps`, `res`, `e`, `$`. Established technical terms (`url`, `id`, `hdr`, `ffmpeg`) are fine. Field names that come from yt-dlp's JSON (`vcodec`, `abr`, `filesize_approx`) keep yt-dlp's spelling.
 - **No comments in the code.** Names say what a constant, function or file does. Design explanations, platform quirks and format details go in these docs.
 - **One job per file.** When a file mixes concerns or grows long, split it; the folder groups related files.
-- **Imports use aliases, not `../`.** `@shared/`, `@server/`, `@client/` and `@desktop/` point into `src/` (set in `tsconfig.base.json`; TypeScript, esbuild and tsx all read them). Files in the same folder import each other with `./`.
+- **Imports use aliases, not `../`.** `@shared/`, `@server/`, `@client/` and `@desktop/` point into `src/`, and `@scripts/` into `scripts/` (set in `tsconfig.base.json`; TypeScript, esbuild and tsx all read them). Files in the same folder import each other with `./`.
 - **Arrow functions only.** `const name = (...) => ...` instead of `function`; generators are `function*` expressions. Class methods stay methods.
 - **Blank lines around statements.** Before and after `const`/`let` groups, `if`, loops, `switch` and `try`, and after any block. In CSS, every rule and at-rule is separated by a blank line. `npm run lint:fix` adds them in both.
 - **Pure logic stays pure.** `buildDownloadArguments`, `normalizeDownloadRequest`, `parseMediaInfo`, `parseSettings` and `parseHistory` have no I/O, so they can be tested directly.
@@ -94,6 +100,7 @@ Tests live in `test/` and cover:
 | `verified-download.test.ts` | Checksum match and mismatch, stalled downloads, reading checksum files and release tags (against a local test server). |
 | `tool-setup.test.ts` | The setup states with fake tools: missing, installing, ready, a tool lost later, failed installs, and the update-check schedule. |
 | `app-update.test.ts` | Comparing app versions and offering a newer release. |
+| `release-notes.test.ts` | Finding a version's section in `CHANGELOG.md` and building the release notes from it. |
 | `locale.test.ts` | Turning the system locale into a language tag, passing it to the page, and formatting dates with it. |
 
 Shared fakes and helpers for these live in `test/support/`.

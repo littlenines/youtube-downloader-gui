@@ -1,83 +1,200 @@
-# YT Downloader
+<p align="center">
+  <img src="assets/icon.png" alt="YT Downloader icon" width="112" />
+</p>
 
-A desktop app for downloading **music in high quality** and **video at the quality you pick**.
+<h1 align="center">YT Downloader</h1>
 
-- **Music:** MP3 320 kbps, original Opus, M4A, FLAC or WAV, with album art and tags.
-- **Video:** every resolution the video offers, up to 4K/8K and HDR, as MP4, MKV or WebM.
+<p align="center">
+  <b>Download music in high quality and video at the quality you pick, all from one simple window.</b>
+</p>
 
-It works with YouTube, YouTube Music and 1000+ other sites supported by [yt-dlp](https://github.com/yt-dlp/yt-dlp). Everything runs on your computer in its own window; nothing is uploaded anywhere.
+<p align="center">
+  <a href="https://github.com/littlenines/youtube-downloader-gui/releases/latest"><img src="https://img.shields.io/github/v/release/littlenines/youtube-downloader-gui?style=for-the-badge&label=latest%20version&color=2ea44f" alt="Latest version" /></a>
+  <a href="https://github.com/littlenines/youtube-downloader-gui/releases"><img src="https://img.shields.io/github/downloads/littlenines/youtube-downloader-gui/total?style=for-the-badge&color=0969da" alt="Total downloads" /></a>
+  <img src="https://img.shields.io/badge/Windows%20%7C%20Linux-555?style=for-the-badge" alt="Windows and Linux" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-555?style=for-the-badge" alt="MIT license" /></a>
+</p>
+
+<h2 align="center">
+  ⬇️ <a href="https://github.com/littlenines/youtube-downloader-gui/releases/latest">DOWNLOAD HERE</a> ⬇️
+</h2>
+
+<p align="center">
+  <a href="https://github.com/littlenines/youtube-downloader-gui/releases/latest/download/yt-downloader-win-x64.zip"><b>Windows 10/11</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/littlenines/youtube-downloader-gui/releases/latest/download/yt-downloader-linux-x64.tar.gz"><b>Linux</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/littlenines/youtube-downloader-gui/releases/latest/download/yt-downloader-linux-arm64.tar.gz"><b>Raspberry Pi / Linux ARM</b></a>
+</p>
+
+<p align="center">Free · No ads · No account · Nothing is uploaded anywhere</p>
+
+---
+
+> *I made this downloader because I was tired of searching for other people's downloaders, or of using a terminal. I wanted to see what I was doing, and to be able to do everything from one app.*
+>
+
+---
+
+## Features
+
+### Music
+
+- **MP3 320 kbps, original Opus, M4A, FLAC or WAV.** Pick the one that fits where you'll play it.
+- **Album art** cut square from the thumbnail and saved in the file.
+- **Artist, Title and Album filled in for you.** "Daft Punk - Get Lucky (Official Video)" becomes artist *Daft Punk*, title *Get Lucky*, and the file is named `Daft Punk - Get Lucky.mp3`. Change anything before downloading.
+- **Cut out the talking.** Intros and non-music parts can be removed automatically when the community has marked them (SponsorBlock).
+
+### Video
+
+- **Every resolution the video really has**, up to 4K and 8K, including HDR and 60 fps.
+- **MP4, MKV or WebM.** The estimated file size is shown before you download.
+- **English subtitles** can be added to MP4 and MKV files.
+
+### Finding what to download
+
+- **Paste a link,** or press <kbd>Ctrl</kbd>+<kbd>V</kbd> anywhere in the window.
+- **Search without a browser:** type a song or video name and press <kbd>Enter</kbd>.
+- **Drag and drop** a link from your browser onto the window.
+- **Preview** a video right in the app, with seeking, before you download it.
+- **YouTube, YouTube Music and 1000+ other sites**, everything [yt-dlp](https://github.com/yt-dlp/yt-dlp) supports.
+
+### Picking exactly what you want
+
+- **Download only part of a video or song.** Set a start and end time, or pause the preview and click **Use preview time**.
+- **Pick videos from a playlist.** Tick the ones you want, or use **Select all** / **Select none**.
+- **Many links at once.** Paste a whole list, for example from a chat, choose the format once and click **Download all**.
+
+### Downloading
+
+- **Pause and resume** any download, and it continues from where it stopped.
+- **Nothing gets lost.** Close the app in the middle of a download and it continues the next time you open it.
+- **Several downloads at the same time,** as many as you set in Settings.
+- **Progress on the taskbar** (Windows), and the button flashes when a download finishes in the background.
+- **Download history** with **Show in folder** for every finished file.
+
+### Simple and private
+
+- **Everything happens on your computer.** No account, no ads, and nothing is uploaded.
+- **Sets itself up.** On first start it downloads the two free tools it needs and checks that they are genuine.
+- **Tells you when a new version is out,** once when it starts and never more.
+- **No installation.** Everything stays in one folder; delete the folder and the app is gone.
+
+---
 
 ## Getting started
 
-Download the file for your system from the [latest release](https://github.com/littlenines/youtube-downloader-gui/releases/latest), or build it yourself (see [Development](docs/development.md)):
+### 1. Download it
 
-| System | Download | Start it |
+| Your computer | File to download | How to start it |
 |---|---|---|
-| Windows 10/11 (64-bit) | `yt-downloader-win-x64.zip` | Unzip it, then double-click `yt-downloader.exe` |
-| Linux x64 | `yt-downloader-linux-x64.tar.gz` | `tar xzf yt-downloader-linux-x64.tar.gz && ./yt-downloader/yt-downloader` |
-| Linux ARM64 (e.g. Raspberry Pi 4/5) | `yt-downloader-linux-arm64.tar.gz` | same as above |
+| **Windows 10 / 11** (64-bit) | [`yt-downloader-win-x64.zip`](https://github.com/littlenines/youtube-downloader-gui/releases/latest/download/yt-downloader-win-x64.zip) | Unzip it, open the folder and double-click **`yt-downloader.exe`** |
+| **Linux** (64-bit) | [`yt-downloader-linux-x64.tar.gz`](https://github.com/littlenines/youtube-downloader-gui/releases/latest/download/yt-downloader-linux-x64.tar.gz) | `tar xzf yt-downloader-linux-x64.tar.gz && ./yt-downloader/yt-downloader` |
+| **Raspberry Pi 4/5, Linux ARM** | [`yt-downloader-linux-arm64.tar.gz`](https://github.com/littlenines/youtube-downloader-gui/releases/latest/download/yt-downloader-linux-arm64.tar.gz) | Same as Linux, with `arm64` in the file name |
 
-On Linux, `./yt-downloader --install` adds the app to the applications menu.
+> [!IMPORTANT]
+> **Unzip it into a normal folder**, such as *Documents*, *Desktop* or *Downloads*, not into *Program Files*. The app keeps its settings and your downloads next to itself, so it needs a folder it is allowed to write to.
 
-**First start:** the app asks to download the two free tools it needs: yt-dlp, which downloads the video, and ffmpeg, which converts and merges it. That's about 75 MB on Windows and 90 MB on Linux. Click **Download**, wait for "You're all set", and the app is ready.
+> [!WARNING]
+> **Windows may say *"Windows protected your PC"*** the first time. That happens because the app isn't signed with a paid certificate, not because something is wrong. Click **More info**, then **Run anyway**. You only need to do this once.
 
-Downloads go to the `downloads` folder next to the app. To change it, open Settings (the gear button) and click **Browse…**. Everything the app uses stays in its own folder, so deleting the folder removes it completely.
+> [!TIP]
+> On Linux, run `./yt-downloader --install` once to add the app to your applications menu.
 
-## Finding what to download
+### 2. One-time setup
 
-- **Paste a link,** or press Ctrl+V anywhere in the window.
-- **Search:** type something like `daft punk get lucky` and press Enter, then pick a result. **Back to results** returns to the list.
-- **Drag and drop:** drag a link, or the icon next to a browser's address bar, onto the window.
-- **Several at once:** paste or drop text that contains several links, for example a list from a chat. They all appear in one panel. Pick the format once and click **Download all**.
-- **Preview:** click ▶ on the thumbnail to play the video right in the app, with seeking, before you download.
+On first start the app asks to download the two free tools it needs:
 
-- **Windows:** the app isn't code-signed, so the first time Windows may say *"Windows protected your PC"*. Click **More info**, then **Run anyway**.
-- **While downloading:** the taskbar button shows the progress and flashes when a download finishes in the background. Closing the window asks first if downloads are still running.
+- **yt-dlp** downloads the video.
+- **ffmpeg** converts and joins the audio and video.
 
-## Music: which format?
+Click **Download tools** and wait until you see **"You're all set"**.
 
-| Format | When to use it |
+> [!NOTE]
+> This is about **75 MB on Windows** and **90 MB on Linux**, downloaded once. The tools come straight from their official pages, and the app checks each file before using it.
+
+### 3. Download something
+
+1. **Paste a link** or **type a search** at the top and press <kbd>Enter</kbd>.
+2. **Choose Music or Video,** then the format and quality.
+3. Optional: edit the **tags**, tick **Download only part of it**, or pick videos from a playlist.
+4. Click **Download**. Your file appears in the **Downloads** list, with **Show in folder** when it's done.
+
+> [!TIP]
+> Your files go to the **`downloads`** folder next to the app. To save them somewhere else, open **Settings** (the ⚙️ button) and click **Browse…**.
+
+---
+
+## Which music format should I choose?
+
+| Format | Best for |
 |---|---|
-| **MP3 · 320 kbps** | Plays on everything: phones, cars, DJ apps. The highest-bitrate MP3, so nothing is lost on top of the source. |
-| **Opus · original** | The best possible quality: YouTube's own audio stream, saved without re-encoding. |
-| **M4A (AAC)** | Apple and iTunes. Kept as-is when YouTube has an AAC stream. |
-| **FLAC / WAV** | For DJ software, DAWs and editors. They keep the source exactly but can't add quality YouTube doesn't have. |
+| **MP3 · 320 kbps** | **Not sure? Pick this one.** Plays on everything: phones, cars, speakers and DJ apps. |
+| **Opus · original** | The best quality possible: YouTube's own audio, saved exactly as it is. |
+| **M4A (AAC)** | iPhone, iTunes and Apple Music. |
+| **FLAC / WAV** | DJ software, music production and editing programs. |
 
-YouTube's audio is at most about 130–160 kbps Opus or AAC, so no format can sound better than that source.
+> [!NOTE]
+> YouTube streams audio at about 130–160 kbps. No format can sound better than that, so FLAC and WAV keep the sound exactly but can't add quality that isn't there.
 
-- **Album art:** downloads include album art, cropped square from the thumbnail.
-- **Tags and file names:** for a single song, the Artist, Title and Album fields are filled in for you; for example, "Daft Punk - Get Lucky (Official Video)" becomes artist "Daft Punk", title "Get Lucky". Correct them if needed. They are written into the file and name it `Artist - Title.mp3`.
-- **Non-music parts:** an option cuts intros and talking, using SponsorBlock community data when the video has it.
+## Which video format should I choose?
 
-## Video
+| Format | Best for |
+|---|---|
+| **MP4** | **Not sure? Pick this one.** Plays on every phone, TV and computer. |
+| **MKV** | The best quality at any resolution, with chapters and subtitles. |
+| **WebM** | YouTube's own format, saved without any conversion. |
 
-The quality list shows each resolution the video really has, with frame rate, codecs, HDR and estimated size.
+> [!NOTE]
+> YouTube offers MP4's most compatible codec (H.264) only up to 1080p. At 1440p and 4K, MP4 uses VP9 or AV1 instead, which modern phones and players handle fine.
 
-- **MP4** prefers H.264, which plays everywhere. YouTube offers H.264 only up to 1080p; 1440p and 4K come as VP9 or AV1, which modern players and phones handle.
-- **MKV** gives the best quality with any codec, plus chapters and subtitles.
-- **WebM** is YouTube's native VP9 + Opus, with no conversion.
+---
 
-Playlists work too: paste a playlist link, or choose "Download the whole playlist" on a video that's part of one. Each playlist goes into its own numbered folder.
+## Questions
 
-## Without a desktop
+<details>
+<summary><b>How do I update to a new version?</b></summary>
 
-For a server without a screen, `npm run package:server` builds a version that runs as a small web server:
+When a new version is out, the app tells you when it starts.
 
-1. Start it with `HOST=0.0.0.0 ./yt-downloader --no-open`. It prints a link containing an access key.
-2. On another computer, open that link with `localhost` replaced by the server's address. The key is remembered, so afterwards `http://<server-address>:5190` is enough.
+1. Close the app.
+2. Download and unzip the new version.
+3. Copy everything from the new `yt-downloader-win-x64` folder into your old one, and choose **Replace** when Windows asks.
 
-Anyone who has the link can use the app, so only share it, and the server, on a network you trust.
+Your settings, history, tools and downloads are kept, because they live in the `data`, `tools` and `downloads` folders and the new version doesn't include those.
 
-## Documentation
+See what changed in the [changelog](CHANGELOG.md).
+</details>
 
-- [Architecture](docs/architecture.md): how the app is put together, the first-run setup, a download step by step, and security.
-- [HTTP API](docs/http-api.md): the local API between the page and the engine.
-- [Development](docs/development.md): commands, code conventions, tests and packaging.
+<details>
+<summary><b>How do I uninstall it?</b></summary>
 
-## License
+Delete the app's folder. Nothing is installed anywhere else, so that removes everything. Move your `downloads` folder somewhere else first if you want to keep your files.
+</details>
 
-YT Downloader is released under the [MIT License](LICENSE). Release packages include it as `YT-Downloader-LICENSE.txt`.
+<details>
+<summary><b>What happens if I close the app while downloading?</b></summary>
 
-The tools the app downloads on first start come under their own licenses: yt-dlp is in the public domain (Unlicense), and the ffmpeg builds are GPL-licensed. Electron, which the desktop app is built on, is MIT-licensed; its license and Chromium's ship in the release folder as `LICENSE` and `LICENSES.chromium.html`.
+The app asks first. If you quit, the downloads are paused and continue from where they stopped the next time you open the app.
+</details>
 
-Please respect copyright and the sites' terms. Download only what you have the right to.
+<details>
+<summary><b>A download fails. What can I do?</b></summary>
+
+Click **Retry** on the download. If it keeps failing, the site may have changed: the app updates yt-dlp regularly, and an update usually fixes it. Some videos are private, age-restricted or blocked in your country, and those can't be downloaded.
+</details>
+
+---
+
+## 📄 License
+
+YT Downloader is free and open source under the [MIT License](LICENSE). Release packages include it as `YT-Downloader-LICENSE.txt`.
+
+The tools the app downloads on first start have their own licenses:
+
+- yt-dlp is in the public domain (Unlicense).
+- The ffmpeg builds are GPL-licensed.
+- Electron, which the desktop app is built on, is MIT-licensed. Its license and Chromium's ship in the release folder as `LICENSE` and `LICENSES.chromium.html`.
+
+> [!CAUTION]
+> Please respect copyright and each site's terms. Only download what you have the right to.

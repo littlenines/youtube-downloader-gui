@@ -49,6 +49,52 @@ ${platformNotes}
 `
 }
 
+const REPOSITORY_URL = 'https://github.com/littlenines/youtube-downloader-gui'
+
+const isVersionHeading = (line: string, version: string): boolean =>
+  new RegExp(`^## \\[?${version.replaceAll('.', '\\.')}\\]?(\\s|$)`).test(line)
+
+export const changelogSection = (changelog: string, version: string): string => {
+  const lines = changelog.split(/\r?\n/)
+  const headingIndex = lines.findIndex((line) => isVersionHeading(line, version))
+
+  if (headingIndex === -1) throw new Error(`CHANGELOG.md has no "## ${version}" section. Add one before releasing.`)
+
+  const linesAfterHeading = lines.slice(headingIndex + 1)
+  const nextHeadingIndex = linesAfterHeading.findIndex((line) => line.startsWith('## '))
+  const section = linesAfterHeading
+    .slice(0, nextHeadingIndex === -1 ? undefined : nextHeadingIndex)
+    .join('\n')
+    .trim()
+
+  if (!section) throw new Error(`The "## ${version}" section in CHANGELOG.md is empty.`)
+
+  return section
+}
+
+export const releaseNotes = (changelog: string, version: string): string => {
+  const downloadLink = (file: string) => `[\`${file}\`](${REPOSITORY_URL}/releases/download/v${version}/${file})`
+
+  return `## What's new
+
+${changelogSection(changelog, version)}
+
+## Download
+
+| System | File | Start it |
+|---|---|---|
+| Windows 10/11 (64-bit) | ${downloadLink('yt-downloader-win-x64.zip')} | Unzip it, then double-click \`yt-downloader.exe\` |
+| Linux (64-bit) | ${downloadLink('yt-downloader-linux-x64.tar.gz')} | \`tar xzf yt-downloader-linux-x64.tar.gz && ./yt-downloader/yt-downloader\` |
+| Linux ARM64 (e.g. Raspberry Pi 4/5) | ${downloadLink('yt-downloader-linux-arm64.tar.gz')} | same as above |
+
+On the first start the app offers to download yt-dlp and ffmpeg (about 75–90 MB).
+
+Windows may say "Windows protected your PC" because the app isn't code-signed yet: click **More info**, then **Run anyway**.
+
+\`SHA256SUMS.txt\` lists the checksums of the files. Every version is in the [changelog](${REPOSITORY_URL}/blob/master/CHANGELOG.md).
+`
+}
+
 export const LINUX_LAUNCHER = `#!/bin/sh
 # Starts ${APP_NAME}.   ./yt-downloader --install   adds it to the applications menu.
 DIR=$(dirname "$(readlink -f "$0")")
