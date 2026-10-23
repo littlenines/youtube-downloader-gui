@@ -1,3 +1,4 @@
+import { clipFileSuffix } from '@shared/clip-range.js'
 import type { AudioTags, Container, DownloadOptions } from '@shared/types.js'
 import { AUDIO_PRESETS } from './audio-presets.js'
 import { OUTPUT_MARKERS } from './download-events.js'
@@ -52,6 +53,14 @@ const playlistArguments = ({ playlist, playlistItems }: DownloadOptions): string
   return ['--yes-playlist', '--playlist-items', playlistItemsArgument(playlistItems)]
 }
 
+const clipArguments = ({ clip, kind }: DownloadOptions): string[] => {
+  if (!clip) return []
+
+  const sectionArguments = ['--download-sections', `*${clip.startSeconds}-${clip.endSeconds}`]
+
+  return kind === 'video' ? [...sectionArguments, '--force-keyframes-at-cuts'] : sectionArguments
+}
+
 const reportingArguments = ({ downloadFolder, partialFolder }: DownloadFolders): string[] => [
   '--newline',
   '--progress',
@@ -71,6 +80,7 @@ const reportingArguments = ({ downloadFolder, partialFolder }: DownloadFolders):
 
 const audioArguments = (options: DownloadOptions, playlistFolder: string): string[] => {
   const preset = AUDIO_PRESETS[options.format]
+  const clipSuffix = options.clip ? clipFileSuffix(options.clip) : ''
   const commandArguments = [...preset.ytdlpArguments, '--embed-metadata']
 
   if (options.tags) {
@@ -81,10 +91,10 @@ const audioArguments = (options: DownloadOptions, playlistFolder: string): strin
       ...setTagArguments('title', title),
       ...setTagArguments('album', album),
       '-o',
-      '%(meta_artist,artist&{} - |)s%(meta_title,track,title)s.%(ext)s',
+      `%(meta_artist,artist&{} - |)s%(meta_title,track,title)s${clipSuffix}.%(ext)s`,
     )
   } else {
-    commandArguments.push('-o', `${playlistFolder}%(artist&{} - |)s%(track,title)s.%(ext)s`)
+    commandArguments.push('-o', `${playlistFolder}%(artist&{} - |)s%(track,title)s${clipSuffix}.%(ext)s`)
   }
 
   if (options.coverArt && preset.supportsCoverArt) {
@@ -102,6 +112,7 @@ const videoArguments = (options: DownloadOptions, playlistFolder: string): strin
   const canEmbedExtras = options.container !== 'webm'
   const maximumResolution = options.resolution ?? UNLIMITED_RESOLUTION
   const resolutionLabel = options.resolution ? ` [${options.resolution}p]` : ''
+  const clipSuffix = options.clip ? clipFileSuffix(options.clip) : ''
   const commandArguments = [
     '-f',
     'bv*+ba/b',
@@ -118,7 +129,7 @@ const videoArguments = (options: DownloadOptions, playlistFolder: string): strin
     commandArguments.push('--embed-subs', '--sub-langs', 'en', '--write-auto-subs')
   }
 
-  commandArguments.push('-o', `${playlistFolder}%(title)s${resolutionLabel}.%(ext)s`)
+  commandArguments.push('-o', `${playlistFolder}%(title)s${resolutionLabel}${clipSuffix}.%(ext)s`)
 
   return commandArguments
 }
@@ -128,5 +139,12 @@ export const buildDownloadArguments = (options: DownloadOptions, folders: Downlo
   const formatArguments =
     options.kind === 'audio' ? audioArguments(options, playlistFolder) : videoArguments(options, playlistFolder)
 
-  return [...reportingArguments(folders), ...playlistArguments(options), ...formatArguments, '--', options.url]
+  return [
+    ...reportingArguments(folders),
+    ...playlistArguments(options),
+    ...clipArguments(options),
+    ...formatArguments,
+    '--',
+    options.url,
+  ]
 }

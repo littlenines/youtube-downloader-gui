@@ -1,4 +1,5 @@
-import type { AudioTags, Container, DownloadOptions, DownloadRequest } from '@shared/types.js'
+import { describeClip } from '@shared/clip-range.js'
+import type { AudioTags, ClipRange, Container, DownloadOptions, DownloadRequest } from '@shared/types.js'
 import { AUDIO_PRESETS, isAudioFormat } from '@server/services/ytdlp/audio-presets.js'
 
 const CONTAINERS: Container[] = ['mp4', 'mkv', 'webm']
@@ -39,6 +40,22 @@ export const normalizePlaylistItems = (value: unknown): number[] | null => {
   return positions.length ? positions.slice(0, MAXIMUM_PLAYLIST_ITEMS) : null
 }
 
+const MINIMUM_CLIP_SECONDS = 1
+
+const roundToMilliseconds = (seconds: number) => Math.round(seconds * 1000) / 1000
+
+export const normalizeClip = (value: unknown): ClipRange | null => {
+  if (!value || typeof value !== 'object') return null
+
+  const { startSeconds, endSeconds } = value as Record<string, unknown>
+
+  if (typeof startSeconds !== 'number' || typeof endSeconds !== 'number') return null
+  if (!Number.isFinite(startSeconds) || !Number.isFinite(endSeconds) || startSeconds < 0) return null
+  if (endSeconds - startSeconds < MINIMUM_CLIP_SECONDS) return null
+
+  return { startSeconds: roundToMilliseconds(startSeconds), endSeconds: roundToMilliseconds(endSeconds) }
+}
+
 export const normalizeDownloadRequest = (request: Partial<DownloadRequest>): DownloadOptions => ({
   url: String(request.url ?? '').trim(),
   kind: request.kind === 'video' ? 'video' : 'audio',
@@ -47,6 +64,7 @@ export const normalizeDownloadRequest = (request: Partial<DownloadRequest>): Dow
   container: isContainer(request.container) ? request.container : 'mp4',
   playlist: Boolean(request.playlist),
   playlistItems: request.playlist ? normalizePlaylistItems(request.playlistItems) : null,
+  clip: request.playlist ? null : normalizeClip(request.clip),
   coverArt: request.coverArt !== false,
   squareCoverArt: request.squareCoverArt !== false,
   removeNonMusic: Boolean(request.removeNonMusic),
@@ -54,10 +72,13 @@ export const normalizeDownloadRequest = (request: Partial<DownloadRequest>): Dow
   tags: request.kind !== 'video' && !request.playlist ? normalizeTags(request.tags) : null,
 })
 
-export const describeDownloadOptions = (options: DownloadOptions): string => {
+const describeFormat = (options: DownloadOptions): string => {
   if (options.kind === 'audio') return AUDIO_PRESETS[options.format].label
 
   const quality = options.resolution ? `${options.resolution}p` : 'Best quality'
 
   return `${quality} · ${options.container.toUpperCase()}`
 }
+
+export const describeDownloadOptions = (options: DownloadOptions): string =>
+  options.clip ? `${describeFormat(options)} · ${describeClip(options.clip)}` : describeFormat(options)

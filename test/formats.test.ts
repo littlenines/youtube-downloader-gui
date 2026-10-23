@@ -223,3 +223,31 @@ describe('buildDownloadArguments: edited tags', () => {
     assert.equal(tagged({ artist: ' ', title: '', album: '' }).tags, null)
   })
 })
+
+describe('buildDownloadArguments: clips', () => {
+  const clip = { startSeconds: 83, endSeconds: 296.5 }
+
+  it('downloads only the section and names the file after it', () => {
+    const commandArguments = argumentsFor({ url: 'https://x', clip })
+
+    assert.equal(valueAfter(commandArguments, '--download-sections'), '*83-296.5')
+    assert.ok(!commandArguments.includes('--force-keyframes-at-cuts'))
+    assert.match(valueAfter(commandArguments, '-o') ?? '', / \(1m23s-4m57s\)\.%\(ext\)s$/)
+  })
+
+  it('cuts video at exact frames', () => {
+    const commandArguments = argumentsFor({ url: 'https://x', kind: 'video', clip })
+
+    assert.ok(commandArguments.includes('--force-keyframes-at-cuts'))
+    assert.match(valueAfter(commandArguments, '-o') ?? '', /\(1m23s-4m57s\)\.%\(ext\)s$/)
+  })
+
+  it('adds the clip to the job label, and ignores clips for playlists', () => {
+    assert.equal(
+      describeDownloadOptions(normalizeDownloadRequest({ url: 'x', clip })),
+      'MP3 · 320 kbps · clip 1:23–4:56.5',
+    )
+    assert.equal(normalizeDownloadRequest({ url: 'x', playlist: true, clip }).clip, null)
+    assert.ok(!argumentsFor({ url: 'https://x' }).includes('--download-sections'))
+  })
+})

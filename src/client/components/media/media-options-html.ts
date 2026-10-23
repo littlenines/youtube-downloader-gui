@@ -1,3 +1,4 @@
+import { clipFileSuffix, describeClip } from '@shared/clip-range.js'
 import type { AudioFormat, AudioTags, MediaInfo, PlaylistInfo, VideoInfo, VideoQuality } from '@shared/types.js'
 import { state } from '@client/state.js'
 import { escapeHtml, formatBytes } from '@client/utils/format.js'
@@ -12,6 +13,7 @@ import {
   selectedClass,
 } from '@client/components/choices/choice-html.js'
 import { audioFormatCard } from '@client/components/choices/choice-options.js'
+import { clipEditorHtml, clipFraction } from './clip-editor.js'
 import { isWholePlaylistSelected, selectedVideoCount } from './playlist-picker.js'
 
 const FOUR_K_RESOLUTION = 2160
@@ -33,8 +35,9 @@ export const fileNamePreview = (): string => {
   const title = state.tags?.title.trim() || state.info?.title || ''
   const artist = state.tags?.artist.trim()
   const artistPrefix = artist ? `${artist} - ` : ''
+  const clipSuffix = state.clip ? clipFileSuffix(state.clip) : ''
 
-  return `${artistPrefix}${title}.${audioFormatCard(state.choices.format).fileExtension}`
+  return `${artistPrefix}${title}${clipSuffix}.${audioFormatCard(state.choices.format).fileExtension}`
 }
 
 const tagEditorHtml = (): string => {
@@ -95,13 +98,19 @@ const videoPanelHtml = (info: MediaInfo): string => {
     ${containerControlHtml()}${subtitlesOption}`
 }
 
-const estimatedBytes = (info: MediaInfo): number | null => {
+const wholeVideoEstimatedBytes = (info: MediaInfo): number | null => {
   if (info.kind !== 'video' || !info.durationSeconds) return null
   if (state.choices.kind === 'video') return selectedVideoQuality(info)?.estimatedBytes ?? null
 
   const bytesPerSecond = AUDIO_BYTES_PER_SECOND[state.choices.format]
 
   return bytesPerSecond ? bytesPerSecond * info.durationSeconds : (info.audio?.sizeBytes ?? null)
+}
+
+const estimatedBytes = (info: MediaInfo): number | null => {
+  const wholeVideoBytes = wholeVideoEstimatedBytes(info)
+
+  return wholeVideoBytes && info.kind === 'video' ? wholeVideoBytes * clipFraction(info) : wholeVideoBytes
 }
 
 const videoQualityLabel = (info: MediaInfo): string => {
@@ -122,10 +131,11 @@ const summaryHtml = (info: MediaInfo): string => {
       ? audioFormatCard(choices.format).title
       : `${choices.container.toUpperCase()} · ${videoQualityLabel(info)}`
   const videoCountText = info.kind === 'playlist' ? ` · ${playlistSelectionSummary(info)}` : ''
+  const clipText = state.clip ? ` · ${describeClip(state.clip)}` : ''
   const estimate = estimatedBytes(info)
   const estimateText = estimate ? ` · ~${formatBytes(estimate)}` : ''
 
-  return `<b>${escapeHtml(formatText)}</b>${videoCountText}${estimateText}`
+  return `<b>${escapeHtml(formatText)}</b>${videoCountText}${clipText}${estimateText}`
 }
 
 const isNothingSelected = (info: MediaInfo): boolean => info.kind === 'playlist' && selectedVideoCount(info) === 0
@@ -137,5 +147,5 @@ const footerHtml = (info: MediaInfo): string =>
 export const mediaOptionsHtml = (info: MediaInfo): string => {
   const panelHtml = state.choices.kind === 'audio' ? audioPanelHtml(info) : videoPanelHtml(info)
 
-  return `${kindTabsHtml()}<div class="tab-panel">${panelHtml}</div>${footerHtml(info)}`
+  return `${kindTabsHtml()}<div class="tab-panel">${panelHtml}${clipEditorHtml(info)}</div>${footerHtml(info)}`
 }

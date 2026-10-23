@@ -6,6 +6,14 @@ import { errorMessage, findElement } from '@client/utils/dom.js'
 import { applyChoiceButton, applyChoiceCheckbox } from '@client/components/choices/apply-choice.js'
 import { showPanel } from '@client/components/panels.js'
 import { requestSetup } from '@client/components/setup/setup.js'
+import {
+  applyClipTimeInput,
+  applyPreviewTime,
+  canTrim,
+  isClipTimeInput,
+  isClipToggle,
+  setClipEnabled,
+} from './clip-editor.js'
 import { startMediaDownload } from './media-download.js'
 import { mediaHeaderHtml, playlistLinkNoteHtml } from './media-header-html.js'
 import { fileNamePreview, mediaOptionsHtml, TAG_FIELDS } from './media-options-html.js'
@@ -29,6 +37,19 @@ const renderMediaOptions = (): void => {
   const optionsContainer = mediaPanel().querySelector('.media-options')
 
   if (state.info && optionsContainer) optionsContainer.innerHTML = mediaOptionsHtml(state.info)
+}
+
+const CLIP_EDGE_ATTRIBUTE = 'data-clip-edge'
+
+const renderMediaOptionsKeepingClipFocus = (): void => {
+  setTimeout(() => {
+    const focusedElement = document.activeElement
+    const focusedEdge = focusedElement instanceof HTMLElement ? focusedElement.getAttribute(CLIP_EDGE_ATTRIBUTE) : null
+
+    renderMediaOptions()
+
+    if (focusedEdge) mediaPanel().querySelector<HTMLInputElement>(`[${CLIP_EDGE_ATTRIBUTE}="${focusedEdge}"]`)?.select()
+  })
 }
 
 const renderMediaPanel = (info: MediaInfo): void => {
@@ -72,6 +93,7 @@ export const loadMediaInfo = async (url: string, playlist = false, { fromSearch 
 
     state.info = info
     state.tags = info.kind === 'video' ? suggestTags(info) : null
+    state.clip = null
 
     if (info.kind === 'playlist') selectWholePlaylist(info)
 
@@ -108,7 +130,10 @@ const handleMediaPanelClick = (event: Event): void => {
   else if (action === 'download' && state.info) void startMediaDownload(state.info, button)
   else if (action === 'preview' && state.info?.kind === 'video') startPreview(mediaPanel(), state.info)
   else if (action === 'back-to-results') showPanel('search')
-  else if (action === 'select-all-videos' || action === 'select-no-videos') {
+  else if ((action === 'clip-start-from-preview' || action === 'clip-end-from-preview') && canTrim(state.info)) {
+    applyPreviewTime(mediaPanel(), state.info, action === 'clip-start-from-preview' ? 'start' : 'end')
+    renderMediaOptions()
+  } else if (action === 'select-all-videos' || action === 'select-no-videos') {
     if (state.info?.kind !== 'playlist') return
 
     setWholePlaylistSelected(mediaPanel(), state.info, action === 'select-all-videos')
@@ -119,7 +144,13 @@ const handleMediaPanelClick = (event: Event): void => {
 const handleMediaPanelChange = (event: Event): void => {
   const target = event.target as HTMLElement
 
-  if (isPlaylistCheckbox(target) && state.info?.kind === 'playlist') {
+  if (isClipToggle(target) && canTrim(state.info)) {
+    setClipEnabled(state.info, target.checked)
+    renderMediaOptions()
+  } else if (isClipTimeInput(target) && canTrim(state.info)) {
+    applyClipTimeInput(state.info, target)
+    renderMediaOptionsKeepingClipFocus()
+  } else if (isPlaylistCheckbox(target) && state.info?.kind === 'playlist') {
     applyPlaylistCheckbox(mediaPanel(), state.info, target)
     renderMediaOptions()
   } else if (applyChoiceCheckbox(target)) {

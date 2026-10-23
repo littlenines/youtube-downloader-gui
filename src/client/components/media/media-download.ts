@@ -36,6 +36,7 @@ export const startMediaDownload = async (info: MediaInfo, button: HTMLButtonElem
       container: choices.container,
       playlist: isPlaylist,
       playlistItems: info.kind === 'playlist' ? selectedPlaylistItems(info) : null,
+      clip: info.kind === 'video' ? state.clip : null,
       coverArt: choices.coverArt,
       squareCoverArt: true,
       removeNonMusic: choices.removeNonMusic,

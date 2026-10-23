@@ -80,6 +80,11 @@ export interface SearchResult {
   thumbnailUrl: string | null
 }
 
+export interface ClipRange {
+  startSeconds: number
+  endSeconds: number
+}
+
 export interface DownloadRequest {
   url: string
   kind: MediaKind
@@ -88,6 +93,7 @@ export interface DownloadRequest {
   container?: Container
   playlist?: boolean
   playlistItems?: number[] | null
+  clip?: ClipRange | null
   coverArt?: boolean
   squareCoverArt?: boolean
   removeNonMusic?: boolean
@@ -106,6 +112,7 @@ export interface DownloadOptions {
   container: Container
   playlist: boolean
   playlistItems: number[] | null
+  clip: ClipRange | null
   coverArt: boolean
   squareCoverArt: boolean
   removeNonMusic: boolean

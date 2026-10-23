@@ -109,6 +109,7 @@ Request (`DownloadRequest`):
 | `container` (video) | `mp4`, `mkv`, `webm` | `mp4` |
 | `playlist` | Download a playlist into a numbered folder | `false` |
 | `playlistItems` (playlist) | Positions of the videos to download, from the entries' `position`. `null` downloads every video; an empty list is refused with `400`. | `null` |
+| `clip` (single video) | `{ startSeconds, endSeconds }`: download only that part. At least 1 second long; ignored for playlists. | `null` |
 | `coverArt`, `squareCoverArt` | Embed album art, cropped square | `true` |
 | `removeNonMusic` | Cut non-music parts using SponsorBlock data | `false` |
 | `subtitles` | Embed English subtitles (not for WebM) | `false` |

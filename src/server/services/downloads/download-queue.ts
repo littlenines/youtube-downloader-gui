@@ -147,7 +147,7 @@ export class DownloadQueue {
 
       if (run.cancelled) return
 
-      job.stage = 'Starting'
+      job.stage = job.options.clip ? 'Downloading the clip' : 'Starting'
 
       const download = this.engine.startDownload(job.options, { downloadFolder, partialFolder }, (event) =>
         applyDownloadEvent(job, event),

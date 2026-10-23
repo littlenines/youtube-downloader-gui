@@ -54,7 +54,8 @@ export const applyDownloadEvent = (job: Job, event: DownloadEvent): void => {
   if (event.type === 'progress') applyProgressEvent(job, event)
   else if (event.type === 'item') applyPlaylistItemEvent(job, event)
   else {
-    job.files.push(event.file)
+    if (!job.files.includes(event.file)) job.files.push(event.file)
+
     job.stage = 'Saved'
   }
 }

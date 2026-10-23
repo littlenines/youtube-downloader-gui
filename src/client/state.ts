@@ -1,4 +1,4 @@
-import type { AudioFormat, AudioTags, Container, MediaInfo, MediaKind } from '@shared/types.js'
+import type { AudioFormat, AudioTags, ClipRange, Container, MediaInfo, MediaKind } from '@shared/types.js'
 
 export interface Choices {
   kind: MediaKind
@@ -15,6 +15,7 @@ export interface AppState {
   info: MediaInfo | null
   tags: AudioTags | null
   selectedPlaylistPositions: Set<number>
+  clip: ClipRange | null
   openedFromSearch: boolean
   choices: Choices
 }
@@ -45,6 +46,7 @@ export const state: AppState = {
   info: null,
   tags: null,
   selectedPlaylistPositions: new Set(),
+  clip: null,
   openedFromSearch: false,
   choices: loadChoices(),
 }
