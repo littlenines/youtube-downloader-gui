@@ -1,0 +1,111 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "jsPlugins": [
+    "@stylistic/eslint-plugin"
+  ],
+  "ignorePatterns": [
+    "dist",
+    "release",
+    "build",
+    "tools",
+    "data"
+  ],
+  "rules": {
+    "@stylistic/padding-line-between-statements": [
+      "error",
+      {
+        "blankLine": "always",
+        "prev": [
+          "const",
+          "let"
+        ],
+        "next": "*"
+      },
+      {
+        "blankLine": "always",
+        "prev": "*",
+        "next": [
+          "const",
+          "let"
+        ]
+      },
+      {
+        "blankLine": "any",
+        "prev": [
+          "const",
+          "let"
+        ],
+        "next": [
+          "const",
+          "let"
+        ]
+      },
+      {
+        "blankLine": "always",
+        "prev": "*",
+        "next": [
+          "if",
+          "for",
+          "while",
+          "do",
+          "switch",
+          "try"
+        ]
+      },
+      {
+        "blankLine": "always",
+        "prev": [
+          "if",
+          "for",
+          "while",
+          "do",
+          "switch",
+          "try"
+        ],
+        "next": "*"
+      },
+      {
+        "blankLine": "any",
+        "prev": "if",
+        "next": [
+          "if",
+          "return"
+        ]
+      },
+      {
+        "blankLine": "always",
+        "prev": "block-like",
+        "next": "*"
+      }
+    ],
+    "@stylistic/lines-between-class-members": [
+      "error",
+      "always",
+      {
+        "exceptAfterSingleLine": true
+      }
+    ],
+    "func-style": [
+      "error",
+      "expression"
+    ],
+    "prefer-arrow-callback": "error",
+    "arrow-body-style": [
+      "error",
+      "as-needed"
+    ],
+    "object-shorthand": "error",
+    "prefer-template": "error",
+    "id-length": [
+      "error",
+      {
+        "min": 2,
+        "exceptions": [
+          "_",
+          "x",
+          "y"
+        ]
+      }
+    ]
+  }
+}

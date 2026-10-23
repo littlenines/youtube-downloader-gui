@@ -12,6 +12,20 @@
     "verbatimModuleSyntax": true,
     "sourceMap": true,
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "paths": {
+      "@shared/*": [
+        "./src/shared/*"
+      ],
+      "@server/*": [
+        "./src/server/*"
+      ],
+      "@client/*": [
+        "./src/client/*"
+      ],
+      "@desktop/*": [
+        "./src/desktop/*"
+      ]
+    }
   }
 }

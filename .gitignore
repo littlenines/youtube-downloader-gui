@@ -1,8 +1,8 @@
 node_modules/
-dist/
-build/
-release/
-tools/
-data/
-downloads/
+/dist/
+/build/
+/release/
+/tools/
+/data/
+/downloads/
 *.log

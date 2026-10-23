@@ -1,0 +1,131 @@
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+}
+.logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-text);
+  display: grid;
+  place-items: center;
+}
+.top-actions {
+  display: flex;
+  gap: 6px;
+}
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 28px 16px 80px;
+}
+.hero {
+  text-align: center;
+  padding: 18px 0 8px;
+}
+.hero h1 {
+  font-size: clamp(22px, 4vw, 30px);
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+}
+.hero p {
+  margin: 0 0 18px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  font-weight: 550;
+  white-space: nowrap;
+  transition:
+    border-color 0.12s,
+    filter 0.12s;
+}
+.button:hover {
+  border-color: var(--text-faint);
+}
+.button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+.button.primary:hover {
+  filter: brightness(1.06);
+}
+.button.ghost {
+  background: transparent;
+}
+.button.icon-only {
+  padding: 8px 11px;
+}
+.button.small {
+  padding: 5px 10px;
+  font-size: 13px;
+}
+.button.large {
+  padding: 13px 22px;
+  font-size: 16px;
+  border-radius: 12px;
+}
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.link-form {
+  display: flex;
+  gap: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: var(--shadow);
+}
+.link-form:focus-within {
+  border-color: var(--accent);
+}
+.link-form input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  padding: 8px 10px;
+  font-size: 16px;
+}
+.setup-banner {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.setup-banner.error {
+  color: var(--error);
+  border-color: var(--error);
+}

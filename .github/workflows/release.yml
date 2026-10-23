@@ -1,6 +1,5 @@
 name: Release
 
-# Pushing a tag such as v1.0.0 builds every package, checks it, and publishes a GitHub release with the files.
 on:
   push:
     tags: ['v*']
@@ -14,8 +13,11 @@ jobs:
   release:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -29,22 +31,38 @@ jobs:
             exit 1
           fi
 
-      - run: npm ci
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run package
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build the packages
+        run: npm run package
 
       - name: Zip the Windows app folder
         shell: pwsh
-        run: Compress-Archive -Path release/yt-downloader-win-x64 -DestinationPath release/yt-downloader-win-x64.zip -CompressionLevel Optimal
+        run: |
+          Compress-Archive `
+            -Path release/yt-downloader-win-x64 `
+            -DestinationPath release/yt-downloader-win-x64.zip `
+            -CompressionLevel Optimal
 
       - name: Write checksums
         shell: bash
         working-directory: release
-        run: sha256sum yt-downloader-win-x64.zip yt-downloader-linux-x64.tar.gz yt-downloader-linux-arm64.tar.gz > SHA256SUMS.txt
+        run: |
+          sha256sum \
+            yt-downloader-win-x64.zip \
+            yt-downloader-linux-x64.tar.gz \
+            yt-downloader-linux-arm64.tar.gz \
+            > SHA256SUMS.txt
 
-      # Lets anyone confirm a file was built by this workflow from this repository: gh attestation verify <file> --repo <owner>/<repo>
-      - uses: actions/attest@v4
+      - name: Attest build provenance
+        uses: actions/attest@v4
         with:
           subject-path: |
             release/yt-downloader-win-x64.zip

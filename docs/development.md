@@ -22,6 +22,7 @@ npm start
 | `npm run build` | Builds `dist/`: `desktop.cjs`, `preload.cjs`, `app.cjs`, `icon.png` and `client/`. |
 | `npm test` | Unit tests (`node:test`, run through `tsx`). |
 | `npm run typecheck` | Strict TypeScript for the server, desktop, page, tests and scripts. |
+| `npm run lint` / `lint:fix` | oxlint: arrow functions, blank lines around statements, no one-letter names. `lint:fix` adds missing blank lines and other fixable issues. |
 | `npm run format` / `format:check` | Prettier. |
 | `npm run package` | Desktop releases for Windows x64, Linux x64 and Linux ARM64 in `release/`. |
 | `npm run package:win`, `package:linux` | The same, for one platform. |
@@ -34,7 +35,7 @@ If Electron starts and behaves like plain Node (for example `Cannot read propert
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs `npm run typecheck`, `npm test` and `npm run format:check` on Windows and Linux for every push and pull request. It skips Electron's binary download, which the tests don't need.
+`.github/workflows/ci.yml` runs `npm run typecheck`, `npm run lint`, `npm test` and `npm run format:check` on Windows and Linux for every push and pull request. It skips Electron's binary download, which the tests don't need.
 
 ## Releasing
 
@@ -51,17 +52,21 @@ The workflow (on a Windows runner):
 2. Runs the typecheck and tests.
 3. Builds all three packages and zips the Windows folder.
 4. Writes `SHA256SUMS.txt` and a build attestation for each file, so anyone can verify where a file came from with `gh attestation verify <file> --repo littlenines/youtube-downloader-gui`.
-5. Publishes the release with download instructions and notes generated from the commits since the last release.
+5. Publishes the release with download instructions.
 
 If a release run fails, delete the tag (`git push --delete origin v1.1.0` and `git tag -d v1.1.0`), fix the problem, and tag again.
 
 ## Code conventions
 
 - **Names are full words.** Use `downloadFolder`, `bytesPerSecond`, `response`, `error`, `findElement`, not `dir`, `bps`, `res`, `e`, `$`. Established technical terms (`url`, `id`, `hdr`, `ffmpeg`) are fine. Field names that come from yt-dlp's JSON (`vcodec`, `abr`, `filesize_approx`) keep yt-dlp's spelling.
-- **Comments explain why, not what.** Write one only when the code can't say it itself: a platform quirk, a format detail, a non-obvious constraint. Keep design explanations in these docs.
-- **Pure logic stays pure.** `formats.ts`, `parseMediaInfo`, `parseSettings` and `parseHistory` have no I/O, so they can be tested directly.
+- **No comments in the code.** Names say what a constant, function or file does. Design explanations, platform quirks and format details go in these docs.
+- **One job per file.** When a file mixes concerns or grows long, split it; the folder groups related files.
+- **Imports use aliases, not `../`.** `@shared/`, `@server/`, `@client/` and `@desktop/` point into `src/` (set in `tsconfig.base.json`; TypeScript, esbuild and tsx all read them). Files in the same folder import each other with `./`.
+- **Arrow functions only.** `const name = (...) => ...` instead of `function`; generators are `function*` expressions. Class methods stay methods.
+- **Blank lines around statements.** Before and after `const`/`let` groups, `if`, loops, `switch` and `try`, and after any block. `npm run lint:fix` adds them.
+- **Pure logic stays pure.** `buildDownloadArguments`, `normalizeDownloadRequest`, `parseMediaInfo`, `parseSettings` and `parseHistory` have no I/O, so they can be tested directly.
 - **The API contract lives in `src/shared/types.ts`.** Change it there first; TypeScript then points at every place that needs updating.
-- Prettier formats everything (`printWidth` 140, single quotes).
+- Prettier formats everything: no semicolons, single quotes, `printWidth` 120.
 
 ## Tests
 
@@ -127,8 +132,8 @@ Releases are not signed. Windows SmartScreen asks once ("More info" → "Run any
 
 - **A new audio format:**
   1. Add it to `AudioFormat` in `src/shared/types.ts`.
-  2. Add its yt-dlp arguments to `AUDIO_PRESETS` in `formats.ts`.
-  3. Add a card to `AUDIO_FORMAT_CARDS` in `src/client/components/media.ts`.
+  2. Add its yt-dlp arguments to `AUDIO_PRESETS` in `src/server/services/ytdlp/audio-presets.ts`.
+  3. Add a card to `AUDIO_FORMAT_CARDS` in `src/client/components/choices/choice-options.ts`.
   4. Add a test.
 - **A new setting:**
   1. Extend `Settings` in `src/shared/types.ts`.
@@ -136,4 +141,4 @@ Releases are not signed. Windows SmartScreen asks once ("More info" → "Run any
   3. Add the control to the settings dialog in `index.html` and `components/settings.ts`.
 - **Tool versions:**
   - yt-dlp always comes from its latest release and updates itself weekly.
-  - ffmpeg is pinned by `FFMPEG_RELEASE` in `tools.ts`.
+  - ffmpeg is pinned by `FFMPEG_RELEASE_URL` and `FFMPEG_SHA256_BY_ASSET` in `src/server/services/tools/release-assets.ts`.

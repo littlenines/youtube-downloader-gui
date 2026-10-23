@@ -1,0 +1,121 @@
+import { suggestTags } from '@shared/tags.js'
+import type { AudioTags, MediaInfo } from '@shared/types.js'
+import { api, ApiError, isAbortError, TOOLS_MISSING_STATUS } from '@client/api.js'
+import { state } from '@client/state.js'
+import { errorMessage, findElement } from '@client/utils/dom.js'
+import { applyChoiceButton, applyChoiceCheckbox } from '@client/components/choices/apply-choice.js'
+import { showPanel } from '@client/components/panels.js'
+import { requestSetup } from '@client/components/setup/setup.js'
+import { startMediaDownload } from './media-download.js'
+import { mediaHeaderHtml, playlistNoteHtml } from './media-header-html.js'
+import { fileNamePreview, mediaOptionsHtml, TAG_FIELDS } from './media-options-html.js'
+import { startPreview } from './media-preview.js'
+
+let currentMediaRequest: AbortController | null = null
+
+const mediaPanel = () => findElement('#media')
+
+const isTagField = (value: string | undefined): value is keyof AudioTags =>
+  TAG_FIELDS.some(({ field }) => field === value)
+
+const renderMediaOptions = (): void => {
+  const optionsContainer = mediaPanel().querySelector('.media-options')
+
+  if (state.info && optionsContainer) optionsContainer.innerHTML = mediaOptionsHtml(state.info)
+}
+
+const renderMediaPanel = (info: MediaInfo): void => {
+  const backButton = state.openedFromSearch
+    ? '<button class="button ghost small back-button" data-action="back-to-results">← Back to results</button>'
+    : ''
+
+  mediaPanel().innerHTML = `${backButton}<div class="card">${mediaHeaderHtml(info)}${playlistNoteHtml(info)}<div class="media-options"></div></div>`
+  renderMediaOptions()
+  showPanel('media')
+}
+
+const showLoading = (): void => {
+  mediaPanel().innerHTML = '<div class="card loading"><div class="spinner"></div>Reading the link…</div>'
+  showPanel('media')
+}
+
+const showLinkError = (error: unknown): void => {
+  const errorBox = findElement('#linkError')
+
+  errorBox.textContent = errorMessage(error)
+  errorBox.hidden = false
+}
+
+export const loadMediaInfo = async (url: string, playlist = false, { fromSearch = false } = {}): Promise<void> => {
+  currentMediaRequest?.abort()
+
+  const request = new AbortController()
+
+  currentMediaRequest = request
+  state.url = url
+  state.openedFromSearch = fromSearch
+  showLoading()
+
+  try {
+    const info = await api.mediaInfo(url, playlist, request.signal)
+
+    if (request.signal.aborted) return
+
+    state.info = info
+    state.tags = info.kind === 'video' ? suggestTags(info) : null
+
+    if (info.kind === 'video' && !info.qualities.some((quality) => quality.resolution === state.choices.resolution)) {
+      state.choices.resolution = null
+    }
+
+    renderMediaPanel(info)
+  } catch (error) {
+    if (request.signal.aborted || isAbortError(error)) return
+
+    state.info = null
+    showPanel(fromSearch ? 'search' : null)
+
+    if (error instanceof ApiError && error.status === TOOLS_MISSING_STATUS) {
+      requestSetup(() => void loadMediaInfo(url, playlist, { fromSearch }))
+
+      return
+    }
+
+    showLinkError(error)
+  }
+}
+
+const handleMediaPanelClick = (event: Event): void => {
+  const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button')
+
+  if (!button) return
+  if (applyChoiceButton(button)) return renderMediaOptions()
+
+  const action = button.dataset.action
+
+  if (action === 'load-playlist') void loadMediaInfo(state.url, true)
+  else if (action === 'download' && state.info) void startMediaDownload(state.info, button)
+  else if (action === 'preview' && state.info?.kind === 'video') startPreview(mediaPanel(), state.info)
+  else if (action === 'back-to-results') showPanel('search')
+}
+
+const handleTagInput = (event: Event): void => {
+  const input = event.target as HTMLInputElement
+  const field = input.dataset.tag
+
+  if (!state.tags || !isTagField(field)) return
+
+  state.tags[field] = input.value
+
+  const fileNameElement = mediaPanel().querySelector('.file-name-preview')
+
+  if (fileNameElement) fileNameElement.textContent = fileNamePreview()
+}
+
+export const initializeMediaPanel = (): void => {
+  mediaPanel().addEventListener('click', handleMediaPanelClick)
+  mediaPanel().addEventListener('change', (event) => {
+    if (applyChoiceCheckbox(event.target as HTMLElement)) renderMediaOptions()
+  })
+  mediaPanel().addEventListener('input', handleTagInput)
+}

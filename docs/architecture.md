@@ -21,26 +21,27 @@ Both front ends run the same local HTTP API and show the same page.
 
 ## Source layout
 
+Each file has one job, and its name says what that job is. Folders group files by area:
+
 | Path | Responsibility |
 |---|---|
 | `src/shared/types.ts` | The API contract: every type that crosses between server, desktop and page. |
-| `src/shared/tags.ts`, `src/shared/links.ts` | Pure helpers both sides use: tag suggestions, and finding links in pasted or dropped text. |
+| `src/shared/` | Pure helpers both sides use: tag suggestions (`tags.ts`), finding links (`links.ts`), whether a job is active (`jobs.ts`), resolution labels such as 4K (`resolution.ts`). |
 | `src/server/config.ts` | Where things live (next to the executable when packaged, the project root otherwise), the port and the host. |
-| `src/server/server.ts` | Start-up shared by both front ends: creates the services and listens. |
 | `src/server/index.ts` | Browser/headless entry point. |
-| `src/server/app.ts` | The HTTP server: cross-site request check, API router, static page. |
-| `src/server/routes/index.ts` | The REST endpoints (see [http-api.md](http-api.md)). |
-| `src/server/services/tools.ts` | Installs and updates yt-dlp, ffmpeg, ffprobe (and Deno for the single-executable server), and reports setup progress. |
-| `src/server/services/formats.ts` | Pure rules that turn the user's choices into yt-dlp arguments. |
-| `src/server/services/ytdlp.ts` | Runs yt-dlp: reads a link's formats (`parseMediaInfo` is pure), searches YouTube, and runs downloads with progress. |
-| `src/server/services/ytdlp-output.ts` | The shapes of yt-dlp's JSON output. |
-| `src/server/services/preview.ts` | Picks a playable stream for the preview and relays it to the page. |
-| `src/server/services/queue.ts` | The download queue: concurrency, progress, cancel with partial-file cleanup, retry. |
-| `src/server/services/stores.ts` | Settings and history, stored as JSON in `data/`. |
-| `src/server/lib/` | Small building blocks: router, static files, JSON files, archives, OS helpers. |
-| `src/desktop/main.ts` | The Electron main process: window, single instance, native dialogs, taskbar progress, quit confirmation. |
-| `src/desktop/preload.ts` | Exposes `window.desktop` (the native folder picker) to the page. |
-| `src/client/` | The page: link box (links, searches, drops), media panel (formats, quality picker, tags, preview), search results, batch panel, downloads list, settings and setup dialogs. |
+| `src/server/server.ts` | Start-up shared by both front ends: creates the services and listens. |
+| `src/server/app.ts` | The HTTP server: request checks, API router, static page. |
+| `src/server/security/` | The cross-site and DNS-rebinding check (`request-guard.ts`), the access cookie and access link (`access-cookie.ts`), and the stored access key (`access-key-file.ts`). |
+| `src/server/routes/` | The REST endpoints, one file per area: settings and setup, media (link info, search, preview), downloads. See [http-api.md](http-api.md). |
+| `src/server/services/tools/` | Installing and updating the tools: paths (`tool-paths.ts`), release files and pinned checksums (`release-assets.ts`), one install step per tool (`install-steps.ts`), the setup state machine (`tool-setup.ts`) and the app's instance of it (`app-tool-setup.ts`). |
+| `src/server/services/ytdlp/` | Everything that talks to yt-dlp: shared arguments, reading a link (`media-info.ts`, `video-qualities.ts`), search, readable error messages, download arguments and audio presets, running a download and reading its output lines (`download-process.ts`, `download-events.ts`), and the shapes of its JSON output (`ytdlp-json.ts`). |
+| `src/server/services/downloads/` | The download queue (`download-queue.ts`), validating requests (`download-options.ts`), creating and resetting jobs (`jobs.ts`), turning yt-dlp events into job progress (`job-progress.ts`), and partial folders (`partial-folders.ts`). |
+| `src/server/services/preview/` | Choosing a playable preview stream and relaying it to the page. |
+| `src/server/services/stores/` | Settings and history, stored as JSON in `data/`. |
+| `src/server/lib/` | Building blocks with no app knowledge: HTTP router and JSON helpers, static files, JSON files, zip and tar, checksums, GitHub releases, verified downloads, the desktop shell (open a link, show a file) and stopping a process tree. |
+| `src/desktop/` | The Electron main process: `main.ts` starts it; the window, saved window position, taskbar progress, quit confirmation and start-up switches each have their own file. `preload.ts` exposes `window.desktop` (the native folder picker) to the page. |
+| `src/client/` | The page. `main.ts` starts every part; `link-input.ts` and `drag-and-drop.ts` take links, searches and drops; `components/` holds the media panel, choice controls, search results, batch panel, downloads list, settings and setup. |
+| `src/client/styles/` | The stylesheet in parts, imported in order by `index.css` and bundled into one `styles.css`. |
 | `scripts/` | Build, packaging and icon generation (see [development.md](development.md)). |
 
 ## Files at run time
@@ -57,7 +58,7 @@ When running from source, the project root plays this role (these folders are gi
 
 ## First run: installing the tools
 
-No tools are bundled. The `ToolSetup` class in `tools.ts` owns this state. Everything it touches outside itself (install steps, `yt-dlp -U`, the clock, the update-check marker) is passed in, so `tool-setup.test.ts` drives every state with fakes. On start-up, `toolSetup.initialize()` checks what is installed:
+No tools are bundled. The `ToolSetup` class in `services/tools/tool-setup.ts` owns this state. Everything it touches outside itself (install steps, `yt-dlp -U`, the clock, the update-check marker) is passed in, so `tool-setup.test.ts` drives every state with fakes. On start-up, `toolSetup.initialize()` checks what is installed:
 
 1. **Everything present:** setup runs right away in the background and only checks whether a yt-dlp update is due. A successful check counts for a week (recorded in `tools/.yt-dlp-checked`); a failed one is retried a day later. An app left running checks again whenever no download is running, so an update never replaces yt-dlp mid-download.
 2. **Something missing:** setup waits. The page opens the setup dialog, which explains what will be downloaded and how much, and starts the install through `POST /api/setup` when the user agrees. It then polls `GET /api/status` for progress and ends with "You're all set".
@@ -72,7 +73,7 @@ Every tool is checked before it is installed (`lib/verified-download.ts`). The f
 |---|---|
 | yt-dlp | `SHA2-256SUMS` of the same release. "latest" is first resolved to a fixed tag, so the file and its checksum can't come from different releases. |
 | Deno | The `.sha256sum` file published next to each download, from the same resolved tag. |
-| ffmpeg, ffprobe | Pinned in `FFMPEG_SHA256`. The pinned release publishes no checksums, so the values were taken from GitHub's asset digests and one was checked against an independent download. |
+| ffmpeg, ffprobe | Pinned in `FFMPEG_SHA256_BY_ASSET` (`services/tools/release-assets.ts`). The pinned release publishes no checksums, so the values were taken from GitHub's asset digests and one was checked against an independent download. |
 | Node (server builds) | `SHASUMS256.txt` on nodejs.org, checked by `scripts/package-server.ts`. |
 | Electron (desktop builds) | Checked by `@electron/packager` against Electron's own checksums. |
 
@@ -93,7 +94,7 @@ YouTube requires yt-dlp to run JavaScript. The runtime depends on how the app ru
 ## A download, step by step
 
 1. The page sends `POST /api/downloads` with the user's choices.
-2. `normalizeRequest` validates them into `DownloadOptions`, and the queue creates a `Job`.
+2. `normalizeDownloadRequest` validates them into `DownloadOptions`, and the queue creates a `Job`.
 3. When a slot is free (Settings → downloads at the same time), the queue waits for the tools and starts yt-dlp with `buildDownloadArguments`. The link always comes after `--`, so it can never be read as an option.
 4. Each job gets its own partial folder, `<download folder>/.yt-downloader-partial/<job id>`, passed as `-P temp:`. yt-dlp keeps everything unfinished there (stream parts, fragments, thumbnails, merge and conversion output) and moves each file to the download folder only once it is complete.
 5. yt-dlp prints marker lines that the app reads (`parseOutputLine`):
@@ -113,7 +114,7 @@ A job keeps its slot until its yt-dlp process has exited, even after it was canc
 
 ## Finding and choosing what to download
 
-Everything typed, pasted, or dropped on the window goes through one function, `handleText` in `src/client/main.ts`:
+Everything typed, pasted, or dropped on the window goes through one function, `handleEnteredText` in `src/client/link-input.ts`:
 
 | Input | Result |
 |---|---|
@@ -192,6 +193,20 @@ To measure again, start the app with `--remote-debugging-port=9333` and record f
 - The desktop window gets no permissions except reading and writing the clipboard (for the Paste button). The folder picker answers only requests from the app's own page.
 - Release builds have Electron's `EnableNodeCliInspectArguments` and `EnableNodeOptionsEnvironmentVariable` fuses turned off, so the running app can't be opened to a debugger. A release build started with `--remote-debugging-port` exits. `RunAsNode` stays on because yt-dlp uses the binary as its JavaScript runtime; that mode starts a separate, empty Node process.
 - On Linux, the release launcher keeps Chromium's sandbox when user namespaces or a setuid `chrome-sandbox` are available, and otherwise starts without it. That is acceptable only because the window never loads outside content.
+
+## Platform and format details
+
+Facts the code depends on that its names can't say:
+
+- **Fixed desktop port.** The desktop app prefers port 5199 because the page's saved choices live in browser storage, which belongs to one address. Only if 5199 is taken does it use another free port.
+- **Remembered choices.** Format, container and options are remembered in the page's storage; the resolution is not, because it depends on each video. In private windows, where storage is unavailable, nothing is remembered.
+- **Resolution means the short side.** A vertical 1080×1920 video counts as 1080p, and yt-dlp's `res` sort key compares the short side too, so vertical videos are picked like horizontal ones.
+- **Subtitles use `en`, not `en.*`.** `en.*` also matches YouTube's machine-translated tracks, and fetching those got the whole download refused with HTTP 429.
+- **Marker lines.** In `VITEM` lines the title comes last, because a title may contain the `|` separator.
+- **Tag values.** The always-empty `%(id&|)s` around an edited tag also keeps a trailing `\` in the value away from the `:` separator.
+- **Stopping downloads.** On Linux and macOS yt-dlp runs in its own process group, so cancelling also stops the ffmpeg it started. On Windows, `taskkill /T` stops the tree. Removing a partial folder retries a few times, because Windows keeps a stopped process's files locked for a moment.
+- **Showing a file on Windows.** Explorer only accepts `/select,"path"` passed verbatim, and `windowsHide` would open its window invisibly, so neither option is used for it.
+- **Release folders.** They already contain Electron's own `LICENSE`, so the app's license is named `YT-Downloader-LICENSE.txt`.
 
 ## Compatibility with older data
 
