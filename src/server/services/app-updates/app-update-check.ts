@@ -1,5 +1,5 @@
 import { isNewerVersion } from '@shared/versions.js'
-import type { AppUpdate } from '@shared/types.js'
+import type { AppUpdate } from '@shared/types/app.js'
 import { APP_VERSION } from '@server/app-version.js'
 import { errorText } from '@server/lib/http/http-error.js'
 import { latestReleaseTag } from '@server/lib/github-releases.js'

@@ -1,4 +1,4 @@
-import type { SetupStatus } from '@shared/types.js'
+import type { SetupStatus } from '@shared/types/app.js'
 import { errorText } from '@server/lib/http/http-error.js'
 import type { InstallStep } from './install-steps.js'
 

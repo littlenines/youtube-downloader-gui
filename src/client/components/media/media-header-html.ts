@@ -1,4 +1,4 @@
-import type { MediaInfo } from '@shared/types.js'
+import type { MediaInfo } from '@shared/types/media.js'
 import { escapeHtml, formatCount, formatDuration } from '@client/utils/format.js'
 
 const thumbnailHtml = (info: MediaInfo): string => {

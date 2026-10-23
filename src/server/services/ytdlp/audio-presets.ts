@@ -1,4 +1,4 @@
-import type { AudioFormat } from '@shared/types.js'
+import type { AudioFormat } from '@shared/types/downloads.js'
 
 interface AudioPreset {
   label: string

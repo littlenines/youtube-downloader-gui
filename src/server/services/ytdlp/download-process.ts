@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process'
 import { createInterface } from 'node:readline'
 import type { Readable } from 'node:stream'
-import type { DownloadOptions } from '@shared/types.js'
+import type { DownloadOptions } from '@shared/types/downloads.js'
 import { IS_WINDOWS } from '@server/config.js'
 import { killProcessTree } from '@server/lib/process-tree.js'
 import { ytdlpPath } from '@server/services/tools/tool-paths.js'
@@ -45,6 +45,7 @@ export const startDownload = (
   let errorOutput = ''
   const itemErrors: string[] = []
   let savedFileCount = 0
+  let wasStoppedByApp = false
 
   const handleOutputLine = (line: string) => {
     const event = parseOutputLine(line)
@@ -68,11 +69,17 @@ export const startDownload = (
       const isPartlyDownloadedPlaylist = options.playlist && savedFileCount > 0
 
       if (exitCode === 0) resolve({ skippedItems: itemErrors })
+      else if (wasStoppedByApp) reject(new Error('Stopped.'))
       else if (isPartlyDownloadedPlaylist) {
         resolve({ skippedItems: itemErrors.length ? itemErrors : [friendlyErrorMessage(errorOutput)] })
       } else reject(new Error(friendlyErrorMessage(errorOutput)))
     })
   })
 
-  return { finished, cancel: () => killProcessTree(child.pid) }
+  const stop = () => {
+    wasStoppedByApp = true
+    killProcessTree(child.pid)
+  }
+
+  return { finished, cancel: stop }
 }

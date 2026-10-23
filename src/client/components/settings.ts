@@ -1,4 +1,4 @@
-import type { StatusResponse } from '@shared/types.js'
+import type { StatusResponse } from '@shared/types/app.js'
 import { api } from '@client/api.js'
 import { desktopBridge } from '@client/desktop.js'
 import { errorMessage, findElement, showToast } from '@client/utils/dom.js'

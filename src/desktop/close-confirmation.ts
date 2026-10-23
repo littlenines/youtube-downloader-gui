@@ -16,7 +16,7 @@ const askToQuitWhileDownloading = (window: BrowserWindow, activeCount: number): 
     cancelId: KEEP_DOWNLOADING_BUTTON,
     noLink: true,
     message: isSingle ? 'A download is still running.' : `${activeCount} downloads are still running.`,
-    detail: `Quitting stops ${isSingle ? 'it' : 'them'} and removes the unfinished ${isSingle ? 'file' : 'files'}.`,
+    detail: `Quitting pauses ${isSingle ? 'it' : 'them'}. ${isSingle ? 'It continues' : 'They continue'} where ${isSingle ? 'it' : 'they'} stopped the next time you open the app.`,
   })
 
   return choice !== KEEP_DOWNLOADING_BUTTON

@@ -1,4 +1,4 @@
-import type { SetupStatus } from '@shared/types.js'
+import type { SetupStatus } from '@shared/types/app.js'
 import { api } from '@client/api.js'
 import { errorMessage, findElement, showToast } from '@client/utils/dom.js'
 import { renderSetupBanner, renderSetupDialog, setupDialog } from './setup-view.js'

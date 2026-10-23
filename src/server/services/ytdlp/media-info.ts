@@ -1,4 +1,4 @@
-import type { MediaInfo, PlaylistInfo, VideoInfo } from '@shared/types.js'
+import type { MediaInfo, PlaylistInfo, VideoInfo } from '@shared/types/media.js'
 import { registerPreview } from '@server/services/preview/preview-streams.js'
 import { toolSetup } from '@server/services/tools/app-tool-setup.js'
 import { runYtdlpForJson } from './run-ytdlp-json.js'

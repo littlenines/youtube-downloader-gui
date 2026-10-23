@@ -43,12 +43,17 @@ const newestChangeTime = async (path: string): Promise<number> => {
   return Math.max(pathStats.mtimeMs, ...entryTimes)
 }
 
-export const removeStalePartialFolders = async (downloadFolder: string): Promise<void> => {
+export const removeStalePartialFolders = async (
+  downloadFolder: string,
+  keptJobIds: ReadonlySet<string> = new Set(),
+): Promise<void> => {
   const sharedParent = join(downloadFolder, PARTIAL_FOLDER_NAME)
   const jobFolderNames = await readdir(sharedParent).catch(() => [] as string[])
   const staleBefore = Date.now() - STALE_PARTIAL_FOLDER_MILLISECONDS
 
   for (const name of jobFolderNames) {
+    if (keptJobIds.has(name)) continue
+
     const jobFolder = join(sharedParent, name)
 
     if ((await newestChangeTime(jobFolder).catch(() => 0)) < staleBefore) await removePartialFolder(jobFolder)

@@ -1,4 +1,4 @@
-import type { AppUpdate } from '@shared/types.js'
+import type { AppUpdate } from '@shared/types/app.js'
 import { isNewerVersion, parseVersion } from '@shared/versions.js'
 import { api } from '@client/api.js'
 import { findElement } from '@client/utils/dom.js'

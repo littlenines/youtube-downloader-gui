@@ -1,4 +1,4 @@
-import type { VideoInfo } from '@shared/types.js'
+import type { VideoInfo } from '@shared/types/media.js'
 import { api } from '@client/api.js'
 import { showToast } from '@client/utils/dom.js'
 import { escapeHtml } from '@client/utils/format.js'

@@ -1,5 +1,5 @@
-import { isActiveJob } from '@shared/jobs.js'
-import type { HistoryEntry, Job } from '@shared/types.js'
+import { isActiveJob, isFinishedJob, isUnfinishedJob } from '@shared/jobs.js'
+import type { HistoryEntry, Job } from '@shared/types/downloads.js'
 import { escapeHtml, formatBytes, formatSpeed, formatTimeLeft } from '@client/utils/format.js'
 
 export interface RowContent {
@@ -42,6 +42,8 @@ const jobStatusText = (job: Job): string => {
         formatSpeed(job.bytesPerSecond),
         formatTimeLeft(job.secondsLeft),
       ])
+    case 'paused':
+      return joinNonEmpty(['Paused', job.progress ? `${Math.round(job.progress * 100)}%` : ''])
     case 'done':
       return joinNonEmpty([
         'Done',
@@ -76,19 +78,21 @@ const rowHtml = (options: RowHtmlOptions): string => {
 }
 
 const jobActionsHtml = (job: Job): string => {
-  const isActive = isActiveJob(job)
   const canRetry = job.status === 'error' || job.status === 'cancelled'
 
   return [
     job.status === 'done' ? actionButtonHtml('reveal', job.id, 'Show in folder') : '',
-    isActive ? actionButtonHtml('cancel', job.id, 'Cancel') : '',
+    isActiveJob(job) ? actionButtonHtml('pause', job.id, 'Pause') : '',
+    job.status === 'paused' ? actionButtonHtml('resume', job.id, 'Resume', 'primary') : '',
+    isUnfinishedJob(job) ? actionButtonHtml('cancel', job.id, 'Cancel') : '',
     canRetry ? actionButtonHtml('retry', job.id, 'Retry') : '',
-    isActive ? '' : removeButtonHtml(job.id),
+    isFinishedJob(job) ? removeButtonHtml(job.id) : '',
   ].join('')
 }
 
 export const jobRow = (job: Job): RowContent => {
   const isActive = isActiveJob(job)
+  const showsProgress = isUnfinishedJob(job)
 
   return {
     key: job.id,
@@ -99,11 +103,11 @@ export const jobRow = (job: Job): RowContent => {
       label: job.label,
       status: job.status,
       actions: jobActionsHtml(job),
-      showProgress: isActive,
+      showProgress: showsProgress,
     }),
     title: job.title,
     statusText: jobStatusText(job),
-    progressPercent: isActive ? Math.round(job.progress * 100) : null,
+    progressPercent: showsProgress ? Math.round(job.progress * 100) : null,
   }
 }
 

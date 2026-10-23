@@ -25,7 +25,7 @@ Each file has one job, and its name says what that job is. Folders group files b
 
 | Path | Responsibility |
 |---|---|
-| `src/shared/types.ts` | The API contract: every type that crosses between server, desktop and page. |
+| `src/shared/types/` | The API contract: every type that crosses between server, desktop and page, in `media.ts` (link info, qualities, playlists, search), `downloads.ts` (requests, options, jobs, history) and `app.ts` (settings, setup, status, updates). |
 | `src/shared/` | Pure helpers both sides use: tag suggestions (`tags.ts`), finding links (`links.ts`), whether a job is active (`jobs.ts`), resolution labels such as 4K (`resolution.ts`). |
 | `src/server/config.ts` | Where things live (next to the executable when packaged, the project root otherwise), the port and the host. |
 | `src/server/index.ts` | Browser/headless entry point. |
@@ -35,7 +35,7 @@ Each file has one job, and its name says what that job is. Folders group files b
 | `src/server/routes/` | The REST endpoints, one file per area: settings and setup, media (link info, search, preview), downloads. See [http-api.md](http-api.md). |
 | `src/server/services/tools/` | Installing and updating the tools: paths (`tool-paths.ts`), release files and pinned checksums (`release-assets.ts`), one install step per tool (`install-steps.ts`), the setup state machine (`tool-setup.ts`) and the app's instance of it (`app-tool-setup.ts`). |
 | `src/server/services/ytdlp/` | Everything that talks to yt-dlp: shared arguments, reading a link (`media-info.ts`, `video-qualities.ts`), search, readable error messages, download arguments and audio presets, running a download and reading its output lines (`download-process.ts`, `download-events.ts`), and the shapes of its JSON output (`ytdlp-json.ts`). |
-| `src/server/services/downloads/` | The download queue (`download-queue.ts`), validating requests (`download-options.ts`), creating and resetting jobs (`jobs.ts`), turning yt-dlp events into job progress (`job-progress.ts`), and partial folders (`partial-folders.ts`). |
+| `src/server/services/downloads/` | The download queue (`download-queue.ts`), which decides what runs, with its parts: running one download (`job-runner.ts`), the runs in progress and how they were stopped (`active-runs.ts`), the folder each job started in (`job-folders.ts`), converting to and from `queue.json` (`saved-jobs.ts`) and the real yt-dlp engine (`download-engine.ts`). Also validating requests (`download-options.ts`), creating and resetting jobs (`jobs.ts`), turning yt-dlp events into job progress (`job-progress.ts`) and partial folders (`partial-folders.ts`). |
 | `src/server/services/preview/` | Choosing a playable preview stream and relaying it to the page. |
 | `src/server/services/stores/` | Settings and history, stored as JSON in `data/`. |
 | `src/server/lib/` | Building blocks with no app knowledge: HTTP router and JSON helpers, static files, JSON files, zip and tar, checksums, GitHub releases, verified downloads, the desktop shell (open a link, show a file) and stopping a process tree. |
@@ -51,7 +51,7 @@ Everything the app creates lives next to it, so deleting the folder removes the 
 | Folder | Contents |
 |---|---|
 | `tools/` | `yt-dlp/` (the folder build), `ffmpeg/ffmpeg`, `ffmpeg/ffprobe`, and `deno` for the single-executable server. |
-| `data/` | `settings.json`, `history.json`, `window.json` (window size and position) and `window/` (the desktop window's browser data). |
+| `data/` | `settings.json`, `history.json`, `queue.json` (downloads that haven't finished), `window.json` (window size and position) and `window/` (the desktop window's browser data). |
 | `downloads/` | The default download folder; changeable in Settings. |
 
 When running from source, the project root plays this role (these folders are git-ignored).
@@ -105,6 +105,10 @@ YouTube requires yt-dlp to run JavaScript. The runtime depends on how the app ru
 7. When the job ends in any way, its partial folder is deleted. On success the job is added to the history. On cancel the process tree is stopped (process group on Linux and macOS, `taskkill /T` on Windows), so nothing unfinished reaches the download folder at any stage.
 
 A job keeps its slot until its yt-dlp process has exited, even after it was cancelled. Retrying a cancelled job queues it, and it starts only once the previous run has fully ended, so two runs never write the same file.
+
+**Pausing and resuming.** **Pause** stops a download's yt-dlp process but keeps its partial folder, and the job becomes `paused`, which frees its slot. **Resume** queues it again: yt-dlp continues the `.part` files in the same partial folder instead of starting over (measured: a 4K download paused at 7% resumed at 7%). A clip is the exception, because its ffmpeg cut can't continue and starts again. A job remembers the download folder it started in, so changing the folder in Settings while it is paused doesn't lose its partial files. Partial files are deleted when a job is finished (done, failed or cancelled), or when its run was cancelled even if Retry was clicked before the process exited, so a retry always starts fresh. Pausing then resuming while the old process is still exiting keeps them. If yt-dlp finishes on its own just as Pause is clicked, the job counts as done. A process the app stopped is never mistaken for success, not even a playlist that had already saved files. Paused downloads can't be removed from the list; cancel them first.
+
+**Keeping the queue across restarts.** Every time the list of unfinished downloads (waiting, running or paused) changes, it is saved to `data/queue.json`, together with whether each one was paused and the folder it started in. So a crash, a closed console window or a power cut loses nothing. Quitting the app pauses running downloads, keeping their partial files, and the quit question says they'll continue where they stopped. At start-up, downloads that were running come back and continue; downloads the user paused stay paused. Saved downloads are restored before the server answers any request, so they keep their order and nothing added in the meantime can overwrite them. The start-up cleanup of old partial folders runs alongside and skips the folders of saved downloads, however long they have been paused. A job's folder is saved as soon as it starts, and quitting waits for the final save of `queue.json`. Finished downloads go to the history as before; failed and cancelled ones are not kept.
 
 **Trimming a clip.** For a single video (not a live stream), the media panel can download only part of it. Times are typed as `1:23`, `1:02:03` or seconds, or taken from where the preview is paused. yt-dlp gets `--download-sections "*<start>-<end>"`; for video also `--force-keyframes-at-cuts`, which re-encodes around the cuts so the clip starts on the exact frame rather than the nearest keyframe (measured: a 10-second 1080p clip is exactly 10.000 s and takes about 10 s to make). The file name ends with the range, start rounded down and end rounded up (`Title (1m23s-4m57s).mp3`). yt-dlp reports progress for a section only once it is done, so the job shows "Downloading the clip" until then. It also reports the finished file twice when cutting, so a job ignores a file it already has.
 

@@ -1,51 +1,43 @@
-import { isActiveJob } from '@shared/jobs.js'
-import type { DownloadOptions, Job } from '@shared/types.js'
-import { totalFileSize } from '@server/lib/file-size.js'
-import { errorText } from '@server/lib/http/http-error.js'
+import { isActiveJob, isFinishedJob, isUnfinishedJob } from '@shared/jobs.js'
+import type { DownloadOptions, Job } from '@shared/types/downloads.js'
 import type { HistoryStore } from '@server/services/stores/history-store.js'
+import type { SavedJob, SavedQueue } from '@server/services/stores/queue-store.js'
 import type { SettingsStore } from '@server/services/stores/settings-store.js'
-import { toolSetup } from '@server/services/tools/app-tool-setup.js'
-import { startDownload, type DownloadResult } from '@server/services/ytdlp/download-process.js'
-import { applyDownloadEvent } from './job-progress.js'
-import {
-  createQueuedJob,
-  historyEntryFromJob,
-  resetJobForRetry,
-  skippedItemsWarning,
-  type JobDisplayDetails,
-} from './jobs.js'
-import { createPartialFolder, partialFolderFor, removePartialFolder } from './partial-folders.js'
+import { ActiveRuns } from './active-runs.js'
+import { appDownloadEngine, type DownloadEngine } from './download-engine.js'
+import { JobFolders } from './job-folders.js'
+import { runDownloadJob } from './job-runner.js'
+import { createQueuedJob, resetJobForRetry, type JobDisplayDetails } from './jobs.js'
+import { jobFromSavedJob, savedJobFromJob } from './saved-jobs.js'
 
-export interface DownloadEngine {
-  requireTools(): Promise<void>
-  startDownload: typeof startDownload
-  whenIdle(): void
-}
-
-const appDownloadEngine: DownloadEngine = {
-  requireTools: () => toolSetup.requireInstalled(),
-  startDownload,
-  whenIdle: () => toolSetup.checkForUpdate(),
-}
-
-interface ActiveRun {
-  cancelled: boolean
-  cancel: (() => void) | null
+export interface DownloadQueueDependencies {
+  settings: SettingsStore
+  history: HistoryStore
+  savedQueue: SavedQueue
+  engine?: DownloadEngine
 }
 
 const ignoreFailure = () => {}
 
 export class DownloadQueue {
   private readonly jobs = new Map<string, Job>()
-  private readonly activeRuns = new Map<string, ActiveRun>()
+  private readonly activeRuns = new ActiveRuns()
   private readonly runningPromises = new Set<Promise<void>>()
+  private readonly jobFolders: JobFolders
+  private readonly settings: SettingsStore
+  private readonly history: HistoryStore
+  private readonly savedQueue: SavedQueue
+  private readonly engine: DownloadEngine
   private jobSequenceNumber = 0
+  private isShuttingDown = false
 
-  constructor(
-    private readonly settings: SettingsStore,
-    private readonly history: HistoryStore,
-    private readonly engine: DownloadEngine = appDownloadEngine,
-  ) {}
+  constructor({ settings, history, savedQueue, engine = appDownloadEngine }: DownloadQueueDependencies) {
+    this.settings = settings
+    this.history = history
+    this.savedQueue = savedQueue
+    this.engine = engine
+    this.jobFolders = new JobFolders(() => settings.get().downloadFolder)
+  }
 
   list(): Job[] {
     return [...this.jobs.values()].reverse()
@@ -60,7 +52,46 @@ export class DownloadQueue {
     const job = createQueuedJob(id, options, details)
 
     this.jobs.set(id, job)
-    this.startQueuedJobs()
+    this.queueChanged()
+
+    return job
+  }
+
+  restoreJobs(savedJobs: SavedJob[]): void {
+    for (const savedJob of savedJobs) {
+      if (this.jobs.has(savedJob.id)) continue
+
+      this.jobs.set(savedJob.id, jobFromSavedJob(savedJob))
+      this.jobFolders.remember(savedJob.id, savedJob.downloadFolder)
+    }
+
+    this.queueChanged()
+  }
+
+  pause(id: string): Job | undefined {
+    const job = this.jobs.get(id)
+
+    if (!job || !isActiveJob(job)) return job
+
+    Object.assign(job, {
+      status: 'paused',
+      stage: null,
+      bytesPerSecond: null,
+      secondsLeft: null,
+    } satisfies Partial<Job>)
+    this.activeRuns.stop(id, 'pause')
+    this.queueChanged()
+
+    return job
+  }
+
+  resume(id: string): Job | undefined {
+    const job = this.jobs.get(id)
+
+    if (job?.status !== 'paused') return job
+
+    job.status = 'queued'
+    this.queueChanged()
 
     return job
   }
@@ -70,13 +101,15 @@ export class DownloadQueue {
 
     if (!job) return undefined
 
-    if (isActiveJob(job)) {
+    if (isUnfinishedJob(job)) {
       job.status = 'cancelled'
       job.stage = null
-      this.cancelRun(id)
+      this.activeRuns.stop(id, 'cancel')
+
+      if (!this.activeRuns.has(id)) void this.jobFolders.discardPartialFiles(id)
     }
 
-    this.startQueuedJobs()
+    this.queueChanged()
 
     return job
   }
@@ -84,10 +117,10 @@ export class DownloadQueue {
   retry(id: string): Job | undefined {
     const job = this.jobs.get(id)
 
-    if (!job || isActiveJob(job)) return job
+    if (!job || isUnfinishedJob(job)) return job
 
     resetJobForRetry(job)
-    this.startQueuedJobs()
+    this.queueChanged()
 
     return job
   }
@@ -95,15 +128,17 @@ export class DownloadQueue {
   remove(id: string): void {
     const job = this.jobs.get(id)
 
-    if (job && !isActiveJob(job)) this.jobs.delete(id)
+    if (job && isFinishedJob(job)) this.jobs.delete(id)
   }
 
   clearFinished(): void {
-    for (const [id, job] of this.jobs) if (!isActiveJob(job)) this.jobs.delete(id)
+    for (const [id, job] of this.jobs) if (isFinishedJob(job)) this.jobs.delete(id)
   }
 
   startQueuedJobs(): void {
-    let freeSlots = this.settings.get().simultaneousDownloads - this.activeRuns.size
+    if (this.isShuttingDown) return
+
+    let freeSlots = this.settings.get().simultaneousDownloads - this.activeRuns.count
 
     for (const job of this.jobs.values()) {
       if (freeSlots <= 0) return
@@ -117,78 +152,47 @@ export class DownloadQueue {
     }
   }
 
-  async stopAll(): Promise<void> {
-    for (const job of this.jobs.values()) if (isActiveJob(job)) this.cancel(job.id)
-
+  async pauseForShutdown(): Promise<void> {
+    this.isShuttingDown = true
+    this.activeRuns.stopAll('pause')
     await Promise.allSettled(this.runningPromises)
+    await this.saveUnfinishedJobs()
   }
 
-  private cancelRun(id: string): void {
-    const run = this.activeRuns.get(id)
+  private queueChanged(): void {
+    void this.saveUnfinishedJobs()
+    this.startQueuedJobs()
+  }
 
-    if (!run) return
+  private saveUnfinishedJobs(): Promise<void> {
+    const savedJobs = [...this.jobs.values()]
+      .filter(isUnfinishedJob)
+      .map((job) => savedJobFromJob(job, this.jobFolders.savedFolder(job.id)))
 
-    run.cancelled = true
-    run.cancel?.()
+    return this.savedQueue.save(savedJobs).catch(ignoreFailure)
   }
 
   private async runJob(job: Job): Promise<void> {
-    const run: ActiveRun = { cancelled: false, cancel: null }
-    const downloadFolder = this.settings.get().downloadFolder
-    const partialFolder = partialFolderFor(downloadFolder, job.id)
+    const run = this.activeRuns.start(job.id)
 
-    this.activeRuns.set(job.id, run)
+    this.jobFolders.folderFor(job.id)
     job.status = 'downloading'
     job.stage = 'Waiting for the download tools'
+    void this.saveUnfinishedJobs()
 
-    try {
-      await this.engine.requireTools()
-      await createPartialFolder(partialFolder)
-
-      if (run.cancelled) return
-
-      job.stage = job.options.clip ? 'Downloading the clip' : 'Starting'
-
-      const download = this.engine.startDownload(job.options, { downloadFolder, partialFolder }, (event) =>
-        applyDownloadEvent(job, event),
-      )
-
-      run.cancel = download.cancel
-
-      const result = await download.finished
-
-      if (run.cancelled) return
-
-      await this.finishJob(job, result)
-    } catch (error) {
-      if (run.cancelled) return
-
-      job.status = 'error'
-      job.error = errorText(error)
-    } finally {
-      await removePartialFolder(partialFolder)
-      this.afterRun(job)
-    }
+    await runDownloadJob(job, run, { engine: this.engine, history: this.history, jobFolders: this.jobFolders })
+    this.afterRun(job)
   }
 
   private afterRun(job: Job): void {
-    this.activeRuns.delete(job.id)
+    this.activeRuns.finish(job.id)
 
-    if (!isActiveJob(job)) job.finishedAt = new Date().toISOString()
+    if (isFinishedJob(job)) job.finishedAt = new Date().toISOString()
 
     job.bytesPerSecond = null
     job.secondsLeft = null
-    this.startQueuedJobs()
+    this.queueChanged()
 
-    if (!this.activeRuns.size) this.engine.whenIdle()
-  }
-
-  private async finishJob(job: Job, { skippedItems }: DownloadResult): Promise<void> {
-    job.status = 'done'
-    job.warning = skippedItemsWarning(skippedItems)
-    job.progress = 1
-    job.stage = null
-    job.sizeBytes = await totalFileSize(job.files)
-    await this.history.add(historyEntryFromJob(job)).catch(ignoreFailure)
+    if (!this.activeRuns.count && !this.isShuttingDown) this.engine.whenIdle()
   }
 }

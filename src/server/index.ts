@@ -45,7 +45,7 @@ const printStartupMessage = (accessLink: string, loopbackOnly: boolean, services
 const stopOnSignals = (server: Server, services: Services): void => {
   const stop = () => {
     server.close()
-    void services.queue.stopAll().finally(() => process.exit(0))
+    void services.queue.pauseForShutdown().finally(() => process.exit(0))
   }
 
   process.on('SIGINT', stop)

@@ -1,5 +1,5 @@
 import { resolutionTag } from '@shared/resolution.js'
-import type { AudioSource, VideoQuality } from '@shared/types.js'
+import type { AudioSource, VideoQuality } from '@shared/types/media.js'
 import { hasAudio, hasVideo, type YtdlpFormat } from './ytdlp-json.js'
 
 const HIGH_FRAME_RATE_THRESHOLD = 30

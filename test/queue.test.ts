@@ -1,73 +1,21 @@
 import assert from 'node:assert/strict'
 import { existsSync } from 'node:fs'
-import { mkdir, mkdtemp, rm, utimes, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { after, describe, it } from 'node:test'
-import type { Settings } from '@shared/types.js'
 import { normalizeDownloadRequest } from '@server/services/downloads/download-options.js'
-import { DownloadQueue, type DownloadEngine } from '@server/services/downloads/download-queue.js'
-import { PARTIAL_FOLDER_NAME, removeStalePartialFolders } from '@server/services/downloads/partial-folders.js'
-import type { HistoryStore } from '@server/services/stores/history-store.js'
-import type { SettingsStore } from '@server/services/stores/settings-store.js'
-import type { DownloadResult } from '@server/services/ytdlp/download-process.js'
-
-interface FakeRun {
-  finish(skippedItems?: string[]): void
-  fail(message: string): void
-  cancelled: boolean
-}
-
-const createFakeEngine = () => {
-  const runs: FakeRun[] = []
-  const engine: DownloadEngine = {
-    requireTools: async () => {},
-    startDownload: () => {
-      let finish!: (result: DownloadResult) => void
-      let fail!: (error: Error) => void
-      const finished = new Promise<DownloadResult>((resolve, reject) => {
-        finish = resolve
-        fail = reject
-      })
-      const run: FakeRun = {
-        finish: (skippedItems = []) => finish({ skippedItems }),
-        fail: (message) => fail(new Error(message)),
-        cancelled: false,
-      }
-
-      runs.push(run)
-      return { finished, cancel: () => (run.cancelled = true) }
-    },
-    whenIdle: () => {},
-  }
-
-  return { engine, runs }
-}
-
-const waitUntil = async (condition: () => boolean): Promise<void> => {
-  for (let waited = 0; waited < 2000; waited += 5) {
-    if (condition()) return
-
-    await new Promise((resolve) => setTimeout(resolve, 5))
-  }
-
-  throw new Error('Timed out waiting for the condition.')
-}
+import { DownloadQueue } from '@server/services/downloads/download-queue.js'
+import { PARTIAL_FOLDER_NAME } from '@server/services/downloads/partial-folders.js'
+import { createFakeEngine, createQueueTestSetup, noSavedQueue, waitFor, waitUntil } from './support/queue-fakes.js'
 
 describe('DownloadQueue', async () => {
-  const downloadFolder = await mkdtemp(join(tmpdir(), 'queue-test-'))
+  const { downloadFolder, settings, history, options } = await createQueueTestSetup('queue-test-')
 
   after(() => rm(downloadFolder, { recursive: true, force: true }))
 
-  const settings = {
-    get: (): Settings => ({ downloadFolder, simultaneousDownloads: 2, lowLatencyRendering: true }),
-  } as unknown as SettingsStore
-  const history = { add: async () => {} } as unknown as HistoryStore
-  const options = normalizeDownloadRequest({ url: 'https://example.com/video' })
-
   it('waits for a cancelled run to exit before retrying, and keeps the new run cancellable', async () => {
     const { engine, runs } = createFakeEngine()
-    const queue = new DownloadQueue(settings, history, engine)
+    const queue = new DownloadQueue({ settings, history, savedQueue: noSavedQueue, engine })
     const job = queue.add(options, {})
 
     await waitUntil(() => runs.length === 1)
@@ -76,7 +24,7 @@ describe('DownloadQueue', async () => {
     assert.equal(runs[0]?.cancelled, true)
     queue.retry(job.id)
     assert.equal(job.status, 'queued')
-    await new Promise((resolve) => setTimeout(resolve, 30))
+    await waitFor(30)
     assert.equal(runs.length, 1, 'the retry must not start while the first process is still running')
 
     runs[0]?.fail('killed')
@@ -86,13 +34,13 @@ describe('DownloadQueue', async () => {
     queue.cancel(job.id)
     assert.equal(runs[1]?.cancelled, true, 'the retried run must still be cancellable')
     runs[1]?.fail('killed')
-    await queue.stopAll()
+    await queue.pauseForShutdown()
     assert.equal(job.status, 'cancelled')
   })
 
   it('marks real failures as errors and removes the partial folder', async () => {
     const { engine, runs } = createFakeEngine()
-    const queue = new DownloadQueue(settings, history, engine)
+    const queue = new DownloadQueue({ settings, history, savedQueue: noSavedQueue, engine })
     const job = queue.add(options, {})
 
     await waitUntil(() => runs.length === 1)
@@ -107,7 +55,7 @@ describe('DownloadQueue', async () => {
 
   it('finishes a successful download', async () => {
     const { engine, runs } = createFakeEngine()
-    const queue = new DownloadQueue(settings, history, engine)
+    const queue = new DownloadQueue({ settings, history, savedQueue: noSavedQueue, engine })
     const job = queue.add(options, {})
 
     await waitUntil(() => runs.length === 1)
@@ -120,7 +68,7 @@ describe('DownloadQueue', async () => {
 
   it('finishes a playlist that had to skip videos, with a warning instead of an error', async () => {
     const { engine, runs } = createFakeEngine()
-    const queue = new DownloadQueue(settings, history, engine)
+    const queue = new DownloadQueue({ settings, history, savedQueue: noSavedQueue, engine })
     const job = queue.add(normalizeDownloadRequest({ url: 'https://example.com/playlist', playlist: true }), {
       videoCount: 10,
     })
@@ -131,29 +79,24 @@ describe('DownloadQueue', async () => {
     assert.equal(job.status, 'done')
     assert.equal(job.warning, '2 videos could not be downloaded. This video is private.')
   })
-})
 
-describe('removeStalePartialFolders', async () => {
-  const downloadFolder = await mkdtemp(join(tmpdir(), 'stale-test-'))
+  it('starts a retry fresh when the cancelled run exits after Retry was clicked', async () => {
+    const { engine, runs } = createFakeEngine()
+    const queue = new DownloadQueue({ settings, history, savedQueue: noSavedQueue, engine })
+    const job = queue.add(options, {})
 
-  after(() => rm(downloadFolder, { recursive: true, force: true }))
+    await waitUntil(() => runs.length === 1)
 
-  it('removes folders a crashed app left hours ago and keeps ones still in use', async () => {
-    const staleFolder = join(downloadFolder, PARTIAL_FOLDER_NAME, 'crashed-job')
-    const activeFolder = join(downloadFolder, PARTIAL_FOLDER_NAME, 'running-job')
+    const partialFile = join(runs[0]?.partialFolder ?? '', 'video.mp4.part')
 
-    await mkdir(staleFolder, { recursive: true })
-    await mkdir(activeFolder, { recursive: true })
-    await writeFile(join(staleFolder, 'song.webm.part'), 'old')
-    await writeFile(join(activeFolder, 'video.mp4.part'), 'new')
+    await writeFile(partialFile, 'broken')
+    queue.cancel(job.id)
+    queue.retry(job.id)
+    runs[0]?.fail('killed')
+    await waitUntil(() => runs.length === 2)
+    assert.equal(existsSync(partialFile), false)
 
-    const yesterday = new Date(Date.now() - 24 * 3600 * 1000)
-
-    await utimes(join(staleFolder, 'song.webm.part'), yesterday, yesterday)
-    await utimes(staleFolder, yesterday, yesterday)
-
-    await removeStalePartialFolders(downloadFolder)
-    assert.equal(existsSync(staleFolder), false)
-    assert.equal(existsSync(join(activeFolder, 'video.mp4.part')), true)
+    runs[1]?.finish()
+    await waitUntil(() => job.finishedAt !== null)
   })
 })

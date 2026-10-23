@@ -1,4 +1,4 @@
-import type { ClipRange } from './types.js'
+import type { ClipRange } from './types/downloads.js'
 
 const SECONDS_PER_MINUTE = 60
 const SECONDS_PER_HOUR = 3600

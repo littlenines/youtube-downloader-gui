@@ -5,6 +5,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { HttpError } from '@server/lib/http/http-error.js'
 import { parseHistory } from '@server/services/stores/history-store.js'
+import { parseSavedQueue } from '@server/services/stores/queue-store.js'
 import { absoluteFolder, parseSettings } from '@server/services/stores/settings-store.js'
 
 describe('parseSettings', () => {
@@ -72,5 +73,39 @@ describe('parseSettings: rendering', () => {
   it('uses low-latency rendering unless it was turned off', () => {
     assert.equal(parseSettings(undefined).lowLatencyRendering, true)
     assert.equal(parseSettings({ lowLatencyRendering: false }).lowLatencyRendering, false)
+  })
+})
+
+describe('parseSavedQueue', () => {
+  it('keeps saved downloads with a valid link and validates their options', () => {
+    const savedJobs = parseSavedQueue([
+      { id: 'a', options: { url: 'https://youtu.be/x', kind: 'video', container: 'mkv' }, title: 'Song', label: 'L' },
+      { id: 'b', options: { url: 'not a link' } },
+      { options: { url: 'https://youtu.be/y' } },
+      'garbage',
+    ])
+
+    assert.equal(savedJobs.length, 1)
+    assert.equal(savedJobs[0]?.id, 'a')
+    assert.equal(savedJobs[0]?.options.container, 'mkv')
+    assert.equal(savedJobs[0]?.options.format, 'mp3')
+  })
+
+  it('refuses ids that are not a plain name, and folders that are not absolute', () => {
+    const savedJobs = parseSavedQueue([
+      { id: '..', options: { url: 'https://youtu.be/x' } },
+      { id: 'a/../..', options: { url: 'https://youtu.be/x' } },
+      { id: 'ok-1', options: { url: 'https://youtu.be/x' }, downloadFolder: 'relative/folder' },
+    ])
+
+    assert.deepEqual(
+      savedJobs.map((savedJob) => [savedJob.id, savedJob.downloadFolder]),
+      [['ok-1', null]],
+    )
+  })
+
+  it('reads a missing or damaged file as an empty queue', () => {
+    assert.deepEqual(parseSavedQueue(undefined), [])
+    assert.deepEqual(parseSavedQueue({}), [])
   })
 })

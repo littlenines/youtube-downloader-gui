@@ -1,4 +1,4 @@
-import type { SetupStatus } from '@shared/types.js'
+import type { SetupStatus } from '@shared/types/app.js'
 import { findElement, setProgress } from '@client/utils/dom.js'
 
 export const setupDialog = () => findElement<HTMLDialogElement>('#setupDialog')

@@ -1,4 +1,4 @@
-import type { PreviewSource } from '@shared/types.js'
+import type { PreviewSource } from '@shared/types/media.js'
 import { hasAudio, hasVideo, type YtdlpFormat } from '@server/services/ytdlp/ytdlp-json.js'
 
 const PREVIEW_MAXIMUM_HEIGHT = 720

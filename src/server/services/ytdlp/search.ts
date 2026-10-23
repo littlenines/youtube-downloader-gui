@@ -1,4 +1,4 @@
-import type { SearchResult } from '@shared/types.js'
+import type { SearchResult } from '@shared/types/media.js'
 import { toolSetup } from '@server/services/tools/app-tool-setup.js'
 import { runYtdlpForJson } from './run-ytdlp-json.js'
 import type { YtdlpEntry, YtdlpInfo } from './ytdlp-json.js'

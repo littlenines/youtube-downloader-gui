@@ -1,4 +1,4 @@
-import type { AudioFormat, Container } from '@shared/types.js'
+import type { AudioFormat, Container } from '@shared/types/downloads.js'
 
 export interface AudioFormatCard {
   format: AudioFormat

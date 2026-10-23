@@ -1,4 +1,4 @@
-import type { AudioTags } from './types.js'
+import type { AudioTags } from './types/downloads.js'
 
 export interface TagSource {
   title: string

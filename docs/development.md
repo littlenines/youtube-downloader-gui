@@ -65,7 +65,7 @@ If a release run fails, delete the tag (`git push --delete origin v1.1.0` and `g
 - **Arrow functions only.** `const name = (...) => ...` instead of `function`; generators are `function*` expressions. Class methods stay methods.
 - **Blank lines around statements.** Before and after `const`/`let` groups, `if`, loops, `switch` and `try`, and after any block. In CSS, every rule and at-rule is separated by a blank line. `npm run lint:fix` adds them in both.
 - **Pure logic stays pure.** `buildDownloadArguments`, `normalizeDownloadRequest`, `parseMediaInfo`, `parseSettings` and `parseHistory` have no I/O, so they can be tested directly.
-- **The API contract lives in `src/shared/types.ts`.** Change it there first; TypeScript then points at every place that needs updating.
+- **The API contract lives in `src/shared/types/`.** Change it there first; TypeScript then points at every place that needs updating.
 - Prettier formats everything: no semicolons, single quotes, `printWidth` 120.
 
 ## Tests
@@ -74,17 +74,27 @@ Tests live in `test/` and cover:
 
 | File | Covers |
 |---|---|
-| `formats.test.ts` | Choices → yt-dlp arguments: MP3 320, Opus original, cover art, edited tags and their escaping, video codec preferences, playlists, the `--` safety rule. |
-| `media-info.test.ts` | Parsing `yt-dlp -J` output (one row per resolution, vertical video, best audio, playlists), search results, the preview stream choice, readable error messages. |
+| `download-options.test.ts` | Validating download requests, playlist selections, and job labels. |
+| `download-arguments.test.ts` | Choices → yt-dlp arguments: MP3 320, Opus original, cover art, video codec preferences, progress and file markers, playlists, the `--` safety rule. |
+| `tag-and-clip-arguments.test.ts` | Edited tags and their escaping, and clip sections with their file names. |
+| `clip-range.test.ts` | Reading and writing clip times. |
+| `media-info.test.ts` | Parsing `yt-dlp -J` output: one row per resolution, vertical video, best audio, playlists and their positions. |
+| `ytdlp-output.test.ts` | Readable error messages, search results, the preview stream choice, and yt-dlp's progress and file lines. |
 | `tags-and-links.test.ts` | Tag suggestions from video titles and channels, and finding links in pasted or dropped text. |
 | `archive.test.ts` | Zip and tar.gz reading and writing, including refusing zip entries and symbolic links that escape the target folder. |
 | `json-file.test.ts` | Validation on load, concurrent saves keeping the last value, and keeping a copy of a damaged file. |
-| `stores.test.ts` | Defaults and reading settings and history saved by earlier versions. |
-| `queue.test.ts` | The download queue with a fake download engine: cancel then retry while the old process is still exiting, failures, success, playlists that skip videos, partial-folder cleanup and stale folders. |
+| `stores.test.ts` | Defaults, reading settings and history saved by earlier versions, and reading the saved queue safely. |
+| `queue.test.ts` | The download queue with a fake download engine: cancel then retry while the old process is still exiting, failures, success, playlists that skip videos. |
+| `queue-pause.test.ts` | Pausing and resuming in the same partial folder, cancelling a paused download, and a pause racing a finished download. |
+| `queue-saving.test.ts` | Saving unfinished downloads, restoring them, pausing on shutdown and waiting for the last save. |
+| `partial-folders.test.ts` | Removing partial folders left by a crash, while keeping ones in use or belonging to saved downloads. |
 | `request-guard.test.ts` | Refusing cross-site requests and DNS rebinding, and allowing the app's own page. |
 | `access.test.ts` | The access key (cookie, access link, refusals), the Content-Security-Policy, and malformed addresses answering 400. |
 | `verified-download.test.ts` | Checksum match and mismatch, stalled downloads, reading checksum files and release tags (against a local test server). |
 | `tool-setup.test.ts` | The setup states with fake tools: missing, installing, ready, a tool lost later, failed installs, and the update-check schedule. |
+| `app-update.test.ts` | Comparing app versions and offering a newer release. |
+
+Shared fakes and helpers for these live in `test/support/`.
 
 Everything that needs yt-dlp, the network or a window is checked by running the app. A useful end-to-end pass:
 
@@ -131,12 +141,12 @@ Releases are not signed. Windows SmartScreen asks once ("More info" → "Run any
 ## Changing common things
 
 - **A new audio format:**
-  1. Add it to `AudioFormat` in `src/shared/types.ts`.
+  1. Add it to `AudioFormat` in `src/shared/types/downloads.ts`.
   2. Add its yt-dlp arguments to `AUDIO_PRESETS` in `src/server/services/ytdlp/audio-presets.ts`.
   3. Add a card to `AUDIO_FORMAT_CARDS` in `src/client/components/choices/choice-options.ts`.
   4. Add a test.
 - **A new setting:**
-  1. Extend `Settings` in `src/shared/types.ts`.
+  1. Extend `Settings` in `src/shared/types/app.ts`.
   2. Validate it in `parseSettings` and `SettingsStore.update`.
   3. Add the control to the settings dialog in `index.html` and `components/settings.ts`.
 - **Tool versions:**

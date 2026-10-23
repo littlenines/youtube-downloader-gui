@@ -1,5 +1,6 @@
 import { clipLengthSeconds, formatClipTime, parseClipTime } from '@shared/clip-range.js'
-import type { ClipRange, MediaInfo, VideoInfo } from '@shared/types.js'
+import type { ClipRange } from '@shared/types/downloads.js'
+import type { MediaInfo, VideoInfo } from '@shared/types/media.js'
 import { state } from '@client/state.js'
 import { showToast } from '@client/utils/dom.js'
 import { formatDuration } from '@client/utils/format.js'

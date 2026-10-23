@@ -1,5 +1,5 @@
 import { clipFileSuffix } from '@shared/clip-range.js'
-import type { AudioTags, Container, DownloadOptions } from '@shared/types.js'
+import type { AudioTags, Container, DownloadOptions } from '@shared/types/downloads.js'
 import { AUDIO_PRESETS } from './audio-presets.js'
 import { OUTPUT_MARKERS } from './download-events.js'
 import type { DownloadFolders } from './download-process.js'

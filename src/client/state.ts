@@ -1,4 +1,5 @@
-import type { AudioFormat, AudioTags, ClipRange, Container, MediaInfo, MediaKind } from '@shared/types.js'
+import type { AudioFormat, AudioTags, ClipRange, Container, MediaKind } from '@shared/types/downloads.js'
+import type { MediaInfo } from '@shared/types/media.js'
 
 export interface Choices {
   kind: MediaKind

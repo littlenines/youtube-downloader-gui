@@ -1,6 +1,6 @@
 # HTTP API
 
-The page talks to the local server through this JSON API. The types are defined in `src/shared/types.ts`.
+The page talks to the local server through this JSON API. The types are defined in `src/shared/types/`.
 
 - **Address:** `http://127.0.0.1:5199` in the desktop app (another free port if 5199 is taken), `http://localhost:5190` in browser mode.
 - **Access key:** every `/api/` request needs the `yt-downloader-access` cookie, or it gets `401`. Opening any page address with `?access=<key>` sets the cookie (`303` to the same address without the key). The key is in `data/access-key`, and the browser mode prints the link at start-up. The desktop window has the cookie already.
@@ -126,12 +126,12 @@ Unknown values fall back to the defaults.
 
 `{ "jobs": Job[], "history": HistoryEntry[] }`
 
-- `jobs`: this session's downloads, newest first.
+- `jobs`: this session's downloads, newest first, including unfinished ones restored from the last run.
 - `history`: the 30 most recent finished downloads, kept across restarts.
 
 A `Job` has:
 
-- `status`: `queued`, `downloading`, `done`, `error` or `cancelled`.
+- `status`: `queued`, `downloading`, `paused`, `done`, `error` or `cancelled`.
 - `progress`: from 0 to 1.
 - `stage`: a readable step, for example "Downloading video".
 - `bytesPerSecond` and `secondsLeft`.
@@ -144,13 +144,15 @@ A `Job` has:
 
 | Request | Effect |
 |---|---|
-| `POST /api/downloads/:id/cancel` | Stops it and deletes its partial files. |
+| `POST /api/downloads/:id/pause` | Stops a waiting or running download and keeps its partial files. |
+| `POST /api/downloads/:id/resume` | Queues a paused download again; it continues where it stopped. |
+| `POST /api/downloads/:id/cancel` | Stops it (running, waiting or paused) and deletes its partial files. |
 | `POST /api/downloads/:id/retry` | Queues a failed or cancelled download again. |
 | `POST /api/downloads/:id/reveal` | Shows the file in the file manager. Falls back to its folder, or the download folder. |
-| `DELETE /api/downloads/:id` | Removes it from the list and history. The file stays. |
+| `DELETE /api/downloads/:id` | Removes a finished download from the list and history. The file stays. |
 | `DELETE /api/downloads` | Clears every finished download and the history. |
 
-`cancel` and `retry` answer `404` for unknown ids.
+`pause`, `resume`, `cancel` and `retry` answer `404` for unknown ids.
 
 ## Settings
 

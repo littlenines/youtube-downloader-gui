@@ -1,7 +1,7 @@
 import { app } from 'electron'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { Settings } from '@shared/types.js'
+import type { Settings } from '@shared/types/app.js'
 import { DATA_DIRECTORY, IS_PACKAGED, IS_WINDOWS } from '@server/config.js'
 import { parseSettings } from '@server/services/stores/settings-store.js'
 import { APP_NAME } from './app-identity.js'

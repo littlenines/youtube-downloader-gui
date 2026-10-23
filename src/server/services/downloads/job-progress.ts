@@ -1,4 +1,4 @@
-import type { Job } from '@shared/types.js'
+import type { Job } from '@shared/types/downloads.js'
 import type { DownloadEvent, PlaylistItemEvent, ProgressEvent } from '@server/services/ytdlp/download-events.js'
 
 const PICTURE_STREAM_PROGRESS_SHARE = 0.85

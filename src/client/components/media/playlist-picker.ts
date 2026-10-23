@@ -1,4 +1,4 @@
-import type { PlaylistEntry, PlaylistInfo } from '@shared/types.js'
+import type { PlaylistEntry, PlaylistInfo } from '@shared/types/media.js'
 import { state } from '@client/state.js'
 import { escapeHtml, formatDuration } from '@client/utils/format.js'
 

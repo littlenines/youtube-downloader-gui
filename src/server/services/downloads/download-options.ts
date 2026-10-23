@@ -1,5 +1,5 @@
 import { describeClip } from '@shared/clip-range.js'
-import type { AudioTags, ClipRange, Container, DownloadOptions, DownloadRequest } from '@shared/types.js'
+import type { AudioTags, ClipRange, Container, DownloadOptions, DownloadRequest } from '@shared/types/downloads.js'
 import { AUDIO_PRESETS, isAudioFormat } from '@server/services/ytdlp/audio-presets.js'
 
 const CONTAINERS: Container[] = ['mp4', 'mkv', 'webm']

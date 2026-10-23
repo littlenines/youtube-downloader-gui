@@ -7,4 +7,6 @@
 @import './downloads.css';
 @import './dialogs.css';
 @import './responsive.css';
-@import './panels.css';
+@import './preview-and-tags.css';
+@import './search-and-batch.css';
+@import './drop-overlay.css';

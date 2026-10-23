@@ -1,4 +1,4 @@
-import type { SearchResult } from '@shared/types.js'
+import type { SearchResult } from '@shared/types/media.js'
 import { api, ApiError, isAbortError, TOOLS_MISSING_STATUS } from '@client/api.js'
 import { errorMessage, findElement } from '@client/utils/dom.js'
 import { escapeHtml, formatCount, formatDuration } from '@client/utils/format.js'

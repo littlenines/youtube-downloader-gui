@@ -1,4 +1,4 @@
-import type { AudioFormat, Container } from '@shared/types.js'
+import type { AudioFormat, Container } from '@shared/types/downloads.js'
 import { saveChoices, state, type Choices } from '@client/state.js'
 import { CHECKBOX_CHOICES } from './choice-options.js'
 

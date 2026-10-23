@@ -80,6 +80,10 @@
   transform-origin: left;
 }
 
+.job-row.paused .progress-fill {
+  background: var(--text-faint);
+}
+
 .empty-state {
   padding: 26px;
   text-align: center;

@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import type { HistoryEntry } from '@shared/types.js'
+import type { HistoryEntry } from '@shared/types/downloads.js'
 import { DATA_DIRECTORY } from '@server/config.js'
 import { JsonFile } from '@server/lib/json-file.js'
 import {

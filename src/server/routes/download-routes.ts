@@ -1,4 +1,4 @@
-import type { DownloadRequest, DownloadsResponse } from '@shared/types.js'
+import type { DownloadRequest, DownloadsResponse } from '@shared/types/downloads.js'
 import { HttpError } from '@server/lib/http/http-error.js'
 import { readJsonBody } from '@server/lib/http/json.js'
 import type { Router } from '@server/lib/http/router.js'
@@ -36,6 +36,8 @@ export const registerDownloadRoutes = (router: Router, { settings, history, queu
 
   router.post('/api/downloads/:id/cancel', ({ parameters: [id = ''] }) => queue.cancel(id) ?? throwNoSuchDownload())
   router.post('/api/downloads/:id/retry', ({ parameters: [id = ''] }) => queue.retry(id) ?? throwNoSuchDownload())
+  router.post('/api/downloads/:id/pause', ({ parameters: [id = ''] }) => queue.pause(id) ?? throwNoSuchDownload())
+  router.post('/api/downloads/:id/resume', ({ parameters: [id = ''] }) => queue.resume(id) ?? throwNoSuchDownload())
 
   router.post('/api/downloads/:id/reveal', async ({ parameters: [id = ''] }) => {
     const lastFile = queue.find(id)?.files.at(-1) ?? history.find(id)?.files.at(-1)

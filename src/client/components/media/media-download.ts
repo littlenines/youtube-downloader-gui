@@ -1,4 +1,4 @@
-import type { MediaInfo } from '@shared/types.js'
+import type { MediaInfo } from '@shared/types/media.js'
 import { api } from '@client/api.js'
 import { announceDownloadsChanged } from '@client/events.js'
 import { state } from '@client/state.js'

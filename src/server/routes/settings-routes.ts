@@ -1,4 +1,4 @@
-import type { AppUpdateResponse, Settings, StatusResponse } from '@shared/types.js'
+import type { AppUpdateResponse, Settings, StatusResponse } from '@shared/types/app.js'
 import { readJsonBody } from '@server/lib/http/json.js'
 import type { Router } from '@server/lib/http/router.js'
 import { APP_VERSION } from '@server/app-version.js'

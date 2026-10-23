@@ -1,5 +1,5 @@
-import { isActiveJob } from '@shared/jobs.js'
-import type { DownloadsResponse } from '@shared/types.js'
+import { isActiveJob, isFinishedJob } from '@shared/jobs.js'
+import type { DownloadsResponse } from '@shared/types/downloads.js'
 import { api, OfflineError } from '@client/api.js'
 import { onDownloadsChanged } from '@client/events.js'
 import { errorMessage, findElement, showToast } from '@client/utils/dom.js'
@@ -15,6 +15,8 @@ const ROW_ACTIONS: Record<string, (id: string) => Promise<unknown>> = {
   reveal: api.reveal,
   cancel: api.cancel,
   retry: api.retry,
+  pause: api.pause,
+  resume: api.resume,
   remove: api.remove,
 }
 
@@ -36,7 +38,7 @@ const renderDownloads = ({ jobs, history }: DownloadsResponse): void => {
   if (!rows.length) rows.push(staticRow('empty', '<div class="empty-state">Downloads you start appear here.</div>'))
 
   renderRows(jobList(), rows)
-  clearHistoryButton().hidden = !jobs.some((job) => !isActiveJob(job)) && !earlierEntries.length
+  clearHistoryButton().hidden = !jobs.some(isFinishedJob) && !earlierEntries.length
 }
 
 const nextPollDelay = (isBusy: boolean): number => {

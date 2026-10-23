@@ -1,5 +1,5 @@
 import { suggestTags } from '@shared/tags.js'
-import type { AudioTags, MediaInfo } from '@shared/types.js'
+import type { AudioTags } from '@shared/types/downloads.js'
 import { api, ApiError, isAbortError, TOOLS_MISSING_STATUS } from '@client/api.js'
 import { state } from '@client/state.js'
 import { errorMessage, findElement } from '@client/utils/dom.js'
@@ -15,59 +15,26 @@ import {
   setClipEnabled,
 } from './clip-editor.js'
 import { startMediaDownload } from './media-download.js'
-import { mediaHeaderHtml, playlistLinkNoteHtml } from './media-header-html.js'
-import { fileNamePreview, mediaOptionsHtml, TAG_FIELDS } from './media-options-html.js'
+import { fileNamePreview, TAG_FIELDS } from './media-options-html.js'
+import {
+  mediaPanel,
+  renderMediaOptions,
+  renderMediaOptionsKeepingClipFocus,
+  renderMediaPanel,
+  showLoading,
+} from './media-panel-view.js'
 import { startPreview } from './media-preview.js'
 import {
   applyPlaylistCheckbox,
   isPlaylistCheckbox,
-  playlistPickerHtml,
   selectWholePlaylist,
   setWholePlaylistSelected,
 } from './playlist-picker.js'
 
 let currentMediaRequest: AbortController | null = null
 
-const mediaPanel = () => findElement('#media')
-
 const isTagField = (value: string | undefined): value is keyof AudioTags =>
   TAG_FIELDS.some(({ field }) => field === value)
-
-const renderMediaOptions = (): void => {
-  const optionsContainer = mediaPanel().querySelector('.media-options')
-
-  if (state.info && optionsContainer) optionsContainer.innerHTML = mediaOptionsHtml(state.info)
-}
-
-const CLIP_EDGE_ATTRIBUTE = 'data-clip-edge'
-
-const renderMediaOptionsKeepingClipFocus = (): void => {
-  setTimeout(() => {
-    const focusedElement = document.activeElement
-    const focusedEdge = focusedElement instanceof HTMLElement ? focusedElement.getAttribute(CLIP_EDGE_ATTRIBUTE) : null
-
-    renderMediaOptions()
-
-    if (focusedEdge) mediaPanel().querySelector<HTMLInputElement>(`[${CLIP_EDGE_ATTRIBUTE}="${focusedEdge}"]`)?.select()
-  })
-}
-
-const renderMediaPanel = (info: MediaInfo): void => {
-  const backButton = state.openedFromSearch
-    ? '<button class="button ghost small back-button" data-action="back-to-results">← Back to results</button>'
-    : ''
-
-  const playlistHtml = info.kind === 'playlist' ? playlistPickerHtml(info) : playlistLinkNoteHtml(info)
-
-  mediaPanel().innerHTML = `${backButton}<div class="card">${mediaHeaderHtml(info)}${playlistHtml}<div class="media-options"></div></div>`
-  renderMediaOptions()
-  showPanel('media')
-}
-
-const showLoading = (): void => {
-  mediaPanel().innerHTML = '<div class="card loading"><div class="spinner"></div>Reading the link…</div>'
-  showPanel('media')
-}
 
 const showLinkError = (error: unknown): void => {
   const errorBox = findElement('#linkError')

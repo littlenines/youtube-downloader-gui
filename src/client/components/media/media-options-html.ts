@@ -1,5 +1,6 @@
 import { clipFileSuffix, describeClip } from '@shared/clip-range.js'
-import type { AudioFormat, AudioTags, MediaInfo, PlaylistInfo, VideoInfo, VideoQuality } from '@shared/types.js'
+import type { AudioFormat, AudioTags } from '@shared/types/downloads.js'
+import type { MediaInfo, PlaylistInfo, VideoInfo, VideoQuality } from '@shared/types/media.js'
 import { state } from '@client/state.js'
 import { escapeHtml, formatBytes } from '@client/utils/format.js'
 import {

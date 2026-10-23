@@ -80,3 +80,7 @@ dialog::backdrop {
   z-index: 50;
   max-width: calc(100vw - 32px);
 }
+
+.settings-checkbox {
+  margin-top: 12px;
+}

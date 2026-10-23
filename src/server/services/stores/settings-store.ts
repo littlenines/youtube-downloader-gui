@@ -1,7 +1,7 @@
 import { mkdir } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { isAbsolute, join, resolve } from 'node:path'
-import type { Settings } from '@shared/types.js'
+import type { Settings } from '@shared/types/app.js'
 import { DATA_DIRECTORY, DEFAULT_DOWNLOAD_FOLDER } from '@server/config.js'
 import { HttpError } from '@server/lib/http/http-error.js'
 import { JsonFile } from '@server/lib/json-file.js'

@@ -60,7 +60,7 @@ const answerFolderPicker = (window: BrowserWindow, origin: string): void => {
 const quitWhenAllWindowsClose = (server: ReturnType<typeof createApp>, services: Services): void => {
   app.on('window-all-closed', () => {
     server.close()
-    void services.queue.stopAll().finally(() => app.quit())
+    void services.queue.pauseForShutdown().finally(() => app.quit())
   })
 }
 

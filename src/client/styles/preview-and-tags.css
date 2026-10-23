@@ -1,0 +1,71 @@
+#searchPanel,
+#batchPanel {
+  margin-top: 22px;
+}
+
+.back-button {
+  margin-bottom: 8px;
+}
+
+.preview-frame {
+  position: relative;
+}
+
+.preview-frame video.thumbnail {
+  background: #000;
+}
+
+.play-button {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 0;
+  background: #000a;
+  color: #fff;
+  font-size: 20px;
+  padding-left: 4px;
+  transition: background 0.12s;
+}
+
+.play-button:hover {
+  background: var(--accent);
+}
+
+.preview-audio {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.tag-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tag-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.tag-field input {
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--panel-raised);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text);
+  min-width: 0;
+}
+
+.tag-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+}

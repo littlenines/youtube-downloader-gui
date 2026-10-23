@@ -1,6 +1,6 @@
 import type { BrowserWindow } from 'electron'
 import { isActiveJob } from '@shared/jobs.js'
-import type { Job } from '@shared/types.js'
+import type { Job } from '@shared/types/downloads.js'
 import type { Services } from '@server/server.js'
 
 const UPDATE_INTERVAL_MILLISECONDS = 1000

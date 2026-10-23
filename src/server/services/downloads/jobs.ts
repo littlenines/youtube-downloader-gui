@@ -1,4 +1,4 @@
-import type { DownloadOptions, HistoryEntry, Job } from '@shared/types.js'
+import type { DownloadOptions, HistoryEntry, Job } from '@shared/types/downloads.js'
 import { describeDownloadOptions } from './download-options.js'
 
 export interface JobDisplayDetails {

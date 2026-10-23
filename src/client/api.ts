@@ -1,14 +1,6 @@
-import type {
-  AppUpdateResponse,
-  DownloadRequest,
-  DownloadsResponse,
-  Job,
-  MediaInfo,
-  SearchResult,
-  Settings,
-  SetupStatus,
-  StatusResponse,
-} from '@shared/types.js'
+import type { AppUpdateResponse, Settings, SetupStatus, StatusResponse } from '@shared/types/app.js'
+import type { DownloadRequest, DownloadsResponse, Job } from '@shared/types/downloads.js'
+import type { MediaInfo, SearchResult } from '@shared/types/media.js'
 
 export class OfflineError extends Error {
   constructor() {
@@ -70,6 +62,8 @@ export const api = {
   downloads: () => sendRequest<DownloadsResponse>('GET', '/api/downloads'),
   cancel: (id: string) => sendRequest<Job>('POST', downloadPath(id, '/cancel')),
   retry: (id: string) => sendRequest<Job>('POST', downloadPath(id, '/retry')),
+  pause: (id: string) => sendRequest<Job>('POST', downloadPath(id, '/pause')),
+  resume: (id: string) => sendRequest<Job>('POST', downloadPath(id, '/resume')),
   reveal: (id: string) => sendRequest<{ ok: true }>('POST', downloadPath(id, '/reveal')),
   remove: (id: string) => sendRequest<{ ok: true }>('DELETE', downloadPath(id)),
   clearFinished: () => sendRequest<{ ok: true }>('DELETE', '/api/downloads'),
