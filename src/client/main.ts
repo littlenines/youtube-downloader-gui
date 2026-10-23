@@ -5,6 +5,7 @@ import { initializeMediaPanel } from './components/media/media-panel.js'
 import { initializeSearchPanel } from './components/search.js'
 import { initializeSettings } from './components/settings.js'
 import { initializeSetup } from './components/setup/setup.js'
+import { initializeUpdateNotice } from './components/update-notice.js'
 import { desktopBridge } from './desktop.js'
 import { initializeDragAndDrop } from './drag-and-drop.js'
 import { handleEnteredText, initializeLinkInput } from './link-input.js'
@@ -30,6 +31,7 @@ initializeMediaPanel()
 initializeSearchPanel()
 initializeBatchPanel()
 initializeDownloadsPanel()
+initializeUpdateNotice()
 initializeLinkInput()
 initializeDragAndDrop()
 openLinkFromAddress()

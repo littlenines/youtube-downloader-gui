@@ -2,11 +2,12 @@ import { watch } from 'node:fs'
 import { copyFile, mkdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import * as esbuild from 'esbuild'
-import { DIST_DIRECTORY, PROJECT_ROOT } from './common.js'
+import { DIST_DIRECTORY, PROJECT_ROOT, readPackageVersion } from './common.js'
 
 const isWatchMode = process.argv.includes('--watch')
 const isDevelopment = process.argv.includes('--dev') || isWatchMode
 const STATIC_FILES = ['index.html']
+const appVersion = await readPackageVersion(join(PROJECT_ROOT, 'package.json'))
 
 const copyStaticFiles = async (): Promise<void> => {
   await mkdir(join(DIST_DIRECTORY, 'client'), { recursive: true })
@@ -31,10 +32,11 @@ const nodeBundle: esbuild.BuildOptions = {
   format: 'cjs',
   target: 'node20',
   external: ['electron'],
+  define: { __APP_VERSION__: JSON.stringify(appVersion) },
 }
 
 const withModuleUrl: esbuild.BuildOptions = {
-  define: { 'import.meta.url': '__bundle_url' },
+  define: { ...nodeBundle.define, 'import.meta.url': '__bundle_url' },
   banner: { js: 'const __bundle_url = require("node:url").pathToFileURL(__filename).href;' },
 }
 

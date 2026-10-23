@@ -14,6 +14,7 @@ import {
   LICENSE_FILE_NAME,
   LICENSE_SOURCE,
   PROJECT_ROOT,
+  readPackageVersion,
   RELEASE_DIRECTORY,
   runScript,
   targetsFromCommandLine,
@@ -40,9 +41,6 @@ const lockDownElectron = async (executable: string): Promise<void> => {
     [FuseV1Options.GrantFileProtocolExtraPrivileges]: false,
   })
 }
-
-const readPackageVersion = async (packageFile: string): Promise<string> =>
-  (JSON.parse(await readFile(packageFile, 'utf8')) as { version: string }).version
 
 const checkBuildExists = (): void => {
   for (const file of APP_FILES) {

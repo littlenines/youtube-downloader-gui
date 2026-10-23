@@ -176,7 +176,18 @@ export interface SetupStatus {
   downloadSizeMegabytes: number
 }
 
+export interface AppUpdate {
+  version: string
+  releaseUrl: string
+}
+
+export interface AppUpdateResponse {
+  currentVersion: string
+  update: AppUpdate | null
+}
+
 export interface StatusResponse extends Settings {
+  appVersion: string
   ytdlpVersion: string | null
   platform: string
   setup: SetupStatus

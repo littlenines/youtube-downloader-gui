@@ -55,10 +55,19 @@
           <button class="button primary" type="submit">Get</button>
         </form>
         <div class="error-text" id="linkError" hidden></div>
-        <div class="setup-banner" id="setupBanner" hidden>
-          <div class="spinner" id="setupBannerSpinner"></div>
-          <span id="setupBannerText"></span>
-          <button class="button small primary" type="button" id="setupBannerButton">Download tools</button>
+        <div class="banners">
+          <div class="banner setup-banner" id="setupBanner" hidden>
+            <div class="spinner" id="setupBannerSpinner"></div>
+            <span id="setupBannerText"></span>
+            <button class="button small primary" type="button" id="setupBannerButton">Download tools</button>
+          </div>
+          <div class="banner update-banner" id="updateBanner" hidden>
+            <span id="updateBannerText"></span>
+            <a class="button small primary" id="updateDownloadLink" href="#" target="_blank" rel="noopener noreferrer"
+              >Download</a
+            >
+            <button class="button small ghost" type="button" id="updateDismissButton">Not now</button>
+          </div>
         </div>
       </section>
 

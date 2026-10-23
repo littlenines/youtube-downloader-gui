@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 export const PROJECT_ROOT = join(import.meta.dirname, '..')
@@ -26,6 +27,9 @@ export const isLinuxTarget = (target: ReleaseTarget): boolean => target.startsWi
 export const toMegabytes = (bytes: number): string => `${(bytes / 1048576).toFixed(0)} MB`
 
 export const toWindowsLineEndings = (text: string): string => text.replace(/\n/g, '\r\n')
+
+export const readPackageVersion = async (packageFile: string): Promise<string> =>
+  (JSON.parse(await readFile(packageFile, 'utf8')) as { version: string }).version
 
 export const runScript = (main: () => Promise<void>): void => {
   main().catch((error: unknown) => {

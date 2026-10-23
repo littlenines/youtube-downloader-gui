@@ -8,6 +8,7 @@ import { ACCESS_LINK_PARAMETER } from './security/access-cookie.js'
 import { loadOrCreateAccessKey } from './security/access-key-file.js'
 import { isLoopbackHost } from './security/request-guard.js'
 import { createServices, listen, type Services } from './server.js'
+import { checkForAppUpdateOnStartup } from './services/app-updates/app-update-check.js'
 import { toolSetup } from './services/tools/app-tool-setup.js'
 
 const EXIT_DELAY_MILLISECONDS = 300
@@ -76,6 +77,7 @@ const startWebServer = async (): Promise<void> => {
   if (shouldOpenBrowser) openInBrowser(accessLink)
 
   toolSetup.initialize()
+  checkForAppUpdateOnStartup()
   stopOnSignals(server, services)
 }
 

@@ -177,6 +177,15 @@ Measured on a 180 Hz display with a second monitor and a game running, three thi
 
 To measure again, start the app with `--remote-debugging-port=9333` and record frame gaps with `requestAnimationFrame`, or event timing (`PerformanceObserver` with `type: 'event'`) for clicks. Compare with and without a change in the same session, because the graphics load of other programs changes the absolute numbers.
 
+## New app versions
+
+The app doesn't update itself, but it tells the user when a newer release exists:
+
+- **Its own version** comes from `package.json`, baked into every Node bundle at build time (`__APP_VERSION__` in `scripts/build.ts`). Running from source, it reads `package.json` directly. If neither works the version is `unknown`, and no update is offered rather than a false one.
+- **The check** runs once, when the app starts: it asks GitHub for `littlenines/youtube-downloader-gui/releases/latest`, using the same redirect as the tools setup, so there is no API rate limit. Only full versions like `v1.2.3` count; anything else is ignored. A failed check is written to the console and means no notice this run.
+- **The page** asks `GET /api/app-update` once when it opens; the request waits for the start-up check, so a slow connection can't make the notice go missing.
+- **The notice** is a banner under the link box: "Version 1.1.0 is available (you have 1.0.0)", with **Download**, which opens the release page in the browser, and **Not now**, which hides it until a newer version than the dismissed one appears.
+
 ## Security
 
 - The API listens on `127.0.0.1` only (the headless mode can opt into `HOST=0.0.0.0`).

@@ -5,6 +5,7 @@ import { useDesktopShell } from '@server/lib/desktop-shell.js'
 import { ACCESS_COOKIE_NAME } from '@server/security/access-cookie.js'
 import { loadOrCreateAccessKey } from '@server/security/access-key-file.js'
 import { createServices, listen, type Services } from '@server/server.js'
+import { checkForAppUpdateOnStartup } from '@server/services/app-updates/app-update-check.js'
 import { toolSetup } from '@server/services/tools/app-tool-setup.js'
 import { APP_NAME } from './app-identity.js'
 import { confirmCloseWhileDownloading } from './close-confirmation.js'
@@ -85,6 +86,7 @@ const startDesktopApp = async (): Promise<void> => {
   confirmCloseWhileDownloading(window, services)
   quitWhenAllWindowsClose(server, services)
   toolSetup.initialize()
+  checkForAppUpdateOnStartup()
 }
 
 const showStartFailure = (error: unknown): void => {

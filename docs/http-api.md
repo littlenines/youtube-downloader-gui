@@ -9,6 +9,10 @@ The page talks to the local server through this JSON API. The types are defined 
 
 ## Status and setup
 
+### `GET /api/app-update` → `AppUpdateResponse`
+
+`{ "currentVersion": "1.0.0", "update": { "version": "1.1.0", "releaseUrl": "https://github.com/littlenines/youtube-downloader-gui/releases/tag/v1.1.0" } }`. `update` is `null` when the app is up to date, its own version is unknown, or GitHub couldn't be reached. The server checks once per run, starting at start-up; a request made before that check finishes waits for it.
+
 ### `GET /api/status` → `StatusResponse`
 
 ```json
@@ -16,6 +20,7 @@ The page talks to the local server through this JSON API. The types are defined 
   "downloadFolder": "D:\\yt-downloader\\downloads",
   "simultaneousDownloads": 2,
   "lowLatencyRendering": true,
+  "appVersion": "1.0.0",
   "ytdlpVersion": "2026.10.21",
   "platform": "win32/x64",
   "setup": { "state": "ready", "installed": true, "message": null, "progress": null, "downloadSizeMegabytes": 0 }

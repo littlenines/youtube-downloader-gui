@@ -19,7 +19,7 @@ const fillSettingsDialog = (status: StatusResponse): void => {
   findElement('#renderingSetting').hidden = !desktopBridge || !isWindows
   findElement('#folderExample').textContent = isWindows ? 'D:\\Music\\YouTube' : '/home/you/Music/YouTube'
   findElement('#versionInfo').textContent =
-    `yt-dlp ${status.ytdlpVersion ?? '(not installed yet)'} · ${status.platform}`
+    `App ${status.appVersion} · yt-dlp ${status.ytdlpVersion ?? '(not installed yet)'} · ${status.platform}`
 }
 
 const openSettingsDialog = (): void => {

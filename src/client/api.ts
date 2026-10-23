@@ -1,4 +1,5 @@
 import type {
+  AppUpdateResponse,
   DownloadRequest,
   DownloadsResponse,
   Job,
@@ -59,6 +60,7 @@ const downloadPath = (id: string, action = '') => `/api/downloads/${encodeURICom
 
 export const api = {
   status: () => sendRequest<StatusResponse>('GET', '/api/status'),
+  appUpdate: () => sendRequest<AppUpdateResponse>('GET', '/api/app-update'),
   startSetup: () => sendRequest<SetupStatus>('POST', '/api/setup'),
   mediaInfo: (url: string, playlist: boolean, signal: AbortSignal) =>
     sendRequest<MediaInfo>('POST', '/api/info', { url, playlist }, signal),
