@@ -72,9 +72,9 @@ The response is either a `VideoInfo` or a `PlaylistInfo`:
 
 ### `POST /api/search` → `SearchResult[]`
 
-Request: `{ "query": "daft punk get lucky" }` (up to 200 characters).
+Request: `{ "query": "daft punk get lucky", "kind": "video" }`. The query is up to 200 characters; `kind` is `video` (the default) or `playlist`.
 
-Returns up to 12 YouTube results, each with `title`, `url`, `channel`, `durationSeconds`, `viewCount` and `thumbnailUrl`. Answers `409` when the tools are missing.
+Returns up to 30 YouTube results, each with `kind` (`video` or `playlist`), `title`, `url`, `channel`, `durationSeconds`, `viewCount`, `thumbnailUrl` and `isVerified` (a verified or Topic channel). Playlists have no duration or view count. Answers `409` when the tools are missing.
 
 ## Preview
 

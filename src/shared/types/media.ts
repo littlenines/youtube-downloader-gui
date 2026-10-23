@@ -61,11 +61,15 @@ export interface PlaylistInfo {
 
 export type MediaInfo = VideoInfo | PlaylistInfo
 
+export type SearchKind = 'video' | 'playlist'
+
 export interface SearchResult {
+  kind: SearchKind
   title: string
   url: string
   channel: string | null
   durationSeconds: number | null
   viewCount: number | null
   thumbnailUrl: string | null
+  isVerified: boolean
 }

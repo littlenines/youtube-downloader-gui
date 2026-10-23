@@ -25,12 +25,14 @@ export interface YtdlpThumbnail {
 
 export interface YtdlpEntry {
   _type?: string
+  ie_key?: string
   id?: string
   title?: string
   duration?: number
   url?: string
   webpage_url?: string
   channel?: string
+  channel_is_verified?: boolean
   uploader?: string
   view_count?: number
   thumbnails?: YtdlpThumbnail[]

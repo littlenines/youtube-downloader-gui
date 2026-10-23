@@ -1,3 +1,49 @@
+.search-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-bottom: 10px;
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter-chip {
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.filter-chip:hover {
+  background: var(--accent-soft);
+}
+
+.filter-chip.selected {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.filter-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -4px 0 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.empty-state .button {
+  margin-left: 4px;
+}
+
 .search-results {
   display: flex;
   flex-direction: column;
@@ -45,6 +91,11 @@
 .search-details {
   font-size: 13px;
   color: var(--text-muted);
+}
+
+.verified-mark {
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .batch-header {

@@ -86,7 +86,8 @@ Tests live in `test/` and cover:
 | `tag-and-clip-arguments.test.ts` | Edited tags and their escaping, and clip sections with their file names. |
 | `clip-range.test.ts` | Reading and writing clip times. |
 | `media-info.test.ts` | Parsing `yt-dlp -J` output: one row per resolution, vertical video, best audio, playlists and their positions. |
-| `ytdlp-output.test.ts` | Readable error messages, search results, the preview stream choice, and yt-dlp's progress and file lines. |
+| `ytdlp-output.test.ts` | Readable error messages, search results (videos, playlists, verified channels, what is searched), the preview stream choice, and yt-dlp's progress and file lines. |
+| `search-filters.test.ts` | Narrowing search results by length and to verified channels, the edges between lengths, results without a duration, playlists ignoring the video filters, reading the chips, and **Show all**. |
 | `tags-and-links.test.ts` | Tag suggestions from video titles and channels, and finding links in pasted or dropped text. |
 | `archive.test.ts` | Zip and tar.gz reading and writing, including refusing zip entries and symbolic links that escape the target folder. |
 | `json-file.test.ts` | Validation on load, concurrent saves keeping the last value, and keeping a copy of a damaged file. |

@@ -1,6 +1,6 @@
 import type { AppUpdateResponse, Settings, SetupStatus, StatusResponse } from '@shared/types/app.js'
 import type { DownloadRequest, DownloadsResponse, Job } from '@shared/types/downloads.js'
-import type { MediaInfo, SearchResult } from '@shared/types/media.js'
+import type { MediaInfo, SearchKind, SearchResult } from '@shared/types/media.js'
 import type { Subscription, SubscriptionRequest, SubscriptionsResponse } from '@shared/types/subscriptions.js'
 
 export class OfflineError extends Error {
@@ -59,7 +59,8 @@ export const api = {
   startSetup: () => sendRequest<SetupStatus>('POST', '/api/setup'),
   mediaInfo: (url: string, playlist: boolean, signal: AbortSignal) =>
     sendRequest<MediaInfo>('POST', '/api/info', { url, playlist }, signal),
-  search: (query: string, signal: AbortSignal) => sendRequest<SearchResult[]>('POST', '/api/search', { query }, signal),
+  search: (query: string, kind: SearchKind, signal: AbortSignal) =>
+    sendRequest<SearchResult[]>('POST', '/api/search', { query, kind }, signal),
   previewUrl: (token: string) => `/api/preview/${encodeURIComponent(token)}`,
   startDownload: (download: DownloadRequest) => sendRequest<Job>('POST', '/api/downloads', download),
   downloads: () => sendRequest<DownloadsResponse>('GET', '/api/downloads'),

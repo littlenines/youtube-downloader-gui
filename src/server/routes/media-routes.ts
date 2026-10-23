@@ -1,9 +1,10 @@
+import type { SearchKind } from '@shared/types/media.js'
 import { HttpError } from '@server/lib/http/http-error.js'
 import { readJsonBody } from '@server/lib/http/json.js'
 import type { Router } from '@server/lib/http/router.js'
 import { streamPreview } from '@server/services/preview/preview-streams.js'
 import { fetchMediaInfo } from '@server/services/ytdlp/media-info.js'
-import { searchVideos } from '@server/services/ytdlp/search.js'
+import { searchYoutube } from '@server/services/ytdlp/search.js'
 import { abortWhenClientLeaves, isLinkValue, toHttpError } from './route-helpers.js'
 
 const MAXIMUM_QUERY_LENGTH = 200
@@ -28,13 +29,17 @@ export const registerMediaRoutes = (router: Router): void => {
   })
 
   router.post('/api/search', async ({ request, response }) => {
-    const { query } = await readJsonBody<{ query: string }>(request)
+    const { query, kind } = await readJsonBody<{ query: string; kind: SearchKind }>(request)
     const cleanQuery = cleanSearchQuery(query)
 
     if (!cleanQuery) throw new HttpError(400, 'Type something to search for.')
 
     try {
-      return await searchVideos(cleanQuery, abortWhenClientLeaves(response))
+      return await searchYoutube(
+        cleanQuery,
+        kind === 'playlist' ? 'playlist' : 'video',
+        abortWhenClientLeaves(response),
+      )
     } catch (error) {
       throw toHttpError(error)
     }

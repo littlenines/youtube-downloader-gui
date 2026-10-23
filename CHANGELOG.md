@@ -7,6 +7,12 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 ### Added
 
 - **Subscriptions.** Open a channel or playlist and click **🔔 Subscribe**: its new videos then download automatically, with the format you chose, into a folder named after it. Videos already there are skipped, Shorts can be skipped, and premieres and live streams wait until they can be downloaded. The app checks when it starts; in Settings it can also check every 1 to 24 hours while it's open. **Check now** checks at once. The **🔔 Subscriptions** button in the header lists them, with ✕ to unsubscribe.
+- **Search filters.** Chips above the search results:
+  - **📃 Playlists** searches for playlists instead of videos, the easy way to find and download a full album.
+  - **Length:** only videos under 4 minutes for songs, 4 to 20, or over 20.
+  - **✓ Verified only** hides re-uploads and fan channels, keeping the artist's own and other channels YouTube has verified. Their results show a ✓.
+
+  Searches now find 30 results instead of 12. The app remembers the length and Verified filters, and shows "13 of 30 shown · **Show all**" when they hide something.
 
 ### Fixed
 
