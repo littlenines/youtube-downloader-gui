@@ -4,6 +4,7 @@
   gap: 10px;
   margin-top: 10px;
 }
+
 .clip-field {
   display: flex;
   flex-direction: column;
@@ -12,11 +13,13 @@
   font-weight: 600;
   color: var(--text-muted);
 }
+
 .clip-field-row {
   display: flex;
   gap: 6px;
   align-items: center;
 }
+
 .clip-field input {
   flex: 1;
   min-width: 0;
@@ -29,10 +32,12 @@
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
+
 .clip-field input:focus {
   outline: none;
   border-color: var(--accent);
 }
+
 @media (max-width: 640px) {
   .clip-fields {
     grid-template-columns: 1fr;

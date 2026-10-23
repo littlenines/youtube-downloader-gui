@@ -22,7 +22,7 @@ npm start
 | `npm run build` | Builds `dist/`: `desktop.cjs`, `preload.cjs`, `app.cjs`, `icon.png` and `client/`. |
 | `npm test` | Unit tests (`node:test`, run through `tsx`). |
 | `npm run typecheck` | Strict TypeScript for the server, desktop, page, tests and scripts. |
-| `npm run lint` / `lint:fix` | oxlint: arrow functions, blank lines around statements, no one-letter names. `lint:fix` adds missing blank lines and other fixable issues. |
+| `npm run lint` / `lint:fix` | oxlint for TypeScript (arrow functions, blank lines around statements, no one-letter names) and Stylelint for CSS (a blank line between rules). `lint:fix` adds missing blank lines and other fixable issues. |
 | `npm run format` / `format:check` | Prettier. |
 | `npm run package` | Desktop releases for Windows x64, Linux x64 and Linux ARM64 in `release/`. |
 | `npm run package:win`, `package:linux` | The same, for one platform. |
@@ -63,7 +63,7 @@ If a release run fails, delete the tag (`git push --delete origin v1.1.0` and `g
 - **One job per file.** When a file mixes concerns or grows long, split it; the folder groups related files.
 - **Imports use aliases, not `../`.** `@shared/`, `@server/`, `@client/` and `@desktop/` point into `src/` (set in `tsconfig.base.json`; TypeScript, esbuild and tsx all read them). Files in the same folder import each other with `./`.
 - **Arrow functions only.** `const name = (...) => ...` instead of `function`; generators are `function*` expressions. Class methods stay methods.
-- **Blank lines around statements.** Before and after `const`/`let` groups, `if`, loops, `switch` and `try`, and after any block. `npm run lint:fix` adds them.
+- **Blank lines around statements.** Before and after `const`/`let` groups, `if`, loops, `switch` and `try`, and after any block. In CSS, every rule and at-rule is separated by a blank line. `npm run lint:fix` adds them in both.
 - **Pure logic stays pure.** `buildDownloadArguments`, `normalizeDownloadRequest`, `parseMediaInfo`, `parseSettings` and `parseHistory` have no I/O, so they can be tested directly.
 - **The API contract lives in `src/shared/types.ts`.** Change it there first; TypeScript then points at every place that needs updating.
 - Prettier formats everything: no semicolons, single quotes, `printWidth` 120.

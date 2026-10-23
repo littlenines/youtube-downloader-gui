@@ -4,15 +4,18 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
+
 #media {
   margin-top: 22px;
 }
+
 .media-header {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
   gap: 16px;
   padding: 16px;
 }
+
 .thumbnail {
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -21,12 +24,14 @@
   background: var(--border-soft);
   display: block;
 }
+
 .media-header h2 {
   font-size: 18px;
   margin: 2px 0 6px;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
+
 .media-details {
   display: flex;
   flex-wrap: wrap;
@@ -34,9 +39,11 @@
   font-size: 13px;
   color: var(--text-muted);
 }
+
 .media-chips {
   margin-top: 8px;
 }
+
 .chip {
   display: inline-flex;
   align-items: center;
@@ -49,14 +56,17 @@
   color: var(--text-muted);
   border: 1px solid var(--border);
 }
+
 .chip.accent {
   background: var(--accent-soft);
   color: var(--accent);
   border-color: transparent;
 }
+
 .chip.success {
   color: var(--success);
 }
+
 .playlist-note {
   margin: 0 16px 14px;
   padding: 10px 12px;
@@ -70,12 +80,14 @@
   flex-wrap: wrap;
   font-size: 14px;
 }
+
 .tabs {
   display: flex;
   gap: 6px;
   padding: 0 16px;
   border-bottom: 1px solid var(--border);
 }
+
 .tab {
   border: 0;
   background: transparent;
@@ -85,13 +97,16 @@
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
 }
+
 .tab.selected {
   color: var(--text);
   border-bottom-color: var(--accent);
 }
+
 .tab-panel {
   padding: 16px;
 }
+
 .section-label {
   font-size: 13px;
   color: var(--text-muted);

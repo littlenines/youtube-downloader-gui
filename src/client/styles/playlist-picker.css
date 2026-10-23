@@ -4,6 +4,7 @@
   border-radius: 10px;
   background: var(--panel-raised);
 }
+
 .playlist-picker-header {
   display: flex;
   justify-content: space-between;
@@ -14,10 +15,12 @@
   border-bottom: 1px solid var(--border);
   font-size: 14px;
 }
+
 .playlist-picker-actions {
   display: flex;
   gap: 4px;
 }
+
 .playlist-entries {
   list-style: none;
   margin: 0;
@@ -25,6 +28,7 @@
   max-height: 320px;
   overflow-y: auto;
 }
+
 .playlist-entry {
   display: grid;
   grid-template-columns: auto 2.5em 1fr auto;
@@ -35,29 +39,35 @@
   font-size: 14px;
   cursor: pointer;
 }
+
 .playlist-entry:hover {
   background: var(--border-soft);
 }
+
 .playlist-entry input {
   accent-color: var(--accent);
   width: 16px;
   height: 16px;
 }
+
 .playlist-entry-position,
 .playlist-entry-duration {
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
   font-size: 13px;
 }
+
 .playlist-entry-position {
   text-align: right;
 }
+
 .playlist-entry-title {
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .playlist-picker .note {
   margin: 0;
   padding: 8px 12px;

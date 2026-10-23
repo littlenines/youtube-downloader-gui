@@ -2,22 +2,28 @@
   .media-header {
     grid-template-columns: 1fr;
   }
+
   .job-row {
     grid-template-columns: 64px minmax(0, 1fr);
   }
+
   .job-thumbnail {
     width: 64px;
   }
+
   .job-actions {
     grid-column: 1 / -1;
     justify-content: flex-end;
   }
+
   .quality-option {
     grid-template-columns: 80px 1fr;
   }
+
   .quality-size {
     grid-column: 2;
   }
+
   #openFolderButton {
     display: none;
   }
@@ -27,17 +33,21 @@
   user-select: none;
   cursor: default;
 }
+
 .desktop input,
 .desktop .error-text,
 .desktop .monospace {
   user-select: text;
 }
+
 .desktop .top-bar {
   padding: 10px 16px;
 }
+
 .desktop .hero {
   padding-top: 0;
 }
+
 .desktop .hero h1 {
   display: none;
 }

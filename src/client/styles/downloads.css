@@ -1,16 +1,19 @@
 .downloads {
   margin-top: 34px;
 }
+
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
 }
+
 .section-header h2 {
   font-size: 17px;
   margin: 0;
 }
+
 .job-row {
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr) auto;
@@ -19,6 +22,7 @@
   padding: 12px;
   margin-bottom: 8px;
 }
+
 .job-thumbnail {
   width: 96px;
   aspect-ratio: 16 / 9;
@@ -26,15 +30,18 @@
   object-fit: cover;
   background: var(--border-soft);
 }
+
 .job-details {
   min-width: 0;
 }
+
 .job-title {
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .job-status {
   font-size: 13px;
   color: var(--text-muted);
@@ -43,14 +50,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .job-status.error-text {
   color: var(--error);
   white-space: normal;
 }
+
 .job-actions {
   display: flex;
   gap: 6px;
 }
+
 .progress-track {
   height: 6px;
   background: var(--border-soft);
@@ -58,15 +68,18 @@
   overflow: hidden;
   margin-top: 8px;
 }
+
 .progress-track.large {
   height: 10px;
 }
+
 .progress-fill {
   height: 100%;
   background: var(--accent);
   transform: scaleX(0);
   transform-origin: left;
 }
+
 .empty-state {
   padding: 26px;
   text-align: center;
@@ -74,6 +87,7 @@
   border: 1px dashed var(--border);
   border-radius: var(--radius);
 }
+
 .group-label {
   font-size: 12px;
   color: var(--text-faint);

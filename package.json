@@ -18,8 +18,8 @@
     "icon": "tsx scripts/make-icon.ts",
     "typecheck": "tsc -p tsconfig.server.json --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.json",
     "test": "tsx --test test/*.test.ts",
-    "lint": "oxlint --deny-warnings",
-    "lint:fix": "oxlint --fix",
+    "lint": "oxlint --deny-warnings && stylelint \"src/**/*.css\"",
+    "lint:fix": "oxlint --fix && stylelint \"src/**/*.css\" --fix",
     "format": "prettier --write \"src/**/*.{ts,html,css}\" \"test/**/*.ts\" \"scripts/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,css}\" \"test/**/*.ts\" \"scripts/**/*.ts\""
   },
@@ -38,6 +38,7 @@
     "oxlint": "^1.89.0",
     "postject": "^1.0.0-alpha.6",
     "prettier": "^3.9.10",
+    "stylelint": "^17.16.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }
