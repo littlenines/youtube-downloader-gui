@@ -56,7 +56,7 @@ The response is either a `VideoInfo` or a `PlaylistInfo`:
   - `audio`: the best audio stream.
   - `subtitleLanguages`.
   - `playlistId`, when the link points into a playlist.
-- **`PlaylistInfo`** (`kind: "playlist"`) has `videoCount`, the total duration and up to 500 `entries`.
+- **`PlaylistInfo`** (`kind: "playlist"`) has `videoCount`, the total duration and up to 500 `entries`. Each entry has its `position` in the playlist (counting from 1), `title`, `durationSeconds` and `url`.
 
 | Status | When |
 |---|---|
@@ -107,7 +107,8 @@ Request (`DownloadRequest`):
 | `format` (audio) | `mp3`, `m4a`, `opus`, `original`, `flac`, `wav` | `mp3` |
 | `resolution` (video) | Short side in pixels, or `null` for the best | `null` |
 | `container` (video) | `mp4`, `mkv`, `webm` | `mp4` |
-| `playlist` | Download the whole playlist into a numbered folder | `false` |
+| `playlist` | Download a playlist into a numbered folder | `false` |
+| `playlistItems` (playlist) | Positions of the videos to download, from the entries' `position`. `null` downloads every video; an empty list is refused with `400`. | `null` |
 | `coverArt`, `squareCoverArt` | Embed album art, cropped square | `true` |
 | `removeNonMusic` | Cut non-music parts using SponsorBlock data | `false` |
 | `subtitles` | Embed English subtitles (not for WebM) | `false` |

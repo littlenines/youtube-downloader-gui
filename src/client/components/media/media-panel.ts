@@ -7,9 +7,16 @@ import { applyChoiceButton, applyChoiceCheckbox } from '@client/components/choic
 import { showPanel } from '@client/components/panels.js'
 import { requestSetup } from '@client/components/setup/setup.js'
 import { startMediaDownload } from './media-download.js'
-import { mediaHeaderHtml, playlistNoteHtml } from './media-header-html.js'
+import { mediaHeaderHtml, playlistLinkNoteHtml } from './media-header-html.js'
 import { fileNamePreview, mediaOptionsHtml, TAG_FIELDS } from './media-options-html.js'
 import { startPreview } from './media-preview.js'
+import {
+  applyPlaylistCheckbox,
+  isPlaylistCheckbox,
+  playlistPickerHtml,
+  selectWholePlaylist,
+  setWholePlaylistSelected,
+} from './playlist-picker.js'
 
 let currentMediaRequest: AbortController | null = null
 
@@ -29,7 +36,9 @@ const renderMediaPanel = (info: MediaInfo): void => {
     ? '<button class="button ghost small back-button" data-action="back-to-results">← Back to results</button>'
     : ''
 
-  mediaPanel().innerHTML = `${backButton}<div class="card">${mediaHeaderHtml(info)}${playlistNoteHtml(info)}<div class="media-options"></div></div>`
+  const playlistHtml = info.kind === 'playlist' ? playlistPickerHtml(info) : playlistLinkNoteHtml(info)
+
+  mediaPanel().innerHTML = `${backButton}<div class="card">${mediaHeaderHtml(info)}${playlistHtml}<div class="media-options"></div></div>`
   renderMediaOptions()
   showPanel('media')
 }
@@ -64,6 +73,8 @@ export const loadMediaInfo = async (url: string, playlist = false, { fromSearch 
     state.info = info
     state.tags = info.kind === 'video' ? suggestTags(info) : null
 
+    if (info.kind === 'playlist') selectWholePlaylist(info)
+
     if (info.kind === 'video' && !info.qualities.some((quality) => quality.resolution === state.choices.resolution)) {
       state.choices.resolution = null
     }
@@ -97,6 +108,23 @@ const handleMediaPanelClick = (event: Event): void => {
   else if (action === 'download' && state.info) void startMediaDownload(state.info, button)
   else if (action === 'preview' && state.info?.kind === 'video') startPreview(mediaPanel(), state.info)
   else if (action === 'back-to-results') showPanel('search')
+  else if (action === 'select-all-videos' || action === 'select-no-videos') {
+    if (state.info?.kind !== 'playlist') return
+
+    setWholePlaylistSelected(mediaPanel(), state.info, action === 'select-all-videos')
+    renderMediaOptions()
+  }
+}
+
+const handleMediaPanelChange = (event: Event): void => {
+  const target = event.target as HTMLElement
+
+  if (isPlaylistCheckbox(target) && state.info?.kind === 'playlist') {
+    applyPlaylistCheckbox(mediaPanel(), state.info, target)
+    renderMediaOptions()
+  } else if (applyChoiceCheckbox(target)) {
+    renderMediaOptions()
+  }
 }
 
 const handleTagInput = (event: Event): void => {
@@ -114,8 +142,6 @@ const handleTagInput = (event: Event): void => {
 
 export const initializeMediaPanel = (): void => {
   mediaPanel().addEventListener('click', handleMediaPanelClick)
-  mediaPanel().addEventListener('change', (event) => {
-    if (applyChoiceCheckbox(event.target as HTMLElement)) renderMediaOptions()
-  })
+  mediaPanel().addEventListener('change', handleMediaPanelChange)
   mediaPanel().addEventListener('input', handleTagInput)
 }

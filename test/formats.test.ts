@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { describeDownloadOptions, normalizeDownloadRequest } from '@server/services/downloads/download-options.js'
-import { buildDownloadArguments } from '@server/services/ytdlp/download-arguments.js'
+import { buildDownloadArguments, playlistItemsArgument } from '@server/services/ytdlp/download-arguments.js'
 
 const valueAfter = (commandArguments: string[], flag: string) => commandArguments[commandArguments.indexOf(flag) + 1]
 const PARTIAL_FOLDER = '/downloads/.yt-downloader-partial/job-1'
@@ -134,6 +134,32 @@ describe('buildDownloadArguments: safety and playlists', () => {
 
     assert.ok(commandArguments.includes('--yes-playlist'))
     assert.match(valueAfter(commandArguments, '-o') ?? '', /^%\(playlist_title\)s\/%\(playlist_index\)03d - /)
+    assert.ok(!commandArguments.includes('--playlist-items'))
+  })
+
+  it('downloads only the picked videos of a playlist', () => {
+    const commandArguments = argumentsFor({ url: 'https://x', playlist: true, playlistItems: [9, 1, 2, 3, 7, 10] })
+
+    assert.equal(valueAfter(commandArguments, '--playlist-items'), '1-3,7,9-10')
+  })
+})
+
+describe('playlist selection', () => {
+  it('writes runs of positions as ranges', () => {
+    assert.equal(playlistItemsArgument([1]), '1')
+    assert.equal(playlistItemsArgument([1, 2, 3, 5, 8, 9]), '1-3,5,8-9')
+  })
+
+  it('keeps valid positions, sorted and without duplicates', () => {
+    const options = normalizeDownloadRequest({ url: 'x', playlist: true, playlistItems: [4, 2, 4, 0, -1, 2.5, 3] })
+
+    assert.deepEqual(options.playlistItems, [2, 3, 4])
+  })
+
+  it('downloads the whole playlist when nothing valid was picked, and ignores picks for single videos', () => {
+    assert.equal(normalizeDownloadRequest({ url: 'x', playlist: true, playlistItems: [0] }).playlistItems, null)
+    assert.equal(normalizeDownloadRequest({ url: 'x', playlist: true }).playlistItems, null)
+    assert.equal(normalizeDownloadRequest({ url: 'x', playlistItems: [1, 2] }).playlistItems, null)
   })
 })
 

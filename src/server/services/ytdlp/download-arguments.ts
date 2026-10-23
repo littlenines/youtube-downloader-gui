@@ -32,7 +32,27 @@ const setTagArguments = (field: keyof AudioTags, value: string): string[] => {
   return ['--parse-metadata', `${EMPTY_TEMPLATE}${escapedValue}${EMPTY_TEMPLATE}:(?P<meta_${field}>[\\s\\S]+)`]
 }
 
-const reportingArguments = ({ downloadFolder, partialFolder }: DownloadFolders, playlist: boolean): string[] => [
+export const playlistItemsArgument = (positions: number[]): string => {
+  const ranges: [number, number][] = []
+
+  for (const position of positions) {
+    const lastRange = ranges.at(-1)
+
+    if (lastRange && position === lastRange[1] + 1) lastRange[1] = position
+    else ranges.push([position, position])
+  }
+
+  return ranges.map(([first, last]) => (first === last ? String(first) : `${first}-${last}`)).join(',')
+}
+
+const playlistArguments = ({ playlist, playlistItems }: DownloadOptions): string[] => {
+  if (!playlist) return ['--no-playlist']
+  if (!playlistItems) return ['--yes-playlist']
+
+  return ['--yes-playlist', '--playlist-items', playlistItemsArgument(playlistItems)]
+}
+
+const reportingArguments = ({ downloadFolder, partialFolder }: DownloadFolders): string[] => [
   '--newline',
   '--progress',
   '--windows-filenames',
@@ -47,7 +67,6 @@ const reportingArguments = ({ downloadFolder, partialFolder }: DownloadFolders, 
   `before_dl:${OUTPUT_MARKERS.item}%(playlist_index|)s|%(n_entries|)s|%(title)s`,
   '--print',
   `after_move:${OUTPUT_MARKERS.file}%(filepath)s`,
-  playlist ? '--yes-playlist' : '--no-playlist',
 ]
 
 const audioArguments = (options: DownloadOptions, playlistFolder: string): string[] => {
@@ -109,5 +128,5 @@ export const buildDownloadArguments = (options: DownloadOptions, folders: Downlo
   const formatArguments =
     options.kind === 'audio' ? audioArguments(options, playlistFolder) : videoArguments(options, playlistFolder)
 
-  return [...reportingArguments(folders, options.playlist), ...formatArguments, '--', options.url]
+  return [...reportingArguments(folders), ...playlistArguments(options), ...formatArguments, '--', options.url]
 }

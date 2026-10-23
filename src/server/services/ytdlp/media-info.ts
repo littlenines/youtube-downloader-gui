@@ -16,23 +16,30 @@ const playlistIdFromUrl = (url: string): string | null => {
   }
 }
 
-const isPresentEntry = (entry: YtdlpEntry | null): entry is YtdlpEntry => Boolean(entry)
+interface PositionedEntry {
+  entry: YtdlpEntry
+  position: number
+}
+
+const withPlaylistPositions = (entries: (YtdlpEntry | null)[]): PositionedEntry[] =>
+  entries.flatMap((entry, index) => (entry ? [{ entry, position: index + 1 }] : []))
 
 const parsePlaylistInfo = (info: YtdlpInfo, requestedUrl: string): PlaylistInfo => {
-  const entries = (info.entries ?? []).filter(isPresentEntry)
-  const totalSeconds = entries.reduce((sum, entry) => sum + (entry.duration ?? 0), 0)
+  const positionedEntries = withPlaylistPositions(info.entries ?? [])
+  const totalSeconds = positionedEntries.reduce((sum, { entry }) => sum + (entry.duration ?? 0), 0)
 
   return {
     kind: 'playlist',
     title: info.title ?? 'Playlist',
     uploader: info.uploader ?? info.channel ?? null,
     url: info.webpage_url ?? requestedUrl,
-    videoCount: entries.length,
-    thumbnailUrl: info.thumbnails?.at(-1)?.url ?? entries[0]?.thumbnails?.at(-1)?.url ?? null,
+    videoCount: positionedEntries.length,
+    thumbnailUrl: info.thumbnails?.at(-1)?.url ?? positionedEntries[0]?.entry.thumbnails?.at(-1)?.url ?? null,
     durationSeconds: totalSeconds || null,
-    entries: entries
+    entries: positionedEntries
       .slice(0, MAXIMUM_PLAYLIST_ENTRIES)
-      .map((entry) => ({
+      .map(({ entry, position }) => ({
+        position,
         title: entry.title ?? UNTITLED,
         durationSeconds: entry.duration ?? null,
         url: entry.url ?? entry.webpage_url ?? '',

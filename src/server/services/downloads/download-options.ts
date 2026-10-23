@@ -3,6 +3,7 @@ import { AUDIO_PRESETS, isAudioFormat } from '@server/services/ytdlp/audio-prese
 
 const CONTAINERS: Container[] = ['mp4', 'mkv', 'webm']
 const MAXIMUM_TAG_LENGTH = 200
+const MAXIMUM_PLAYLIST_ITEMS = 10_000
 
 const isContainer = (value: unknown): value is Container => CONTAINERS.includes(value as Container)
 
@@ -28,6 +29,16 @@ const normalizeResolution = (value: unknown): number | null => {
   return Number.isFinite(resolution) && resolution > 0 ? Math.round(resolution) : null
 }
 
+const isPlaylistPosition = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) >= 1
+
+export const normalizePlaylistItems = (value: unknown): number[] | null => {
+  if (!Array.isArray(value)) return null
+
+  const positions = [...new Set(value.filter(isPlaylistPosition))].sort((first, second) => first - second)
+
+  return positions.length ? positions.slice(0, MAXIMUM_PLAYLIST_ITEMS) : null
+}
+
 export const normalizeDownloadRequest = (request: Partial<DownloadRequest>): DownloadOptions => ({
   url: String(request.url ?? '').trim(),
   kind: request.kind === 'video' ? 'video' : 'audio',
@@ -35,6 +46,7 @@ export const normalizeDownloadRequest = (request: Partial<DownloadRequest>): Dow
   resolution: normalizeResolution(request.resolution),
   container: isContainer(request.container) ? request.container : 'mp4',
   playlist: Boolean(request.playlist),
+  playlistItems: request.playlist ? normalizePlaylistItems(request.playlistItems) : null,
   coverArt: request.coverArt !== false,
   squareCoverArt: request.squareCoverArt !== false,
   removeNonMusic: Boolean(request.removeNonMusic),

@@ -1,8 +1,6 @@
 import type { MediaInfo } from '@shared/types.js'
 import { escapeHtml, formatCount, formatDuration } from '@client/utils/format.js'
 
-const PLAYLIST_TITLES_SHOWN = 5
-
 const thumbnailHtml = (info: MediaInfo): string => {
   const image = info.thumbnailUrl
     ? `<img class="thumbnail" src="${escapeHtml(info.thumbnailUrl)}" alt="" referrerpolicy="no-referrer">`
@@ -41,22 +39,9 @@ export const mediaHeaderHtml = (info: MediaInfo): string => `<div class="media-h
       <div class="media-details">${detailsHtml(info)}</div>
       <div class="media-chips">${chipsHtml(info)}</div></div></div>`
 
-export const playlistNoteHtml = (info: MediaInfo): string => {
-  if (info.kind === 'video' && info.playlistId) {
-    return `<div class="playlist-note"><span>This video is part of a playlist.</span>
-      <button class="button small" data-action="load-playlist">Download the whole playlist instead</button></div>`
-  }
+export const playlistLinkNoteHtml = (info: MediaInfo): string => {
+  if (info.kind !== 'video' || !info.playlistId) return ''
 
-  if (info.kind === 'playlist') {
-    const firstTitles = info.entries
-      .slice(0, PLAYLIST_TITLES_SHOWN)
-      .map((entry) => escapeHtml(entry.title))
-      .join(' · ')
-    const remainingCount = info.videoCount - PLAYLIST_TITLES_SHOWN
-    const moreText = remainingCount > 0 ? ` · and ${remainingCount} more` : ''
-
-    return `<div class="playlist-note"><span class="small-text">${firstTitles}${moreText}</span></div>`
-  }
-
-  return ''
+  return `<div class="playlist-note"><span>This video is part of a playlist.</span>
+      <button class="button small" data-action="load-playlist">Open the playlist to pick videos</button></div>`
 }

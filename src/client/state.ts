@@ -14,6 +14,7 @@ export interface AppState {
   url: string
   info: MediaInfo | null
   tags: AudioTags | null
+  selectedPlaylistPositions: Set<number>
   openedFromSearch: boolean
   choices: Choices
 }
@@ -39,7 +40,14 @@ const loadChoices = (): Choices => {
   }
 }
 
-export const state: AppState = { url: '', info: null, tags: null, openedFromSearch: false, choices: loadChoices() }
+export const state: AppState = {
+  url: '',
+  info: null,
+  tags: null,
+  selectedPlaylistPositions: new Set(),
+  openedFromSearch: false,
+  choices: loadChoices(),
+}
 
 export const saveChoices = (): void => {
   try {

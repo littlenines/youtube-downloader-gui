@@ -106,6 +106,8 @@ YouTube requires yt-dlp to run JavaScript. The runtime depends on how the app ru
 
 A job keeps its slot until its yt-dlp process has exited, even after it was cancelled. Retrying a cancelled job queues it, and it starts only once the previous run has fully ended, so two runs never write the same file.
 
+**Picking videos from a playlist.** A playlist opens with every video ticked in a checklist (the first 500 are listed). The page sends the ticked positions as `playlistItems`, and yt-dlp gets them as `--playlist-items`, with runs written as ranges (`1-3,7,9-12`). With every listed video ticked, the page sends `null` instead, so a playlist longer than 500 still downloads completely. Positions count unavailable videos too, because yt-dlp's numbering does; the files keep their playlist number (`004 - Title`).
+
 **Playlists with unavailable videos.** yt-dlp skips a private or removed video and carries on, but then exits with an error code. When a playlist saved at least one file, the job counts as done, and `Job.warning` says how many videos were skipped and why (for example "2 videos could not be downloaded. This video is private."). Only a playlist that saved nothing is a failure.
 
 **Partial folders.** The shared `.yt-downloader-partial` folder is marked hidden on Windows, where a leading dot doesn't hide anything. At start-up, job folders left by a crash or a killed app are removed once nothing in them has changed for six hours. The delay is because another copy of the app (the browser mode, say) may be downloading into the same folder.

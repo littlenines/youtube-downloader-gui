@@ -4,11 +4,14 @@ import { announceDownloadsChanged } from '@client/events.js'
 import { state } from '@client/state.js'
 import { errorMessage, showToast } from '@client/utils/dom.js'
 import { selectedVideoResolution } from './media-options-html.js'
+import { selectedPlaylistItems, selectedVideoCount } from './playlist-picker.js'
 
 const ERROR_TOAST_MILLISECONDS = 6000
 
 const displayTitle = (info: MediaInfo, tags: typeof state.tags): string =>
   tags?.title ? `${tags.artist ? `${tags.artist} - ` : ''}${tags.title}` : info.title
+
+const videoCountText = (count: number): string => `${count} ${count === 1 ? 'video' : 'videos'}`
 
 const requestedResolution = (info: MediaInfo): number | null => {
   if (state.choices.kind === 'audio') return null
@@ -19,7 +22,7 @@ const requestedResolution = (info: MediaInfo): number | null => {
 export const startMediaDownload = async (info: MediaInfo, button: HTMLButtonElement): Promise<void> => {
   const { choices } = state
   const isPlaylist = info.kind === 'playlist'
-  const videoCount = info.kind === 'playlist' ? info.videoCount : 1
+  const videoCount = info.kind === 'playlist' ? selectedVideoCount(info) : 1
   const tags = choices.kind === 'audio' && !isPlaylist ? state.tags : null
 
   button.disabled = true
@@ -32,6 +35,7 @@ export const startMediaDownload = async (info: MediaInfo, button: HTMLButtonElem
       resolution: requestedResolution(info),
       container: choices.container,
       playlist: isPlaylist,
+      playlistItems: info.kind === 'playlist' ? selectedPlaylistItems(info) : null,
       coverArt: choices.coverArt,
       squareCoverArt: true,
       removeNonMusic: choices.removeNonMusic,
@@ -41,7 +45,7 @@ export const startMediaDownload = async (info: MediaInfo, button: HTMLButtonElem
       thumbnailUrl: info.thumbnailUrl,
       videoCount,
     })
-    showToast(isPlaylist ? `Added ${videoCount} videos to the downloads.` : 'Download started.')
+    showToast(isPlaylist ? `Added ${videoCountText(videoCount)} to the downloads.` : 'Download started.')
     announceDownloadsChanged()
   } catch (error) {
     showToast(errorMessage(error), ERROR_TOAST_MILLISECONDS)

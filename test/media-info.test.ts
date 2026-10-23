@@ -100,6 +100,23 @@ describe('parseMediaInfo: playlist', () => {
     assert.equal(playlist.videoCount, 2)
     assert.equal(playlist.durationSeconds, 90)
   })
+
+  it('keeps each video at its position in the playlist, counting unavailable ones', () => {
+    const playlist = parseMediaInfo(
+      { _type: 'playlist', entries: [{ title: 'a', url: 'u1' }, null, { title: 'b', url: 'u2' }] },
+      'https://x',
+    )
+
+    if (playlist.kind !== 'playlist') return assert.fail('expected a playlist')
+
+    assert.deepEqual(
+      playlist.entries.map((entry) => [entry.position, entry.title]),
+      [
+        [1, 'a'],
+        [3, 'b'],
+      ],
+    )
+  })
 })
 
 describe('friendlyErrorMessage', () => {

@@ -1,4 +1,4 @@
-import type { AudioFormat, AudioTags, MediaInfo, VideoInfo, VideoQuality } from '@shared/types.js'
+import type { AudioFormat, AudioTags, MediaInfo, PlaylistInfo, VideoInfo, VideoQuality } from '@shared/types.js'
 import { state } from '@client/state.js'
 import { escapeHtml, formatBytes } from '@client/utils/format.js'
 import {
@@ -12,6 +12,7 @@ import {
   selectedClass,
 } from '@client/components/choices/choice-html.js'
 import { audioFormatCard } from '@client/components/choices/choice-options.js'
+import { isWholePlaylistSelected, selectedVideoCount } from './playlist-picker.js'
 
 const FOUR_K_RESOLUTION = 2160
 const AUDIO_BYTES_PER_SECOND: Partial<Record<AudioFormat, number>> = { mp3: 320_000 / 8, wav: 192_000, flac: 110_000 }
@@ -109,22 +110,29 @@ const videoQualityLabel = (info: MediaInfo): string => {
   return selectedVideoQuality(info)?.label ?? 'best quality'
 }
 
+const playlistSelectionSummary = (info: PlaylistInfo): string =>
+  isWholePlaylistSelected(info)
+    ? `all ${info.videoCount} videos`
+    : `${selectedVideoCount(info)} of ${info.videoCount} videos`
+
 const summaryHtml = (info: MediaInfo): string => {
   const { choices } = state
   const formatText =
     choices.kind === 'audio'
       ? audioFormatCard(choices.format).title
       : `${choices.container.toUpperCase()} · ${videoQualityLabel(info)}`
-  const videoCountText = info.kind === 'playlist' ? ` · all ${info.videoCount} videos` : ''
+  const videoCountText = info.kind === 'playlist' ? ` · ${playlistSelectionSummary(info)}` : ''
   const estimate = estimatedBytes(info)
   const estimateText = estimate ? ` · ~${formatBytes(estimate)}` : ''
 
   return `<b>${escapeHtml(formatText)}</b>${videoCountText}${estimateText}`
 }
 
+const isNothingSelected = (info: MediaInfo): boolean => info.kind === 'playlist' && selectedVideoCount(info) === 0
+
 const footerHtml = (info: MediaInfo): string =>
   `<div class="media-footer"><span class="download-summary">${summaryHtml(info)}</span>
-    <button class="button primary large" data-action="download">⬇ Download</button></div>`
+    <button class="button primary large" data-action="download" ${isNothingSelected(info) ? 'disabled' : ''}>⬇ Download</button></div>`
 
 export const mediaOptionsHtml = (info: MediaInfo): string => {
   const panelHtml = state.choices.kind === 'audio' ? audioPanelHtml(info) : videoPanelHtml(info)

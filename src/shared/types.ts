@@ -52,6 +52,7 @@ export interface VideoInfo {
 }
 
 export interface PlaylistEntry {
+  position: number
   title: string
   durationSeconds: number | null
   url: string
@@ -86,6 +87,7 @@ export interface DownloadRequest {
   resolution?: number | null
   container?: Container
   playlist?: boolean
+  playlistItems?: number[] | null
   coverArt?: boolean
   squareCoverArt?: boolean
   removeNonMusic?: boolean
@@ -103,6 +105,7 @@ export interface DownloadOptions {
   resolution: number | null
   container: Container
   playlist: boolean
+  playlistItems: number[] | null
   coverArt: boolean
   squareCoverArt: boolean
   removeNonMusic: boolean

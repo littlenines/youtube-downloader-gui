@@ -18,6 +18,10 @@ export const registerDownloadRoutes = (router: Router, { settings, history, queu
 
     if (!isLinkValue(body.url)) throw new HttpError(400, 'No link to download.')
 
+    if (body.playlist && Array.isArray(body.playlistItems) && !body.playlistItems.length) {
+      throw new HttpError(400, 'Pick at least one video from the playlist.')
+    }
+
     return queue.add(normalizeDownloadRequest(body), {
       title: body.title,
       thumbnailUrl: body.thumbnailUrl,
