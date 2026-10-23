@@ -2,6 +2,14 @@
 
 Everything that changed in YT Downloader, newest first. Download any version from the [releases page](https://github.com/littlenines/youtube-downloader-gui/releases).
 
+## Unreleased
+
+### Fixed
+
+- **Search results and the video panel can be closed.** A **✕** button closes them, and so do <kbd>Esc</kbd> and clearing the link box. Closing also stops a search or link that is still loading.
+- **No more jumping panels.** Searching while a link is still loading, or opening a link while a search is still loading, used to swap the screen back when the older one finished.
+- **The preview stops when you leave it.** Going back to the results or starting a new search used to leave the preview playing out of sight.
+
 ## 1.2.0
 
 ### Added

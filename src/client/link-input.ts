@@ -3,7 +3,7 @@ import { showBatch } from './components/batch.js'
 import { loadMediaInfo } from './components/media/media-panel.js'
 import { searchVideos } from './components/search.js'
 import { requestSetup, toolsAvailable } from './components/setup/setup.js'
-import { findElement } from './utils/dom.js'
+import { findElement, isTextEntryField } from './utils/dom.js'
 
 const linkInput = () => findElement<HTMLInputElement>('#linkInput')
 const linkError = () => findElement('#linkError')
@@ -45,8 +45,6 @@ const pasteFromClipboard = async (): Promise<void> => {
   }
 }
 
-const isTypingInTextField = (event: Event) => Boolean((event.target as HTMLElement).closest('input, textarea'))
-
 export const initializeLinkInput = (): void => {
   findElement<HTMLFormElement>('#linkForm').addEventListener('submit', (event) => {
     event.preventDefault()
@@ -63,7 +61,7 @@ export const initializeLinkInput = (): void => {
   })
 
   window.addEventListener('paste', (event) => {
-    if (isTypingInTextField(event)) return
+    if (isTextEntryField(event.target)) return
 
     const text = event.clipboardData?.getData('text') ?? ''
 

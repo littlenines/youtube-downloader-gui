@@ -25,6 +25,15 @@ export const setProgress = (progressFill: HTMLElement, fraction: number): void =
   progressFill.parentElement?.setAttribute('aria-valuenow', String(Math.round(clampedFraction * 100)))
 }
 
+const TEXT_ENTRY_SELECTOR = [
+  'textarea',
+  'input:not([type])',
+  ...['text', 'search', 'url', 'email', 'number', 'password', 'tel'].map((type) => `input[type="${type}"]`),
+].join(', ')
+
+export const isTextEntryField = (target: EventTarget | null): boolean =>
+  target instanceof Element && target.closest(TEXT_ENTRY_SELECTOR) !== null
+
 export const errorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error))
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined

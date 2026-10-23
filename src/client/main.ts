@@ -1,5 +1,6 @@
 import { isWebLink } from '@shared/links.js'
 import { initializeBatchPanel } from './components/batch.js'
+import { initializeClosingPanels } from './components/close-panels.js'
 import { initializeDownloadsPanel } from './components/downloads/downloads-panel.js'
 import { initializeMediaPanel } from './components/media/media-panel.js'
 import { initializeSearchPanel } from './components/search.js'
@@ -30,6 +31,7 @@ initializeSettings()
 initializeMediaPanel()
 initializeSearchPanel()
 initializeBatchPanel()
+initializeClosingPanels()
 initializeDownloadsPanel()
 initializeUpdateNotice()
 initializeLinkInput()

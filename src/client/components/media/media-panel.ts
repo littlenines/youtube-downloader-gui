@@ -4,7 +4,7 @@ import { api, ApiError, isAbortError, TOOLS_MISSING_STATUS } from '@client/api.j
 import { state } from '@client/state.js'
 import { errorMessage, findElement } from '@client/utils/dom.js'
 import { applyChoiceButton, applyChoiceCheckbox } from '@client/components/choices/apply-choice.js'
-import { showPanel } from '@client/components/panels.js'
+import { showPanel, whenPanelHidden } from '@client/components/panels.js'
 import { requestSetup } from '@client/components/setup/setup.js'
 import {
   applyClipTimeInput,
@@ -41,6 +41,11 @@ const showLinkError = (error: unknown): void => {
 
   errorBox.textContent = errorMessage(error)
   errorBox.hidden = false
+}
+
+const cancelMediaRequest = (): void => {
+  currentMediaRequest?.abort()
+  currentMediaRequest = null
 }
 
 export const loadMediaInfo = async (url: string, playlist = false, { fromSearch = false } = {}): Promise<void> => {
@@ -93,7 +98,7 @@ const handleMediaPanelClick = (event: Event): void => {
 
   const action = button.dataset.action
 
-  if (action === 'load-playlist') void loadMediaInfo(state.url, true)
+  if (action === 'load-playlist') void loadMediaInfo(state.url, true, { fromSearch: state.openedFromSearch })
   else if (action === 'download' && state.info) void startMediaDownload(state.info, button)
   else if (action === 'preview' && state.info?.kind === 'video') startPreview(mediaPanel(), state.info)
   else if (action === 'back-to-results') showPanel('search')
@@ -139,6 +144,7 @@ const handleTagInput = (event: Event): void => {
 }
 
 export const initializeMediaPanel = (): void => {
+  whenPanelHidden('media', cancelMediaRequest)
   mediaPanel().addEventListener('click', handleMediaPanelClick)
   mediaPanel().addEventListener('change', handleMediaPanelChange)
   mediaPanel().addEventListener('input', handleTagInput)
