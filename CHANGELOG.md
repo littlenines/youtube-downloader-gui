@@ -13,12 +13,14 @@ Everything that changed in YT Downloader, newest first. Download any version fro
   - **✓ Verified only** hides re-uploads and fan channels, keeping the artist's own and other channels YouTube has verified. Their results show a ✓.
 
   Searches now find 30 results instead of 12. The app remembers the length and Verified filters, and shows "13 of 30 shown · **Show all**" when they hide something.
+- **Save the cover image.** **🖼 Save cover** under a video's title saves its thumbnail in full size as a JPG, and **Save square** crops it like album art. They go to the downloads folder and show in the downloads list.
 
 ### Fixed
 
 - **Playlist and channel links open in seconds.** Pasting a playlist or channel link used to read every video in it and gave up after two minutes. Channels now get their own panel with **Subscribe**.
 - **Search results and the video panel can be closed.** A **✕** button closes them, and so do <kbd>Esc</kbd> and clearing the link box. Closing also stops a search or link that is still loading.
 - **No more jumping panels.** Searching while a link is still loading, or opening a link while a search is still loading, used to swap the screen back when the older one finished.
+- **Square album art from tall thumbnails.** Cropping a thumbnail that is taller than wide failed with the old crop. It now takes the middle square of any shape.
 - **The preview stops when you leave it.** Going back to the results or starting a new search used to leave the preview playing out of sight.
 
 ## 1.2.0

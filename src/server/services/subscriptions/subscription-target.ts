@@ -1,4 +1,4 @@
-import { runYtdlpForJson } from '@server/services/ytdlp/run-ytdlp-json.js'
+import { runYtdlpForJson } from '@server/services/ytdlp/run-ytdlp.js'
 import { isYoutubeChannel, youtubeChannelTab, youtubeChannelUrl } from '@server/services/ytdlp/youtube-links.js'
 import type { YtdlpInfo, YtdlpThumbnail } from '@server/services/ytdlp/ytdlp-json.js'
 import type { VideoSource } from './listed-videos.js'

@@ -9,7 +9,7 @@ describe('buildDownloadArguments: audio', () => {
     assert.equal(valueAfter(commandArguments, '--audio-format'), 'mp3')
     assert.equal(valueAfter(commandArguments, '--audio-quality'), '320K')
     assert.ok(commandArguments.includes('--embed-thumbnail'))
-    assert.match(valueAfter(commandArguments, '--ppa') ?? '', /crop=ih:ih/)
+    assert.match(valueAfter(commandArguments, '--ppa') ?? '', /crop=min\(iw\\,ih\):min\(iw\\,ih\)/)
     assert.match(valueAfter(commandArguments, '-o') ?? '', /%\(artist&\{\} - \|\)s%\(track,title\)s/)
   })
 

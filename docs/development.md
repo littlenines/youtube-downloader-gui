@@ -83,6 +83,7 @@ Tests live in `test/` and cover:
 |---|---|
 | `download-options.test.ts` | Validating download requests, playlist selections, and job labels. |
 | `download-arguments.test.ts` | Choices → yt-dlp arguments: MP3 320, Opus original, cover art, video codec preferences, progress and file markers, playlists, the `--` safety rule. |
+| `cover-image.test.ts` | Saving only the cover: the yt-dlp arguments, the square crop for wide and tall pictures, finding the saved file, numbered names that never overwrite a file, the whole save with fake tools (the work folder removed after success, failure or cancel; the crop only for square), checking the request, and its history entry. |
 | `tag-and-clip-arguments.test.ts` | Edited tags and their escaping, and clip sections with their file names. |
 | `clip-range.test.ts` | Reading and writing clip times. |
 | `media-info.test.ts` | Parsing `yt-dlp -J` output: one row per resolution, vertical video, best audio, playlists and their positions. |

@@ -14,6 +14,7 @@ import {
   isClipToggle,
   setClipEnabled,
 } from './clip-editor.js'
+import { saveCover } from './media-cover.js'
 import { startMediaDownload } from './media-download.js'
 import { fileNamePreview, TAG_FIELDS } from './media-options-html.js'
 import {
@@ -103,7 +104,9 @@ const handleMediaPanelClick = (event: Event): void => {
   else if (action === 'download' && state.info) void startMediaDownload(state.info, button)
   else if (action === 'subscribe' && state.info?.kind === 'playlist') void subscribeToMedia(state.info, button)
   else if (action === 'preview' && state.info?.kind === 'video') startPreview(mediaPanel(), state.info)
-  else if (action === 'back-to-results') showPanel('search')
+  else if ((action === 'save-cover' || action === 'save-square-cover') && state.info?.kind === 'video') {
+    void saveCover(state.info, action === 'save-square-cover', button)
+  } else if (action === 'back-to-results') showPanel('search')
   else if ((action === 'clip-start-from-preview' || action === 'clip-end-from-preview') && canTrim(state.info)) {
     applyPreviewTime(mediaPanel(), state.info, action === 'clip-start-from-preview' ? 'start' : 'end')
     renderMediaOptions()

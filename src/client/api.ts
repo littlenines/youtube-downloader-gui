@@ -1,5 +1,5 @@
 import type { AppUpdateResponse, Settings, SetupStatus, StatusResponse } from '@shared/types/app.js'
-import type { DownloadRequest, DownloadsResponse, Job } from '@shared/types/downloads.js'
+import type { CoverRequest, DownloadRequest, DownloadsResponse, HistoryEntry, Job } from '@shared/types/downloads.js'
 import type { MediaInfo, SearchKind, SearchResult } from '@shared/types/media.js'
 import type { Subscription, SubscriptionRequest, SubscriptionsResponse } from '@shared/types/subscriptions.js'
 
@@ -63,6 +63,7 @@ export const api = {
     sendRequest<SearchResult[]>('POST', '/api/search', { query, kind }, signal),
   previewUrl: (token: string) => `/api/preview/${encodeURIComponent(token)}`,
   startDownload: (download: DownloadRequest) => sendRequest<Job>('POST', '/api/downloads', download),
+  saveCover: (cover: CoverRequest) => sendRequest<HistoryEntry>('POST', '/api/covers', cover),
   downloads: () => sendRequest<DownloadsResponse>('GET', '/api/downloads'),
   cancel: (id: string) => sendRequest<Job>('POST', downloadPath(id, '/cancel')),
   retry: (id: string) => sendRequest<Job>('POST', downloadPath(id, '/retry')),

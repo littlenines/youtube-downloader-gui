@@ -1,6 +1,6 @@
 import type { SearchKind, SearchResult } from '@shared/types/media.js'
 import { toolSetup } from '@server/services/tools/app-tool-setup.js'
-import { runYtdlpForJson } from './run-ytdlp-json.js'
+import { runYtdlpForJson } from './run-ytdlp.js'
 import type { YtdlpEntry, YtdlpInfo } from './ytdlp-json.js'
 
 const SEARCH_RESULT_COUNT = 30

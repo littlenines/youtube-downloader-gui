@@ -5,10 +5,14 @@ import { appendErrorOutput, friendlyErrorMessage } from './error-messages.js'
 import { ytdlpCommonArguments, ytdlpEnvironment } from './ytdlp-command.js'
 
 const TIMEOUT_MILLISECONDS = 120_000
-const TIMEOUT_MESSAGE = 'Reading the link took too long. Check the internet connection and try again.'
+const READING_TIMEOUT_MESSAGE = 'Reading the link took too long. Check the internet connection and try again.'
 const CANCELLED_MESSAGE = 'Cancelled.'
 
-export const runYtdlpForJson = (ytdlpArguments: string[], signal?: AbortSignal): Promise<unknown> =>
+export const runYtdlpForText = (
+  ytdlpArguments: string[],
+  signal?: AbortSignal,
+  timeoutMessage = READING_TIMEOUT_MESSAGE,
+): Promise<string> =>
   new Promise((resolve, reject) => {
     if (signal?.aborted) return reject(new Error(CANCELLED_MESSAGE))
 
@@ -23,7 +27,7 @@ export const runYtdlpForJson = (ytdlpArguments: string[], signal?: AbortSignal):
       reject(new Error(message))
     }
 
-    const timeout = setTimeout(() => stopWithError(TIMEOUT_MESSAGE), TIMEOUT_MILLISECONDS)
+    const timeout = setTimeout(() => stopWithError(timeoutMessage), TIMEOUT_MILLISECONDS)
     const stopOnAbort = () => stopWithError(CANCELLED_MESSAGE)
 
     signal?.addEventListener('abort', stopOnAbort, { once: true })
@@ -38,10 +42,16 @@ export const runYtdlpForJson = (ytdlpArguments: string[], signal?: AbortSignal):
 
       if (exitCode !== 0) return reject(new Error(friendlyErrorMessage(errorOutput)))
 
-      try {
-        resolve(JSON.parse(Buffer.concat(outputChunks).toString('utf8')))
-      } catch {
-        reject(new Error('yt-dlp returned unreadable data.'))
-      }
+      resolve(Buffer.concat(outputChunks).toString('utf8'))
     })
   })
+
+export const runYtdlpForJson = async (ytdlpArguments: string[], signal?: AbortSignal): Promise<unknown> => {
+  const output = await runYtdlpForText(ytdlpArguments, signal)
+
+  try {
+    return JSON.parse(output)
+  } catch {
+    throw new Error('yt-dlp returned unreadable data.')
+  }
+}

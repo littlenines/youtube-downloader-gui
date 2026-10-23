@@ -1,5 +1,12 @@
 import { describeClip } from '@shared/clip-range.js'
-import type { AudioTags, ClipRange, Container, DownloadOptions, DownloadRequest } from '@shared/types/downloads.js'
+import type {
+  AudioTags,
+  ClipRange,
+  Container,
+  CoverRequest,
+  DownloadOptions,
+  DownloadRequest,
+} from '@shared/types/downloads.js'
 import { AUDIO_PRESETS, isAudioFormat } from '@server/services/ytdlp/audio-presets.js'
 
 const CONTAINERS: Container[] = ['mp4', 'mkv', 'webm']
@@ -73,6 +80,15 @@ export const sanitizeFolderName = (value: unknown): string | null => {
 
   return folderName.replace(WINDOWS_RESERVED_NAME, '$1_')
 }
+
+export const normalizeCoverRequest = (
+  request: Partial<CoverRequest> & { url: string },
+): CoverRequest & { square: boolean } => ({
+  url: request.url.trim(),
+  square: request.square === true,
+  ...(typeof request.title === 'string' && request.title ? { title: request.title } : {}),
+  thumbnailUrl: typeof request.thumbnailUrl === 'string' ? request.thumbnailUrl : null,
+})
 
 export const normalizeDownloadRequest = (request: Partial<DownloadRequest>): DownloadOptions => ({
   url: String(request.url ?? '').trim(),

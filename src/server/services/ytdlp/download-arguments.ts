@@ -1,6 +1,7 @@
 import { clipFileSuffix } from '@shared/clip-range.js'
 import type { AudioTags, Container, DownloadOptions } from '@shared/types/downloads.js'
 import { AUDIO_PRESETS } from './audio-presets.js'
+import { SQUARE_JPG_CONVERSION_ARGUMENT } from './thumbnail-arguments.js'
 import { OUTPUT_MARKERS } from './download-events.js'
 import type { DownloadFolders } from './download-process.js'
 
@@ -20,8 +21,6 @@ const PROGRESS_TEMPLATE = [
   '%(progress.speed)s',
   '%(progress.eta)s',
 ].join('|')
-
-const SQUARE_COVER_ART_FILTER = 'ThumbnailsConvertor+FFmpeg_o:-c:v mjpeg -qmin 1 -q:v 1 -vf crop=ih:ih'
 
 const EMPTY_TEMPLATE = '%(id&|)s'
 
@@ -100,7 +99,7 @@ const audioArguments = (options: DownloadOptions, outputFolder: string): string[
   if (options.coverArt && preset.supportsCoverArt) {
     commandArguments.push('--embed-thumbnail', '--convert-thumbnails', 'jpg')
 
-    if (options.squareCoverArt) commandArguments.push('--ppa', SQUARE_COVER_ART_FILTER)
+    if (options.squareCoverArt) commandArguments.push('--ppa', SQUARE_JPG_CONVERSION_ARGUMENT)
   }
 
   if (options.removeNonMusic) commandArguments.push('--sponsorblock-remove', 'music_offtopic')

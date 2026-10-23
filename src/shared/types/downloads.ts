@@ -37,6 +37,13 @@ export interface DownloadRequest {
   videoCount?: number
 }
 
+export interface CoverRequest {
+  url: string
+  square?: boolean
+  title?: string
+  thumbnailUrl?: string | null
+}
+
 export interface DownloadOptions {
   url: string
   kind: MediaKind

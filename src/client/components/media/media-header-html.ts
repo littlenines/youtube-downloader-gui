@@ -34,10 +34,18 @@ const chipsHtml = (info: MediaInfo): string => {
   ].join(' ')
 }
 
+const coverButtonsHtml = (info: MediaInfo): string => {
+  if (info.kind !== 'video' || !info.thumbnailUrl) return ''
+
+  return `<div class="cover-buttons">
+      <button class="button small" data-action="save-cover" title="Save the thumbnail in full size as a JPG">🖼 Save cover</button>
+      <button class="button small" data-action="save-square-cover" title="Save the thumbnail cropped square, like album art">Save square</button></div>`
+}
+
 export const mediaHeaderHtml = (info: MediaInfo): string => `<div class="media-header">${thumbnailHtml(info)}
     <div><h2>${escapeHtml(info.title)}</h2>
       <div class="media-details">${detailsHtml(info)}</div>
-      <div class="media-chips">${chipsHtml(info)}</div></div></div>`
+      <div class="media-chips">${chipsHtml(info)}</div>${coverButtonsHtml(info)}</div></div>`
 
 export const playlistLinkNoteHtml = (info: MediaInfo): string => {
   if (info.kind !== 'video' || !info.playlistId) return ''

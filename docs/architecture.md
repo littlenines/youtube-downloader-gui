@@ -160,6 +160,17 @@ The edited values reach yt-dlp as `--parse-metadata "%(id&|)s<value>:(?P<meta_<f
 - **Escaping:** colons and percent signs in the value are escaped.
 - **Effect:** `meta_` fields override what yt-dlp embeds, and the output template `%(meta_artist,artist&{} - |)s%(meta_title,track,title)s` names the file after them, with yt-dlp making the name safe for the file system.
 
+### Saving the cover
+
+**🖼 Save cover** and **Save square** under a video's title save its thumbnail as a JPG in the download folder (`POST /api/covers`, `cover-image.ts`), without downloading the video:
+
+1. **yt-dlp saves the thumbnail** into a work folder inside the hidden partial folder (`.yt-downloader-partial/cover-<id>/`), with `--skip-download --no-playlist --write-thumbnail --convert-thumbnails jpg` and ffmpeg at the best JPG quality. It picks the largest thumbnail (on YouTube usually 1280×720, `maxresdefault`), and converts YouTube's WebP, which some photo viewers and music taggers can't open. It prints the file's path (`%(thumbnails.-1.filepath)s` at the `after_video` stage); there's no `-P temp:`, because with one that path would point at the file before it was moved.
+2. **Square:** the app crops it with ffmpeg itself (`crop=min(iw\,ih):min(iw\,ih)`, the middle square). Not through yt-dlp's converter, because yt-dlp skips that when the thumbnail is already a JPG (SoundCloud, many other sites), and the crop with it. Taking the shorter side keeps it working for pictures taller than wide, where the older `crop=ih:ih` failed. ffmpeg is stopped after 30 seconds, so a stuck crop can't leave the button on "Saving…".
+3. **Copied into the download folder** as `<title>.jpg` or `<title> (square).jpg`, with the title made safe for file names by yt-dlp. A name that is taken gets a number, `<title> (2).jpg`, so nothing is ever overwritten, not even a different video's cover with the same title. The copy uses `COPYFILE_EXCL`, so two saves at once can't pick the same name.
+4. **The work folder is removed** whether the save worked, failed or was cancelled, so no stray WebP or half-written JPG is left in the download folder. After a crash, the start-up cleanup of old partial folders removes it.
+
+- **In the downloads list:** the saved picture becomes a history entry labelled **Cover · JPG** or **Square cover · JPG**, so **Show in folder** and ✕ work as for any finished download, without a route that reveals any path the page sends.
+
 ### Preview
 
 When a link is read, `registerPreview` picks a stream the page can play directly:
@@ -256,6 +267,7 @@ Facts the code depends on that its names can't say:
 - **Tag values.** The always-empty `%(id&|)s` around an edited tag also keeps a trailing `\` in the value away from the `:` separator.
 - **Stopping downloads.** On Linux and macOS yt-dlp runs in its own process group, so cancelling also stops the ffmpeg it started. On Windows, `taskkill /T` stops the tree. Removing a partial folder retries a few times, because Windows keeps a stopped process's files locked for a moment.
 - **Showing a file on Windows.** Explorer only accepts `/select,"path"` passed verbatim, and `windowsHide` would open its window invisibly, so neither option is used for it.
+- **Square album art from JPG thumbnails.** In downloads, the square crop runs inside yt-dlp's thumbnail converter, which yt-dlp skips when the thumbnail is already a JPG. Those (SoundCloud, Bandcamp) are usually square already, so the MP3 keeps the picture as it is. **Save square** crops with ffmpeg itself, so it always comes out square.
 - **Release folders.** They already contain Electron's own `LICENSE`, so the app's license is named `YT-Downloader-LICENSE.txt`.
 
 ## Compatibility with older data

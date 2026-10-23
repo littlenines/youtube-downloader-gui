@@ -1,4 +1,6 @@
-import type { DownloadOptions, HistoryEntry, Job } from '@shared/types/downloads.js'
+import { randomUUID } from 'node:crypto'
+import { basename, extname } from 'node:path'
+import type { CoverRequest, DownloadOptions, HistoryEntry, Job } from '@shared/types/downloads.js'
 import { describeDownloadOptions } from './download-options.js'
 
 export interface JobDisplayDetails {
@@ -53,6 +55,17 @@ export const skippedItemsWarning = (skippedItems: string[]): string | null => {
 
   return `${count} ${count === 1 ? 'video' : 'videos'} could not be downloaded. ${skippedItems[0]}`
 }
+
+export const historyEntryFromCover = (cover: CoverRequest, file: string, sizeBytes: number | null): HistoryEntry => ({
+  id: randomUUID(),
+  title: cover.title || basename(file, extname(file)),
+  thumbnailUrl: cover.thumbnailUrl ?? null,
+  label: cover.square ? 'Square cover · JPG' : 'Cover · JPG',
+  files: [file],
+  sizeBytes,
+  finishedAt: nowAsText(),
+  url: cover.url,
+})
 
 export const historyEntryFromJob = (job: Job): HistoryEntry => ({
   id: job.id,

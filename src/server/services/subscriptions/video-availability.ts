@@ -1,5 +1,5 @@
 import { errorText } from '@server/lib/http/http-error.js'
-import { runYtdlpForJson } from '@server/services/ytdlp/run-ytdlp-json.js'
+import { runYtdlpForJson } from '@server/services/ytdlp/run-ytdlp.js'
 import type { YtdlpInfo } from '@server/services/ytdlp/ytdlp-json.js'
 
 export type VideoAvailability = 'ready' | 'not-yet' | 'never' | 'unknown'

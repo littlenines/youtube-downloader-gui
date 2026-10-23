@@ -155,6 +155,12 @@ A `Job` has:
 
 `pause`, `resume`, `cancel` and `retry` answer `404` for unknown ids.
 
+### `POST /api/covers` → `HistoryEntry`
+
+Saves a video's thumbnail as a JPG in the download folder, without downloading the video, and adds it to the history.
+
+Request: `{ "url": "https://www.youtube.com/watch?v=…", "square": false, "title": "…", "thumbnailUrl": "…" }`. `square` crops it to the middle square; `title` and `thumbnailUrl` are what the downloads list shows (other types are ignored). The file is named after the video, with a number added when the name is taken; an existing file is never overwritten. Answers `400` when the link is missing or has no thumbnail, and `409` when the tools are missing. If only the history can't be saved, the cover is still saved and the answer is still `200`.
+
 ## Subscriptions
 
 ### `GET /api/subscriptions` → `SubscriptionsResponse`
