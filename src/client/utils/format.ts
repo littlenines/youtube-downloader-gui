@@ -38,6 +38,35 @@ export const formatTimeLeft = (seconds: number | null | undefined): string => {
   return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s left`
 }
 
+const DATE_TIME_PARTS: Intl.DateTimeFormatOptions = {
+  year: 'numeric',
+  month: 'numeric',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+  second: '2-digit',
+}
+
+export const supportedLocale = (locale: string | null | undefined): string | undefined => {
+  if (!locale) return undefined
+
+  try {
+    return Intl.DateTimeFormat.supportedLocalesOf(locale)[0]
+  } catch {
+    return undefined
+  }
+}
+
+export const createDateTimeFormatter = (locale: string | undefined) => {
+  const dateTimeFormat = new Intl.DateTimeFormat(locale, DATE_TIME_PARTS)
+
+  return (isoDate: string): string => {
+    const date = new Date(isoDate)
+
+    return Number.isNaN(date.getTime()) ? '' : dateTimeFormat.format(date)
+  }
+}
+
 export const formatCount = (count: number | null | undefined): string => {
   if (!count) return ''
   if (count >= 1e9) return `${(count / 1e9).toFixed(1)}B`

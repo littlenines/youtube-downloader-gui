@@ -29,6 +29,8 @@ const PACKAGER_OUTPUT_DIRECTORY = join(BUILD_DIRECTORY, 'desktop')
 const APP_FILES = ['desktop.cjs', 'preload.cjs', 'icon.png', ...WEB_ASSETS.map((asset) => `client/${asset}`)]
 const USER_DATA_FOLDERS = new Set(['data', 'tools', 'downloads'])
 const LINUX_EXECUTABLES = new Set(['yt-downloader', 'yt-downloader.bin', 'chrome-sandbox', 'chrome_crashpad_handler'])
+const KEPT_LOCALE_FILE = 'en-US.pak'
+const WEBGPU_SHADER_COMPILER_FILES = ['dxcompiler.dll', 'dxil.dll']
 const EXECUTABLE_MODE = 0o755
 const REGULAR_FILE_MODE = 0o644
 
@@ -40,6 +42,19 @@ const lockDownElectron = async (executable: string): Promise<void> => {
     [FuseV1Options.EnableNodeCliInspectArguments]: false,
     [FuseV1Options.GrantFileProtocolExtraPrivileges]: false,
   })
+}
+
+const removeUnusedElectronFiles = async (appFolder: string): Promise<void> => {
+  const localesFolder = join(appFolder, 'locales')
+  const localeFiles = await readdir(localesFolder)
+
+  if (!localeFiles.includes(KEPT_LOCALE_FILE)) throw new Error(`locales/${KEPT_LOCALE_FILE} is missing from Electron.`)
+
+  for (const localeFile of localeFiles) {
+    if (localeFile !== KEPT_LOCALE_FILE) await rm(join(localesFolder, localeFile))
+  }
+
+  for (const file of WEBGPU_SHADER_COMPILER_FILES) await rm(join(appFolder, file), { force: true })
 }
 
 const checkBuildExists = (): void => {
@@ -143,6 +158,7 @@ const packageForTarget = async (target: ReleaseTarget, appVersion: string, elect
   if (!appFolder) throw new Error(`Packaging ${target} produced nothing.`)
 
   await lockDownElectron(join(appFolder, isLinux ? 'yt-downloader' : 'yt-downloader.exe'))
+  await removeUnusedElectronFiles(appFolder)
 
   if (isLinux) await writeLinuxArchive(appFolder, target)
   else await writeWindowsFolder(appFolder, target)

@@ -1,5 +1,6 @@
 import { isActiveJob, isFinishedJob, isUnfinishedJob } from '@shared/jobs.js'
 import type { HistoryEntry, Job } from '@shared/types/downloads.js'
+import { formatDateTime } from '@client/locale.js'
 import { escapeHtml, formatBytes, formatSpeed, formatTimeLeft } from '@client/utils/format.js'
 
 export interface RowContent {
@@ -123,7 +124,7 @@ export const historyRow = (entry: HistoryEntry): RowContent => ({
     showProgress: false,
   }),
   title: entry.title,
-  statusText: joinNonEmpty([formatBytes(entry.sizeBytes), new Date(entry.finishedAt).toLocaleString()]),
+  statusText: joinNonEmpty([formatBytes(entry.sizeBytes), formatDateTime(entry.finishedAt)]),
   progressPercent: null,
 })
 

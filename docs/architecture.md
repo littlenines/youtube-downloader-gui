@@ -39,7 +39,7 @@ Each file has one job, and its name says what that job is. Folders group files b
 | `src/server/services/preview/` | Choosing a playable preview stream and relaying it to the page. |
 | `src/server/services/stores/` | Settings and history, stored as JSON in `data/`. |
 | `src/server/lib/` | Building blocks with no app knowledge: HTTP router and JSON helpers, static files, JSON files, zip and tar, checksums, GitHub releases, verified downloads, the desktop shell (open a link, show a file) and stopping a process tree. |
-| `src/desktop/` | The Electron main process: `main.ts` starts it; the window, saved window position, taskbar progress, quit confirmation and start-up switches each have their own file. `preload.ts` exposes `window.desktop` (the native folder picker) to the page. |
+| `src/desktop/` | The Electron main process: `main.ts` starts it; the window, saved window position, taskbar progress, quit confirmation and start-up switches each have their own file. `preload.ts` exposes `window.desktop` to the page: the native folder picker, and the system locale (passed in by `system-locale.ts`) for formatting dates. |
 | `src/client/` | The page. `main.ts` starts every part; `link-input.ts` and `drag-and-drop.ts` take links, searches and drops; `components/` holds the media panel, choice controls, search results, batch panel, downloads list, settings and setup. |
 | `src/client/styles/` | The stylesheet in parts, imported in order by `index.css` and bundled into one `styles.css`. |
 | `scripts/` | Build, packaging and icon generation (see [development.md](development.md)). |
@@ -170,6 +170,7 @@ The page is plain TypeScript with no framework, bundled by esbuild:
 - **Media panel:** one click and one change listener handle every option. A choice redraws only the options area, not the header and thumbnail. A link response that arrives after a newer one was requested is ignored.
 - **Downloads list:** polls `GET /api/downloads` every 0.7 s while something is active and every 4 s otherwise. Rows are keyed by job id and rebuilt only when their layout changes (finished, failed, cancelled). The title, status text and progress bar update in place, so buttons stay put and clicks are never lost.
 - **Settings:** in the desktop app, **Browse…** opens the native folder picker through `window.desktop.pickFolder`.
+- **Dates:** follow the system's format settings. The desktop window turns `app.getSystemLocale()` into a language tag (`de_DE.UTF-8` becomes `de-DE`; `C` and `POSIX` give none) and passes it to the preload, which exposes it as `window.desktop.systemLocale`. `src/client/locale.ts` checks it once and builds one shared date format. In the browser the browser's own locale is used.
 
 ## Smooth rendering
 

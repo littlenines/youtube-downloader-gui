@@ -1,8 +1,9 @@
-import { BrowserWindow, dialog, nativeTheme, shell } from 'electron'
+import { app, BrowserWindow, dialog, nativeTheme, shell } from 'electron'
 import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { APP_NAME } from './app-identity.js'
+import { systemLocaleArguments } from './system-locale.js'
 import { isOnScreen, loadWindowState } from './window-state.js'
 
 const moduleDirectory = dirname(fileURLToPath(import.meta.url))
@@ -45,6 +46,7 @@ export const createMainWindow = (origin: string): BrowserWindow => {
       sandbox: true,
       nodeIntegration: false,
       spellcheck: false,
+      additionalArguments: systemLocaleArguments(app.getSystemLocale()),
     },
   })
 

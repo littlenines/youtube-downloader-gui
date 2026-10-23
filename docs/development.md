@@ -65,6 +65,7 @@ If a release run fails, delete the tag (`git push --delete origin v1.1.0` and `g
 - **Arrow functions only.** `const name = (...) => ...` instead of `function`; generators are `function*` expressions. Class methods stay methods.
 - **Blank lines around statements.** Before and after `const`/`let` groups, `if`, loops, `switch` and `try`, and after any block. In CSS, every rule and at-rule is separated by a blank line. `npm run lint:fix` adds them in both.
 - **Pure logic stays pure.** `buildDownloadArguments`, `normalizeDownloadRequest`, `parseMediaInfo`, `parseSettings` and `parseHistory` have no I/O, so they can be tested directly.
+- **Dates and numbers use `pageLocale` from `src/client/locale.ts`.** In the desktop app the page has no translations, so `toLocaleString()` with no locale would always give US formats. Use `formatDateTime` there, or pass `pageLocale` to `Intl`.
 - **The API contract lives in `src/shared/types/`.** Change it there first; TypeScript then points at every place that needs updating.
 - Prettier formats everything: no semicolons, single quotes, `printWidth` 120.
 
@@ -93,6 +94,7 @@ Tests live in `test/` and cover:
 | `verified-download.test.ts` | Checksum match and mismatch, stalled downloads, reading checksum files and release tags (against a local test server). |
 | `tool-setup.test.ts` | The setup states with fake tools: missing, installing, ready, a tool lost later, failed installs, and the update-check schedule. |
 | `app-update.test.ts` | Comparing app versions and offering a newer release. |
+| `locale.test.ts` | Turning the system locale into a language tag, passing it to the page, and formatting dates with it. |
 
 Shared fakes and helpers for these live in `test/support/`.
 
@@ -121,6 +123,11 @@ The Linux archive contains:
 - `yt-downloader`: a launcher script. It keeps Chromium's sandbox when the system allows it, and `--install` adds a menu entry.
 - `yt-downloader.bin`: Electron itself.
 - `icon.png` and `README.txt`.
+
+To keep the download small, every package leaves out two parts of Electron that the app doesn't use. Together they are about 22 MB of a 154 MB zip.
+
+- **All of Chromium's interface translations except `en-US.pak`.** The page is English only. Without the other files Chromium's own locale is always `en-US`, so the page formats dates with the system's locale instead (see *Dates* in [architecture.md](architecture.md)). Packaging stops if `en-US.pak` is missing, rather than shipping an app without any.
+- **The WebGPU shader compiler (`dxcompiler.dll`, `dxil.dll`).** The page uses no WebGPU. Chromium draws through ANGLE on Direct3D 11, which uses `d3dcompiler_47.dll` (kept). If anything in Chromium does use Dawn's Direct3D 12 backend, Dawn uses that same compiler when these files are missing. After an Electron upgrade, start the packaged app once and check that the window and preview still draw.
 
 Electron downloads for other platforms are cached by Electron in its own cache folder (on Windows, `%LOCALAPPDATA%\electron\Cache`).
 

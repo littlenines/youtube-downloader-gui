@@ -31,4 +31,5 @@ export interface StatusResponse extends Settings {
 
 export interface DesktopBridge {
   pickFolder(currentFolder: string): Promise<string | null>
+  systemLocale: string | null
 }
