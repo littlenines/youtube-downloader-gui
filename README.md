@@ -10,7 +10,6 @@
 
 <p align="center">
   <a href="https://github.com/littlenines/youtube-downloader-gui/releases/latest"><img src="https://img.shields.io/github/v/release/littlenines/youtube-downloader-gui?style=for-the-badge&label=latest%20version&color=2ea44f" alt="Latest version" /></a>
-  <a href="https://github.com/littlenines/youtube-downloader-gui/releases"><img src="https://img.shields.io/github/downloads/littlenines/youtube-downloader-gui/total?style=for-the-badge&color=0969da" alt="Total downloads" /></a>
   <img src="https://img.shields.io/badge/Windows%20%7C%20Linux-555?style=for-the-badge" alt="Windows and Linux" />
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-555?style=for-the-badge" alt="MIT license" /></a>
 </p>
