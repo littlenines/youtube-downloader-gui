@@ -1,3 +1,5 @@
+import { writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { isFinishedJob } from '@shared/jobs.js'
 import type { Job } from '@shared/types/downloads.js'
 import { totalFileSize } from '@server/lib/file-size.js'
@@ -28,6 +30,28 @@ const finishJob = async (job: Job, { skippedItems }: DownloadResult, history: Hi
   await history.add(historyEntryFromJob(job)).catch(ignoreFailure)
 }
 
+const VIDEO_INFO_FILE_NAME = 'video-info.json'
+
+const writeRecentVideoInfo = async (
+  engine: DownloadEngine,
+  job: Job,
+  partialFolder: string,
+): Promise<string | null> => {
+  const info = job.options.playlist ? null : engine.recentVideoInfo(job.options.url)
+
+  if (!info) return null
+
+  const infoFile = join(partialFolder, VIDEO_INFO_FILE_NAME)
+
+  try {
+    await writeFile(infoFile, JSON.stringify(info))
+
+    return infoFile
+  } catch {
+    return null
+  }
+}
+
 export const runDownloadJob = async (
   job: Job,
   run: ActiveRun,
@@ -45,13 +69,31 @@ export const runDownloadJob = async (
     job.stage = job.options.clip ? 'Downloading the clip' : 'Getting the video info'
     job.activity = job.options.clip ? 'processing' : 'preparing'
 
-    const download = engine.startDownload(job.options, { downloadFolder, partialFolder }, (event) =>
-      applyDownloadEvent(job, event),
-    )
+    let hasStartedDownloading = false
 
-    run.stopProcess = download.cancel
+    const runYtdlp = (infoFile: string | null): Promise<DownloadResult> => {
+      if (run.stopReason) return Promise.reject(new Error('Stopped.'))
 
-    const result = await download.finished
+      const download = engine.startDownload(job.options, { downloadFolder, partialFolder, infoFile }, (event) => {
+        if (event.type !== 'item') hasStartedDownloading = true
+
+        applyDownloadEvent(job, event)
+      })
+
+      run.stopProcess = download.cancel
+
+      return download.finished
+    }
+
+    const infoFile = await writeRecentVideoInfo(engine, job, partialFolder)
+    const result = await runYtdlp(infoFile).catch((error: unknown) => {
+      if (!infoFile || run.stopReason || hasStartedDownloading) throw error
+
+      engine.forgetVideoInfo(job.options.url)
+      Object.assign(job, { stage: 'Getting the video info', activity: 'preparing', progress: 0 } satisfies Partial<Job>)
+
+      return runYtdlp(null)
+    })
 
     if (run.stopReason === 'cancel') return
 

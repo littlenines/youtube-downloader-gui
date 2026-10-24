@@ -4,6 +4,7 @@ import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import type { ReadableStream as WebReadableStream } from 'node:stream/web'
 import type { PreviewSource } from '@shared/types/media.js'
+import { ExpiringMap } from '@server/lib/expiring-map.js'
 import { HttpError } from '@server/lib/http/http-error.js'
 import type { YtdlpFormat } from '@server/services/ytdlp/ytdlp-json.js'
 import { choosePreviewFormat } from './preview-format.js'
@@ -17,33 +18,23 @@ const FORBIDDEN_STATUS = 403
 interface PreviewStream {
   url: string
   headers: Record<string, string>
-  expiresAt: number
 }
 
-const previewStreams = new Map<string, PreviewStream>()
+const previewStreams = new ExpiringMap<PreviewStream>({
+  lifetimeMilliseconds: PREVIEW_LIFETIME_MILLISECONDS,
+  maximumEntries: MAXIMUM_REMEMBERED_PREVIEWS,
+})
 
 const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds))
-
-const forgetOldPreviews = (now: number): void => {
-  for (const [token, stream] of previewStreams) {
-    if (stream.expiresAt < now || previewStreams.size > MAXIMUM_REMEMBERED_PREVIEWS) previewStreams.delete(token)
-  }
-}
 
 export const registerPreview = (formats: YtdlpFormat[]): PreviewSource | null => {
   const choice = choosePreviewFormat(formats)
 
   if (!choice?.format.url) return null
 
-  const now = Date.now()
   const token = randomUUID()
 
-  forgetOldPreviews(now)
-  previewStreams.set(token, {
-    url: choice.format.url,
-    headers: choice.format.http_headers ?? {},
-    expiresAt: now + PREVIEW_LIFETIME_MILLISECONDS,
-  })
+  previewStreams.set(token, { url: choice.format.url, headers: choice.format.http_headers ?? {} })
 
   return { token, kind: choice.kind }
 }
@@ -82,8 +73,7 @@ export const streamPreview = async (
 ): Promise<void> => {
   const stream = previewStreams.get(token)
 
-  if (!stream || stream.expiresAt < Date.now())
-    throw new HttpError(404, 'This preview has expired. Read the link again.')
+  if (!stream) throw new HttpError(404, 'This preview has expired. Read the link again.')
 
   const upstream = await fetchStream(stream, request.headers.range)
 

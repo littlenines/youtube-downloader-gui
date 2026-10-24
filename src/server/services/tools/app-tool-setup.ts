@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process'
 import { existsSync, statSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
+import { videoInfoCache } from '@server/services/ytdlp/video-info-cache.js'
 import { ytdlpEnvironment } from '@server/services/ytdlp/ytdlp-command.js'
 import { INSTALL_STEPS } from './install-steps.js'
 import { toolPaths, YTDLP_UPDATE_CHECK_MARKER, ytdlpPath } from './tool-paths.js'
@@ -14,7 +15,11 @@ const updateYtdlp = (): Promise<boolean> =>
       ytdlpPath(),
       ['-U'],
       { windowsHide: true, env: ytdlpEnvironment(), timeout: UPDATE_TIMEOUT_MILLISECONDS },
-      (error) => resolve(!error),
+      (error) => {
+        if (!error) videoInfoCache.clear()
+
+        resolve(!error)
+      },
     )
   })
 

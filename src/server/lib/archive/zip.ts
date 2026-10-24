@@ -1,6 +1,9 @@
 import { chmod, mkdir, symlink, writeFile } from 'node:fs/promises'
 import { dirname, resolve, sep } from 'node:path'
-import { inflateRawSync } from 'node:zlib'
+import { promisify } from 'node:util'
+import { inflateRaw } from 'node:zlib'
+
+const inflateRawAsync = promisify(inflateRaw)
 
 const END_OF_CENTRAL_DIRECTORY_SIGNATURE = 0x06054b50
 const ZIP64_END_LOCATOR_SIGNATURE = 0x07064b50
@@ -20,7 +23,7 @@ const DEFLATE_METHOD = 8
 interface ZipEntry {
   name: string
   unixModeBits: number
-  read(): Buffer
+  read(): Promise<Buffer>
 }
 
 interface CentralDirectorySizes {
@@ -80,7 +83,12 @@ const applyZip64ExtraField = (zip: Buffer, extraStart: number, extraEnd: number,
   }
 }
 
-const readEntryContent = (zip: Buffer, name: string, method: number, sizes: CentralDirectorySizes): Buffer => {
+const readEntryContent = async (
+  zip: Buffer,
+  name: string,
+  method: number,
+  sizes: CentralDirectorySizes,
+): Promise<Buffer> => {
   const { localHeaderOffset, compressedSize, uncompressedSize } = sizes
 
   if (zip.readUInt32LE(localHeaderOffset) !== LOCAL_FILE_HEADER_SIGNATURE)
@@ -93,7 +101,7 @@ const readEntryContent = (zip: Buffer, name: string, method: number, sizes: Cent
   if (method === STORED_METHOD) return Buffer.from(compressedData)
   if (method !== DEFLATE_METHOD) throw new Error(`Unsupported zip compression method ${method}.`)
 
-  const content = inflateRawSync(compressedData)
+  const content = await inflateRawAsync(compressedData)
 
   if (content.length !== uncompressedSize) throw new Error(`Zip entry ${name} has the wrong size.`)
 
@@ -132,7 +140,7 @@ const readZipEntries = function* (zip: Buffer): Generator<ZipEntry> {
 const isDirectoryEntry = (entry: ZipEntry) => entry.name.endsWith('/')
 const isSymbolicLinkEntry = (entry: ZipEntry) => (entry.unixModeBits & UNIX_FILE_TYPE_MASK) === UNIX_SYMBOLIC_LINK_TYPE
 
-export const extractZipEntry = (zip: Buffer, matchesName: (name: string) => boolean): Buffer => {
+export const extractZipEntry = async (zip: Buffer, matchesName: (name: string) => boolean): Promise<Buffer> => {
   for (const entry of readZipEntries(zip)) {
     if (!isDirectoryEntry(entry) && matchesName(entry.name)) return entry.read()
   }
@@ -161,7 +169,7 @@ export const extractZip = async (zip: Buffer, directory: string): Promise<string
     await mkdir(dirname(targetPath), { recursive: true })
 
     if (isSymbolicLinkEntry(entry)) {
-      const linkTarget = entry.read().toString('utf8')
+      const linkTarget = (await entry.read()).toString('utf8')
 
       if (!isInsideRoot(resolve(dirname(targetPath), linkTarget))) throw new Error(`Unsafe link in zip: ${entry.name}`)
       if (!isWindows) await symlink(linkTarget, targetPath)
@@ -169,7 +177,7 @@ export const extractZip = async (zip: Buffer, directory: string): Promise<string
       continue
     }
 
-    await writeFile(targetPath, entry.read())
+    await writeFile(targetPath, await entry.read())
 
     const permissions = entry.unixModeBits & UNIX_PERMISSION_MASK
 

@@ -90,7 +90,7 @@ const installDeno = async (onProgress: ProgressListener): Promise<void> => {
   await downloadVerifiedFile(`${releaseUrl}/${assetName}`, zipFile, { label: 'Deno', expectedSha256, onProgress })
   await writeFile(
     partialFile,
-    extractZipEntry(await readFile(zipFile), (name) => name === executableName('deno')),
+    await extractZipEntry(await readFile(zipFile), (name) => name === executableName('deno')),
   )
   await makeExecutable(partialFile)
   await rename(partialFile, toolPaths.deno)

@@ -10,4 +10,5 @@ export const argumentsFor = (request: Parameters<typeof normalizeDownloadRequest
   buildDownloadArguments(normalizeDownloadRequest(request), {
     downloadFolder: '/downloads',
     partialFolder: PARTIAL_FOLDER,
+    infoFile: null,
   })

@@ -83,12 +83,14 @@ To measure again, start the app with `--remote-debugging-port=9333` and record f
 
 Facts the code depends on that its names can't say:
 
+- **Window cache.** Chromium keeps its web cache (mostly thumbnails) in `data/window`; `--disk-cache-size` caps it at 10 MB (`start-up-switches.ts`), where it otherwise grew to 17 MB and more.
 - **Fixed desktop port.** The desktop app prefers port 5199 because the page's saved choices live in browser storage, which belongs to one address. Only if 5199 is taken does it use another free port.
 - **Remembered choices.** Format, container and options are remembered in the page's storage; the resolution is not, because it depends on each video. In private windows, where storage is unavailable, nothing is remembered.
 - **Resolution means the short side.** A vertical 1080×1920 video counts as 1080p, and yt-dlp's `res` sort key compares the short side too, so vertical videos are picked like horizontal ones.
 - **Subtitles use `en`, not `en.*`.** `en.*` also matches YouTube's machine-translated tracks, and fetching those got the whole download refused with HTTP 429.
 - **Marker lines.** In `VITEM` lines the title comes last, because a title may contain the `|` separator.
 - **Tag values.** The always-empty `%(id&|)s` around an edited tag also keeps a trailing `\` in the value away from the `:` separator.
+- **Not blocking the main process.** In the desktop app the server runs in Electron's main process, so it avoids long synchronous work: zip entries are unpacked with zlib's async `inflateRaw`. Measured on yt-dlp's 18 MB zip, the longest pause of the event loop while unpacking is about 10 ms either way, since the writes already gave way between files; the async version matters most for a single large file such as Deno's. `taskkill` stays synchronous on purpose: when it returns, ffmpeg and every other child are gone, so a cancelled job's partial files can be deleted and a Retry can't start while an old ffmpeg still writes the same file.
 - **Stopping downloads.** On Linux and macOS yt-dlp runs in its own process group, so cancelling also stops the ffmpeg it started. On Windows, `taskkill /T` stops the tree. Removing a partial folder retries a few times, because Windows keeps a stopped process's files locked for a moment.
 - **Showing a file on Windows.** Explorer only accepts `/select,"path"` passed verbatim, and `windowsHide` would open its window invisibly, so neither option is used for it.
 - **Square album art from JPG thumbnails.** In downloads, the square crop runs inside yt-dlp's thumbnail converter, which yt-dlp skips when the thumbnail is already a JPG. Those (SoundCloud, Bandcamp) are usually square already, so the MP3 keeps the picture as it is. **Save square** crops with ffmpeg itself, so it always comes out square.

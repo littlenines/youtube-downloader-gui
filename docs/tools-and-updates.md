@@ -35,6 +35,9 @@ YouTube requires yt-dlp to run JavaScript. The runtime depends on how the app ru
 | From source with Node | Node (`process.execPath`) |
 | Single-executable server | Deno, downloaded during setup, because running the executable would start the app |
 
+
+**Why ffprobe stays.** It is 83 MB, but tested without it, yt-dlp can't cut out non-music parts ("Unable to determine video duration: ffprobe not found") or make MKV files ("ffprobe not found"). Every other format, clips, cover art and Save cover worked with ffmpeg alone.
+
 ## New app versions
 
 The app doesn't update itself, but it tells the user when a newer release exists:

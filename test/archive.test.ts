@@ -63,17 +63,20 @@ const sampleZip = createZip([
 ])
 
 describe('extractZipEntry', () => {
-  it('extracts a compressed entry by name', () =>
-    assert.deepEqual(
-      extractZipEntry(sampleZip, (name) => name === 'program.exe'),
-      largeContent,
-    ))
-  it('extracts a stored entry', () =>
-    assert.equal(extractZipEntry(sampleZip, (name) => name === 'README.md').toString(), 'hello'))
+  it('extracts a compressed entry by name', async () =>
+    assert.deepEqual(await extractZipEntry(sampleZip, (name) => name === 'program.exe'), largeContent))
+  it('extracts a stored entry', async () =>
+    assert.equal((await extractZipEntry(sampleZip, (name) => name === 'README.md')).toString(), 'hello'))
   it('throws when the file is missing', () =>
-    assert.throws(() => extractZipEntry(sampleZip, (name) => name === 'missing'), /not found/))
+    assert.rejects(
+      extractZipEntry(sampleZip, (name) => name === 'missing'),
+      /not found/,
+    ))
   it('rejects data that is not a zip', () =>
-    assert.throws(() => extractZipEntry(Buffer.from('definitely not a zip file'), () => true), /Not a zip/))
+    assert.rejects(
+      extractZipEntry(Buffer.from('definitely not a zip file'), () => true),
+      /Not a zip/,
+    ))
 })
 
 describe('extractZip', () => {

@@ -153,7 +153,6 @@ export const buildDownloadArguments = (options: DownloadOptions, folders: Downlo
     ...playlistArguments(options),
     ...clipArguments(options),
     ...formatArguments,
-    '--',
-    options.url,
+    ...(folders.infoFile ? ['--load-info-json', folders.infoFile] : ['--', options.url]),
   ]
 }

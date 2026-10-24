@@ -4,6 +4,7 @@ import { normalizeDownloadRequest } from '@server/services/downloads/download-op
 import type { HistoryStore } from '@server/services/stores/history-store.js'
 import type { SavedJob, SavedQueue } from '@server/services/stores/queue-store.js'
 import type { SettingsStore } from '@server/services/stores/settings-store.js'
+import type { DownloadEvent } from '@server/services/ytdlp/download-events.js'
 import type { DownloadResult } from '@server/services/ytdlp/download-process.js'
 import { createTemporaryFolder } from './temporary-folder.js'
 
@@ -12,13 +13,18 @@ export interface FakeRun {
   fail(message: string): void
   cancelled: boolean
   partialFolder: string
+  infoFile: string | null
+  emit(event: DownloadEvent): void
 }
 
-export const createFakeEngine = () => {
+export const createFakeEngine = ({ recentVideoInfo = (): unknown => null } = {}) => {
   const runs: FakeRun[] = []
+  const forgottenUrls: string[] = []
   const engine: DownloadEngine = {
     requireTools: async () => {},
-    startDownload: (_options, { partialFolder }) => {
+    recentVideoInfo,
+    forgetVideoInfo: (url) => forgottenUrls.push(url),
+    startDownload: (_options, { partialFolder, infoFile }, onEvent) => {
       let finish!: (result: DownloadResult) => void
       let fail!: (error: Error) => void
       const finished = new Promise<DownloadResult>((resolve, reject) => {
@@ -30,6 +36,8 @@ export const createFakeEngine = () => {
         fail: (message) => fail(new Error(message)),
         cancelled: false,
         partialFolder,
+        infoFile,
+        emit: onEvent,
       }
 
       runs.push(run)
@@ -39,7 +47,7 @@ export const createFakeEngine = () => {
     whenIdle: () => {},
   }
 
-  return { engine, runs }
+  return { engine, runs, forgottenUrls }
 }
 
 export const waitUntil = async (condition: () => boolean): Promise<void> => {

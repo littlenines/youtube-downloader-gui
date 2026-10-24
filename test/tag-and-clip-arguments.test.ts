@@ -12,6 +12,7 @@ describe('buildDownloadArguments: edited tags', () => {
     const commandArguments = buildDownloadArguments(tagged({ artist: 'Daft Punk', title: 'Get Lucky', album: '' }), {
       downloadFolder: '/downloads',
       partialFolder: PARTIAL_FOLDER,
+      infoFile: null,
     })
     const metadata = commandArguments.filter((_, index) => commandArguments[index - 1] === '--parse-metadata')
 
@@ -26,6 +27,7 @@ describe('buildDownloadArguments: edited tags', () => {
     const commandArguments = buildDownloadArguments(tagged({ artist: '', title: 'Track 1: 100% Live', album: '' }), {
       downloadFolder: '/downloads',
       partialFolder: PARTIAL_FOLDER,
+      infoFile: null,
     })
 
     assert.equal(
@@ -38,6 +40,7 @@ describe('buildDownloadArguments: edited tags', () => {
     const commandArguments = buildDownloadArguments(tagged({ artist: 'Foo\\', title: '', album: '' }), {
       downloadFolder: '/downloads',
       partialFolder: PARTIAL_FOLDER,
+      infoFile: null,
     })
 
     assert.equal(valueAfter(commandArguments, '--parse-metadata'), '%(id&|)sFoo\\%(id&|)s:(?P<meta_artist>[\\s\\S]+)')

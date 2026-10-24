@@ -22,6 +22,7 @@ export interface RunningDownload {
 export interface DownloadFolders {
   downloadFolder: string
   partialFolder: string
+  infoFile: string | null
 }
 
 const forEachNonEmptyLine = (stream: Readable, onLine: (line: string) => void): void => {
