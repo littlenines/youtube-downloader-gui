@@ -2,6 +2,7 @@ import { isFinishedJob } from '@shared/jobs.js'
 import type { Job } from '@shared/types/downloads.js'
 import { totalFileSize } from '@server/lib/file-size.js'
 import { errorText } from '@server/lib/http/http-error.js'
+import { ignoreFailure } from '@server/lib/ignore-failure.js'
 import type { HistoryStore } from '@server/services/stores/history-store.js'
 import type { DownloadResult } from '@server/services/ytdlp/download-process.js'
 import type { ActiveRun } from './active-runs.js'
@@ -16,8 +17,6 @@ export interface JobRunnerDependencies {
   history: HistoryStore
   jobFolders: JobFolders
 }
-
-const ignoreFailure = () => {}
 
 const finishJob = async (job: Job, { skippedItems }: DownloadResult, history: HistoryStore): Promise<void> => {
   job.status = 'done'

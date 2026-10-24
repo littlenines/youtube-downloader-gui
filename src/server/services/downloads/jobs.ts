@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { basename, extname } from 'node:path'
+import { countText } from '@shared/count-text.js'
 import type { CoverRequest, DownloadOptions, HistoryEntry, Job } from '@shared/types/downloads.js'
 import { describeDownloadOptions } from './download-options.js'
 
@@ -24,6 +25,8 @@ export const createQueuedJob = (id: string, options: DownloadOptions, details: J
     createdAt: nowAsText(),
     finishedAt: null,
     progress: 0,
+    downloadLater: false,
+    startsAt: null,
     stage: null,
     bytesPerSecond: null,
     secondsLeft: null,
@@ -41,6 +44,8 @@ export const resetJobForRetry = (job: Job): void => {
     error: null,
     warning: null,
     progress: 0,
+    downloadLater: false,
+    startsAt: null,
     files: [],
     stage: null,
     finishedAt: null,
@@ -53,7 +58,7 @@ export const skippedItemsWarning = (skippedItems: string[]): string | null => {
 
   if (!count) return null
 
-  return `${count} ${count === 1 ? 'video' : 'videos'} could not be downloaded. ${skippedItems[0]}`
+  return `${countText(count, 'video')} could not be downloaded. ${skippedItems[0]}`
 }
 
 export const historyEntryFromCover = (cover: CoverRequest, file: string, sizeBytes: number | null): HistoryEntry => ({

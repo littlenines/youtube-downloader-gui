@@ -15,12 +15,16 @@ describe('parseSettings', () => {
       simultaneousDownloads: 2,
       lowLatencyRendering: true,
       subscriptionCheckHours: 0,
+      laterStartTime: null,
+      laterStopTime: null,
     })
     assert.deepEqual(parseSettings({ downloadFolder: 42, simultaneousDownloads: 9 }), {
       downloadFolder: DEFAULT_DOWNLOAD_FOLDER,
       simultaneousDownloads: 2,
       lowLatencyRendering: true,
       subscriptionCheckHours: 0,
+      laterStartTime: null,
+      laterStopTime: null,
     })
   })
 
@@ -30,6 +34,8 @@ describe('parseSettings', () => {
       simultaneousDownloads: 3,
       lowLatencyRendering: true,
       subscriptionCheckHours: 0,
+      laterStartTime: null,
+      laterStopTime: null,
     })
   })
 
@@ -111,6 +117,27 @@ describe('parseSavedQueue', () => {
     assert.deepEqual(
       savedJobs.map((savedJob) => [savedJob.id, savedJob.downloadFolder]),
       [['ok-1', null]],
+    )
+  })
+
+  it('reads waiting downloads, and ignores a start time that is not a date', () => {
+    const savedJobs = parseSavedQueue([
+      {
+        id: 'later',
+        options: { url: 'https://youtu.be/x' },
+        later: true,
+        startsAt: '2026-10-25T00:00:00.000Z',
+        progress: 0.6,
+      },
+      { id: 'broken', options: { url: 'https://youtu.be/x' }, later: 'yes', startsAt: 'tonight', progress: 7 },
+    ])
+
+    assert.deepEqual(
+      savedJobs.map(({ id, later, startsAt, progress }) => [id, later, startsAt, progress]),
+      [
+        ['later', true, '2026-10-25T00:00:00.000Z', 0.6],
+        ['broken', false, null, 1],
+      ],
     )
   })
 

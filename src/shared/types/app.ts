@@ -3,6 +3,8 @@ export interface Settings {
   simultaneousDownloads: number
   lowLatencyRendering: boolean
   subscriptionCheckHours: number
+  laterStartTime: string | null
+  laterStopTime: string | null
 }
 
 export interface SetupStatus {

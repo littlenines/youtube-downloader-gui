@@ -17,6 +17,7 @@ const ROW_ACTIONS: Record<string, (id: string) => Promise<unknown>> = {
   retry: api.retry,
   pause: api.pause,
   resume: api.resume,
+  'start-now': api.startNow,
   remove: api.remove,
 }
 

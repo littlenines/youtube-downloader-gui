@@ -67,6 +67,23 @@ export const createDateTimeFormatter = (locale: string | undefined) => {
   }
 }
 
+const isSameDay = (first: Date, second: Date): boolean => first.toDateString() === second.toDateString()
+
+export const describeStartTime = (
+  startsAt: Date,
+  now: Date,
+  formatTime: (date: Date) => string,
+  formatDate: (date: Date) => string,
+): string => {
+  const tomorrow = new Date(now)
+
+  tomorrow.setDate(now.getDate() + 1)
+
+  if (isSameDay(startsAt, tomorrow)) return `tomorrow at ${formatTime(startsAt)}`
+  if (isSameDay(startsAt, now) || startsAt < now) return `at ${formatTime(startsAt)}`
+  return `on ${formatDate(startsAt)} at ${formatTime(startsAt)}`
+}
+
 export const formatCount = (count: number | null | undefined): string => {
   if (!count) return ''
   if (count >= 1e9) return `${(count / 1e9).toFixed(1)}B`

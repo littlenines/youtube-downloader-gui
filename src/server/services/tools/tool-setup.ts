@@ -1,5 +1,6 @@
 import type { SetupStatus } from '@shared/types/app.js'
 import { errorText } from '@server/lib/http/http-error.js'
+import { ignoreFailure } from '@server/lib/ignore-failure.js'
 import type { InstallStep } from './install-steps.js'
 
 const ONE_DAY_MILLISECONDS = 24 * 3600 * 1000
@@ -22,8 +23,6 @@ export interface ToolSetupDependencies {
 }
 
 type SetupProgress = Omit<SetupStatus, 'installed' | 'downloadSizeMegabytes'>
-
-const ignoreFailure = () => {}
 
 export class ToolSetup {
   private readonly progress: SetupProgress = { state: 'missing', message: null, progress: null }

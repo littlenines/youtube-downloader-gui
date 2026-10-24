@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { after, describe, it } from 'node:test'
 import { JsonFile } from '@server/lib/json-file.js'
+import { createTemporaryFolder, removeFolder } from './support/temporary-folder.js'
 
 describe('JsonFile', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'json-file-test-'))
+  const directory = await createTemporaryFolder('json-file-test-')
 
-  after(() => rm(directory, { recursive: true, force: true }))
+  after(() => removeFolder(directory))
 
   const parseNumbers = (content: unknown) =>
     Array.isArray(content) ? content.filter((value): value is number => typeof value === 'number') : []

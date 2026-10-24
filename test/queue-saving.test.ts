@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict'
-import { rm } from 'node:fs/promises'
 import { after, describe, it } from 'node:test'
 import { DownloadQueue } from '@server/services/downloads/download-queue.js'
 import type { SavedQueue } from '@server/services/stores/queue-store.js'
@@ -12,11 +11,12 @@ import {
   waitFor,
   waitUntil,
 } from './support/queue-fakes.js'
+import { removeFolder } from './support/temporary-folder.js'
 
 describe('DownloadQueue: saving across restarts', async () => {
   const { downloadFolder, settings, history, options } = await createQueueTestSetup('queue-saving-test-')
 
-  after(() => rm(downloadFolder, { recursive: true, force: true }))
+  after(() => removeFolder(downloadFolder))
 
   it('saves unfinished downloads and forgets them once they finish', async () => {
     const { engine, runs } = createFakeEngine()

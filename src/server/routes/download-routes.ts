@@ -3,6 +3,7 @@ import { HttpError } from '@server/lib/http/http-error.js'
 import { readJsonBody } from '@server/lib/http/json.js'
 import type { Router } from '@server/lib/http/router.js'
 import { totalFileSize } from '@server/lib/file-size.js'
+import { ignoreFailure } from '@server/lib/ignore-failure.js'
 import { normalizeCoverRequest, normalizeDownloadRequest } from '@server/services/downloads/download-options.js'
 import { historyEntryFromCover } from '@server/services/downloads/jobs.js'
 import { saveCoverImage } from '@server/services/ytdlp/cover-image.js'
@@ -10,8 +11,6 @@ import type { RouteDependencies } from './index.js'
 import { abortWhenClientLeaves, isLinkValue, showInFileManager, toHttpError } from './route-helpers.js'
 
 const HISTORY_ENTRIES_SHOWN = 30
-
-const ignoreFailure = () => {}
 
 const throwNoSuchDownload = (): never => {
   throw new HttpError(404, 'No such download.')
@@ -27,11 +26,17 @@ export const registerDownloadRoutes = (router: Router, { settings, history, queu
       throw new HttpError(400, 'Pick at least one video from the playlist.')
     }
 
-    return queue.add(normalizeDownloadRequest(body), {
-      title: body.title,
-      thumbnailUrl: body.thumbnailUrl,
-      videoCount: body.videoCount,
-    })
+    const later = body.later === true
+
+    if (later && !settings.get().laterStartTime) {
+      throw new HttpError(400, 'Choose when “Later” downloads start in ⚙ Settings first.')
+    }
+
+    return queue.add(
+      normalizeDownloadRequest(body),
+      { title: body.title, thumbnailUrl: body.thumbnailUrl, videoCount: body.videoCount },
+      { later },
+    )
   })
 
   router.get('/api/downloads', (): DownloadsResponse => ({
@@ -63,6 +68,10 @@ export const registerDownloadRoutes = (router: Router, { settings, history, queu
   router.post('/api/downloads/:id/cancel', ({ parameters: [id = ''] }) => queue.cancel(id) ?? throwNoSuchDownload())
   router.post('/api/downloads/:id/retry', ({ parameters: [id = ''] }) => queue.retry(id) ?? throwNoSuchDownload())
   router.post('/api/downloads/:id/pause', ({ parameters: [id = ''] }) => queue.pause(id) ?? throwNoSuchDownload())
+  router.post(
+    '/api/downloads/:id/start-now',
+    ({ parameters: [id = ''] }) => queue.startNow(id) ?? throwNoSuchDownload(),
+  )
   router.post('/api/downloads/:id/resume', ({ parameters: [id = ''] }) => queue.resume(id) ?? throwNoSuchDownload())
 
   router.post('/api/downloads/:id/reveal', async ({ parameters: [id = ''] }) => {

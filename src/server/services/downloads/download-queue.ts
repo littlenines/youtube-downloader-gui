@@ -1,13 +1,16 @@
 import { isActiveJob, isFinishedJob, isUnfinishedJob } from '@shared/jobs.js'
 import type { DownloadOptions, Job } from '@shared/types/downloads.js'
+import { ignoreFailure } from '@server/lib/ignore-failure.js'
 import type { HistoryStore } from '@server/services/stores/history-store.js'
 import type { SavedJob, SavedQueue } from '@server/services/stores/queue-store.js'
 import type { SettingsStore } from '@server/services/stores/settings-store.js'
 import { ActiveRuns } from './active-runs.js'
 import { appDownloadEngine, type DownloadEngine } from './download-engine.js'
+import { downloadWindowFromSettings, type DownloadWindow } from './download-window.js'
 import { JobFolders } from './job-folders.js'
 import { runDownloadJob } from './job-runner.js'
 import { createQueuedJob, resetJobForRetry, type JobDisplayDetails } from './jobs.js'
+import { applyWindowToJobs, moveWaitingJobs, waitForWindow } from './later-jobs.js'
 import { jobFromSavedJob, savedJobFromJob } from './saved-jobs.js'
 
 export interface DownloadQueueDependencies {
@@ -17,7 +20,11 @@ export interface DownloadQueueDependencies {
   engine?: DownloadEngine
 }
 
-const ignoreFailure = () => {}
+export interface AddOptions {
+  later?: boolean
+}
+
+const WINDOW_CHECK_MILLISECONDS = 30_000
 
 export class DownloadQueue {
   private readonly jobs = new Map<string, Job>()
@@ -30,6 +37,7 @@ export class DownloadQueue {
   private readonly engine: DownloadEngine
   private jobSequenceNumber = 0
   private isShuttingDown = false
+  private windowTimer: ReturnType<typeof setInterval> | null = null
 
   constructor({ settings, history, savedQueue, engine = appDownloadEngine }: DownloadQueueDependencies) {
     this.settings = settings
@@ -47,9 +55,12 @@ export class DownloadQueue {
     return this.jobs.get(id)
   }
 
-  add(options: DownloadOptions, details: JobDisplayDetails): Job {
+  add(options: DownloadOptions, details: JobDisplayDetails, { later = false }: AddOptions = {}): Job {
     const id = `${Date.now().toString(36)}-${++this.jobSequenceNumber}`
     const job = createQueuedJob(id, options, details)
+    const window = later ? this.downloadWindow() : null
+
+    if (window) waitForWindow(job, window, new Date())
 
     this.jobs.set(id, job)
     this.queueChanged()
@@ -91,9 +102,31 @@ export class DownloadQueue {
     if (job?.status !== 'paused') return job
 
     job.status = 'queued'
+    job.downloadLater = false
     this.queueChanged()
 
     return job
+  }
+
+  startNow(id: string): Job | undefined {
+    const job = this.jobs.get(id)
+
+    if (job?.status !== 'scheduled') return job
+
+    Object.assign(job, { status: 'queued', downloadLater: false, startsAt: null } satisfies Partial<Job>)
+    this.queueChanged()
+
+    return job
+  }
+
+  downloadWindowChanged(): void {
+    this.applyDownloadWindow()
+    moveWaitingJobs(this.jobs.values(), this.downloadWindow(), new Date())
+    this.queueChanged()
+  }
+
+  waitingCount(): number {
+    return [...this.jobs.values()].filter((job) => job.status === 'scheduled').length
   }
 
   cancel(id: string): Job | undefined {
@@ -135,7 +168,7 @@ export class DownloadQueue {
     for (const [id, job] of this.jobs) if (isFinishedJob(job)) this.jobs.delete(id)
   }
 
-  startQueuedJobs(): void {
+  private startQueuedJobs(): void {
     if (this.isShuttingDown) return
 
     let freeSlots = this.settings.get().simultaneousDownloads - this.activeRuns.count
@@ -154,14 +187,53 @@ export class DownloadQueue {
 
   async pauseForShutdown(): Promise<void> {
     this.isShuttingDown = true
+    this.stopWindowTimer()
     this.activeRuns.stopAll('pause')
     await Promise.allSettled(this.runningPromises)
     await this.saveUnfinishedJobs()
   }
 
   private queueChanged(): void {
+    this.applyDownloadWindow()
+    this.saveAndStartJobs()
+  }
+
+  private saveAndStartJobs(): void {
     void this.saveUnfinishedJobs()
     this.startQueuedJobs()
+    this.updateWindowTimer()
+  }
+
+  private checkDownloadWindow(): void {
+    if (this.applyDownloadWindow()) this.saveAndStartJobs()
+  }
+
+  private downloadWindow(): DownloadWindow | null {
+    return downloadWindowFromSettings(this.settings.get())
+  }
+
+  private applyDownloadWindow(): boolean {
+    const { changed, jobIdsToStop } = applyWindowToJobs(this.jobs.values(), this.downloadWindow(), new Date())
+
+    for (const jobId of jobIdsToStop) this.activeRuns.stop(jobId, 'pause')
+
+    return changed
+  }
+
+  private updateWindowTimer(): void {
+    const hasLaterJobs = [...this.jobs.values()].some((job) => job.downloadLater && isUnfinishedJob(job))
+
+    if (!hasLaterJobs || this.isShuttingDown) return this.stopWindowTimer()
+    if (this.windowTimer) return
+
+    this.windowTimer = setInterval(() => this.checkDownloadWindow(), WINDOW_CHECK_MILLISECONDS)
+    this.windowTimer.unref?.()
+  }
+
+  private stopWindowTimer(): void {
+    if (this.windowTimer) clearInterval(this.windowTimer)
+
+    this.windowTimer = null
   }
 
   private saveUnfinishedJobs(): Promise<void> {

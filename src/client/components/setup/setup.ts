@@ -1,11 +1,10 @@
 import type { SetupStatus } from '@shared/types/app.js'
 import { api } from '@client/api.js'
-import { errorMessage, findElement, showToast } from '@client/utils/dom.js'
+import { errorMessage, findElement, LONG_TOAST_MILLISECONDS, showToast } from '@client/utils/dom.js'
 import { renderSetupBanner, renderSetupDialog, setupDialog } from './setup-view.js'
 
 const RUNNING_POLL_MILLISECONDS = 500
 const OFFLINE_RETRY_MILLISECONDS = 3000
-const LONG_TOAST_MILLISECONDS = 6000
 
 let latestStatus: SetupStatus | null = null
 let installStartedHere = false

@@ -4,7 +4,7 @@ export type AudioFormat = 'mp3' | 'm4a' | 'opus' | 'original' | 'flac' | 'wav'
 
 export type Container = 'mp4' | 'mkv' | 'webm'
 
-export type JobStatus = 'queued' | 'downloading' | 'paused' | 'done' | 'error' | 'cancelled'
+export type JobStatus = 'scheduled' | 'queued' | 'downloading' | 'paused' | 'done' | 'error' | 'cancelled'
 
 export interface AudioTags {
   artist: string
@@ -35,6 +35,7 @@ export interface DownloadRequest {
   title?: string
   thumbnailUrl?: string | null
   videoCount?: number
+  later?: boolean
 }
 
 export interface CoverRequest {
@@ -77,6 +78,8 @@ export interface Job {
   createdAt: string
   finishedAt: string | null
   progress: number
+  downloadLater: boolean
+  startsAt: string | null
   stage: string | null
   bytesPerSecond: number | null
   secondsLeft: number | null

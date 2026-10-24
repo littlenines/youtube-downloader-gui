@@ -69,6 +69,7 @@ export const api = {
   retry: (id: string) => sendRequest<Job>('POST', downloadPath(id, '/retry')),
   pause: (id: string) => sendRequest<Job>('POST', downloadPath(id, '/pause')),
   resume: (id: string) => sendRequest<Job>('POST', downloadPath(id, '/resume')),
+  startNow: (id: string) => sendRequest<Job>('POST', downloadPath(id, '/start-now')),
   reveal: (id: string) => sendRequest<{ ok: true }>('POST', downloadPath(id, '/reveal')),
   remove: (id: string) => sendRequest<{ ok: true }>('DELETE', downloadPath(id)),
   clearFinished: () => sendRequest<{ ok: true }>('DELETE', '/api/downloads'),

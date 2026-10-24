@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { createDateTimeFormatter, supportedLocale } from '@client/utils/format.js'
+import { createDateTimeFormatter, describeStartTime, supportedLocale } from '@client/utils/format.js'
 import { normalizeSystemLocale, systemLocaleArguments, systemLocaleFromArguments } from '@desktop/system-locale.js'
 
 const MIDDAY_UTC = '2026-10-23T12:00:00.000Z'
@@ -54,5 +54,21 @@ describe('formatting dates for the page', () => {
 
   it('gives an empty text for a date it cannot read', () => {
     assert.equal(createDateTimeFormatter('en-GB')('not a date'), '')
+  })
+})
+
+describe('when a waiting download starts', () => {
+  const now = new Date(2026, 9, 24, 23, 30)
+  const formatTime = (date: Date) => `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`
+  const formatDate = (date: Date) => `${date.getDate()}.${date.getMonth() + 1}.`
+
+  it('says today or tomorrow, the way people say it', () => {
+    assert.equal(describeStartTime(new Date(2026, 9, 24, 23, 45), now, formatTime, formatDate), 'at 23:45')
+    assert.equal(describeStartTime(new Date(2026, 9, 25, 2, 0), now, formatTime, formatDate), 'tomorrow at 2:00')
+    assert.equal(
+      describeStartTime(new Date(2026, 9, 27, 2, 0), now, formatTime, formatDate),
+      'on 27.10. at 2:00',
+      'other days use the page date format',
+    )
   })
 })

@@ -1,13 +1,12 @@
 import type { AppUpdateResponse, Settings, StatusResponse } from '@shared/types/app.js'
 import { readJsonBody } from '@server/lib/http/json.js'
 import type { Router } from '@server/lib/http/router.js'
+import { ignoreFailure } from '@server/lib/ignore-failure.js'
 import { APP_VERSION } from '@server/app-version.js'
 import { startupAppUpdate } from '@server/services/app-updates/app-update-check.js'
 import { toolSetup } from '@server/services/tools/app-tool-setup.js'
 import type { RouteDependencies } from './index.js'
 import { showInFileManager } from './route-helpers.js'
-
-const ignoreFailure = () => {}
 
 export const registerSettingsRoutes = (router: Router, { settings, queue, subscriptions }: RouteDependencies): void => {
   router.get('/api/status', (): StatusResponse => ({
@@ -32,7 +31,7 @@ export const registerSettingsRoutes = (router: Router, { settings, queue, subscr
   router.post('/api/settings', async ({ request }) => {
     const updatedSettings = await settings.update(await readJsonBody<Settings>(request))
 
-    queue.startQueuedJobs()
+    queue.downloadWindowChanged()
     subscriptions.restartSchedule()
 
     return updatedSettings

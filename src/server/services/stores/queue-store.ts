@@ -16,7 +16,19 @@ export interface SavedJob {
   label: string
   createdAt: string
   paused: boolean
+  progress: number
+  later: boolean
+  startsAt: string | null
   downloadFolder: string | null
+}
+
+const savedProgress = (value: unknown): number =>
+  typeof value === 'number' && Number.isFinite(value) ? Math.min(Math.max(value, 0), 1) : 0
+
+const savedTime = (value: unknown): string | null => {
+  const text = stringOrNull(value)
+
+  return text && !Number.isNaN(Date.parse(text)) ? text : null
 }
 
 const savedDownloadFolder = (value: unknown): string | null => {
@@ -39,6 +51,9 @@ const parseSavedJob = (stored: StoredRecord): SavedJob | null => {
     label: stringOrDefault(stored.label, ''),
     createdAt: stringOrDefault(stored.createdAt, new Date().toISOString()),
     paused: stored.paused === true,
+    progress: savedProgress(stored.progress),
+    later: stored.later === true,
+    startsAt: savedTime(stored.startsAt),
     downloadFolder: savedDownloadFolder(stored.downloadFolder),
   }
 }

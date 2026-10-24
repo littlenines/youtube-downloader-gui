@@ -1,5 +1,8 @@
+import { countText } from '@shared/count-text.js'
+import type { Job } from '@shared/types/downloads.js'
 import { api } from '@client/api.js'
 import { announceDownloadsChanged } from '@client/events.js'
+import { formatStartTime } from '@client/locale.js'
 import { state } from '@client/state.js'
 import { errorMessage, findElement, showToast } from '@client/utils/dom.js'
 import { escapeHtml } from '@client/utils/format.js'
@@ -13,7 +16,9 @@ import {
 } from './choices/choice-html.js'
 import { audioFormatCard } from './choices/choice-options.js'
 import { chosenFormat } from './choices/chosen-format.js'
+import { laterButtonHtml } from './media/media-options-html.js'
 import { showPanel } from './panels.js'
+import { isLaterTimeChosen } from './settings/settings.js'
 import { requestSetup, toolsAvailable } from './setup/setup.js'
 
 const SUCCESS_TOAST_MILLISECONDS = 3500
@@ -55,6 +60,7 @@ const renderBatchPanel = (): void => {
     ${kindTabsHtml()}<div class="tab-panel">${optionsHtml}</div>
     <div class="media-footer"><span class="download-summary"><b>${escapeHtml(chosenFormatText())}</b></span>
       <span class="footer-buttons"><button class="button" data-action="cancel-batch">Cancel</button>
+      ${laterButtonHtml()}
       <button class="button primary large" data-action="download-all">⬇ Download all (${batchLinks.length})</button></span></div></div>`
 }
 
@@ -65,31 +71,44 @@ const removeLink = (index: number): void => {
   else showPanel(null)
 }
 
-const startBatchDownload = (url: string): Promise<unknown> =>
+const startBatchDownload = (url: string, later: boolean): Promise<Job> =>
   api.startDownload({
     ...chosenFormat(state.choices.resolution),
     url,
     playlist: isPlaylistLink(url),
     title: url,
     thumbnailUrl: youtubeThumbnailUrl(url),
+    later,
   })
 
-const downloadAll = async (button: HTMLButtonElement): Promise<void> => {
-  if (!toolsAvailable()) return requestSetup(() => void downloadAll(button))
+const setFooterButtonsDisabled = (disabled: boolean): void => {
+  for (const button of batchPanel().querySelectorAll<HTMLButtonElement>('.footer-buttons button')) {
+    button.disabled = disabled
+  }
+}
+
+const laterText = (startsAt: string | null): string =>
+  startsAt ? ` They start ${formatStartTime(startsAt)}.` : ' The “Later” time has begun, so they started now.'
+
+const downloadAll = async (later = false): Promise<void> => {
+  if (!toolsAvailable()) return requestSetup(() => void downloadAll(later))
+
+  setFooterButtonsDisabled(true)
+
+  if (later && !(await isLaterTimeChosen())) return setFooterButtonsDisabled(false)
 
   const failures: string[] = []
-
-  button.disabled = true
+  let startsAt: string | null = null
 
   for (const url of batchLinks) {
     try {
-      await startBatchDownload(url)
+      startsAt = (await startBatchDownload(url, later)).startsAt ?? startsAt
     } catch (error) {
       failures.push(`${url}: ${errorMessage(error)}`)
     }
   }
 
-  button.disabled = false
+  setFooterButtonsDisabled(false)
   announceDownloadsChanged()
 
   const addedCount = batchLinks.length - failures.length
@@ -97,7 +116,10 @@ const downloadAll = async (button: HTMLButtonElement): Promise<void> => {
   if (failures.length) {
     showToast(`Added ${addedCount} of ${batchLinks.length}. ${failures[0]}`, FAILURE_TOAST_MILLISECONDS)
   } else {
-    showToast(`Added ${addedCount} downloads.`, SUCCESS_TOAST_MILLISECONDS)
+    showToast(
+      `Added ${countText(addedCount, 'download')}.${later ? laterText(startsAt) : ''}`,
+      SUCCESS_TOAST_MILLISECONDS,
+    )
     showPanel(null)
   }
 }
@@ -119,7 +141,8 @@ export const initializeBatchPanel = (): void => {
 
     if (action === 'remove-link') removeLink(Number(index))
     else if (action === 'cancel-batch') showPanel(null)
-    else if (action === 'download-all') void downloadAll(button)
+    else if (action === 'download-all') void downloadAll()
+    else if (action === 'download-later') void downloadAll(true)
   })
   batchPanel().addEventListener('change', (event) => {
     if (applyChoiceCheckbox(event.target as HTMLElement)) renderBatchPanel()

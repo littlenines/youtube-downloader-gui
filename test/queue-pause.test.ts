@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { existsSync } from 'node:fs'
-import { rm, writeFile } from 'node:fs/promises'
+import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { after, describe, it } from 'node:test'
 import { DownloadQueue } from '@server/services/downloads/download-queue.js'
@@ -12,11 +12,12 @@ import {
   waitFor,
   waitUntil,
 } from './support/queue-fakes.js'
+import { removeFolder } from './support/temporary-folder.js'
 
 describe('DownloadQueue: pause and resume', async () => {
   const { downloadFolder, settings, history, options } = await createQueueTestSetup('queue-pause-test-')
 
-  after(() => rm(downloadFolder, { recursive: true, force: true }))
+  after(() => removeFolder(downloadFolder))
 
   it('pauses a download, keeps its partial files, and resumes it in the same folder', async () => {
     const { engine, runs } = createFakeEngine()

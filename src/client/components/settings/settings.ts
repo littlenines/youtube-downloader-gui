@@ -2,9 +2,9 @@ import type { StatusResponse } from '@shared/types/app.js'
 import { api } from '@client/api.js'
 import { desktopBridge } from '@client/desktop.js'
 import { announceSubscriptionsChanged } from '@client/events.js'
-import { errorMessage, findElement, showToast } from '@client/utils/dom.js'
-
-const ERROR_TOAST_MILLISECONDS = 6000
+import { errorMessage, findElement, LONG_TOAST_MILLISECONDS, showToast } from '@client/utils/dom.js'
+import { fillLaterTimes, focusLaterStartTime, initializeLaterTimes } from './later-times.js'
+import { saveSetting } from './save-setting.js'
 
 const settingsDialog = () => findElement<HTMLDialogElement>('#settingsDialog')
 const downloadFolderInput = () => findElement<HTMLInputElement>('#downloadFolderInput')
@@ -19,6 +19,7 @@ const fillSettingsDialog = (status: StatusResponse): void => {
   simultaneousDownloadsSelect().value = String(status.simultaneousDownloads)
   lowLatencyRenderingCheckbox().checked = status.lowLatencyRendering
   subscriptionCheckSelect().value = String(status.subscriptionCheckHours)
+  fillLaterTimes(status)
   findElement('#renderingSetting').hidden = !desktopBridge || !isWindows
   findElement('#folderExample').textContent = isWindows ? 'D:\\Music\\YouTube' : '/home/you/Music/YouTube'
   findElement('#versionInfo').textContent =
@@ -30,13 +31,27 @@ const openSettingsDialog = (): void => {
   api.status().then(fillSettingsDialog, (error: unknown) => showToast(errorMessage(error)))
 }
 
+export const isLaterTimeChosen = async (): Promise<boolean> => {
+  const status = await api.status().catch((error: unknown) => {
+    showToast(errorMessage(error), LONG_TOAST_MILLISECONDS)
+
+    return null
+  })
+
+  if (!status) return false
+  if (status.laterStartTime) return true
+
+  openSettingsDialog()
+  focusLaterStartTime()
+  showToast('Choose when “Later” downloads start, then click 🌙 Later again.', LONG_TOAST_MILLISECONDS)
+
+  return false
+}
+
 const saveDownloadFolder = async (folder: string): Promise<void> => {
-  try {
-    downloadFolderInput().value = (await api.saveSettings({ downloadFolder: folder })).downloadFolder
-    showToast('Saved. New downloads go to that folder.')
-  } catch (error) {
-    showToast(errorMessage(error), ERROR_TOAST_MILLISECONDS)
-  }
+  const settings = await saveSetting({ downloadFolder: folder }, 'Saved. New downloads go to that folder.')
+
+  if (settings) downloadFolderInput().value = settings.downloadFolder
 }
 
 const enableFolderPicker = (): void => {
@@ -58,21 +73,23 @@ export const initializeSettings = (): void => {
   findElement('#openSettingsButton').addEventListener('click', openSettingsDialog)
   findElement('#saveFolderButton').addEventListener('click', () => void saveDownloadFolder(downloadFolderInput().value))
   enableFolderPicker()
+  initializeLaterTimes()
 
-  simultaneousDownloadsSelect().addEventListener('change', async () => {
-    await api.saveSettings({ simultaneousDownloads: Number(simultaneousDownloadsSelect().value) }).catch(() => {})
-    showToast('Saved.')
+  simultaneousDownloadsSelect().addEventListener('change', () => {
+    void saveSetting({ simultaneousDownloads: Number(simultaneousDownloadsSelect().value) })
   })
 
   subscriptionCheckSelect().addEventListener('change', async () => {
-    await api.saveSettings({ subscriptionCheckHours: Number(subscriptionCheckSelect().value) }).catch(() => {})
-    showToast('Saved.')
-    announceSubscriptionsChanged()
+    if (await saveSetting({ subscriptionCheckHours: Number(subscriptionCheckSelect().value) })) {
+      announceSubscriptionsChanged()
+    }
   })
 
-  lowLatencyRenderingCheckbox().addEventListener('change', async () => {
-    await api.saveSettings({ lowLatencyRendering: lowLatencyRenderingCheckbox().checked }).catch(() => {})
-    showToast('Saved. Restart the app to apply it.')
+  lowLatencyRenderingCheckbox().addEventListener('change', () => {
+    void saveSetting(
+      { lowLatencyRendering: lowLatencyRenderingCheckbox().checked },
+      'Saved. Restart the app to apply it.',
+    )
   })
 
   findElement('#openFolderButton').addEventListener('click', () => {

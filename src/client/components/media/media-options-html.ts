@@ -141,9 +141,16 @@ const summaryHtml = (info: MediaInfo): string => {
 
 const isNothingSelected = (info: MediaInfo): boolean => info.kind === 'playlist' && selectedVideoCount(info) === 0
 
-const footerHtml = (info: MediaInfo): string =>
-  `<div class="media-footer"><span class="download-summary">${summaryHtml(info)}</span>
-    <button class="button primary large" data-action="download" ${isNothingSelected(info) ? 'disabled' : ''}>⬇ Download</button></div>`
+const footerHtml = (info: MediaInfo): string => {
+  const disabled = isNothingSelected(info) ? 'disabled' : ''
+
+  return `<div class="media-footer"><span class="download-summary">${summaryHtml(info)}</span>
+    <span class="footer-buttons">${laterButtonHtml(disabled)}
+      <button class="button primary large" data-action="download" ${disabled}>⬇ Download</button></span></div>`
+}
+
+export const laterButtonHtml = (disabled = ''): string =>
+  `<button class="button large" data-action="download-later" ${disabled} title="Download at the time chosen in ⚙ Settings, for example overnight">🌙 Later</button>`
 
 const SHORTS_TAB_PATTERN = /\/shorts\/?(?:[?#]|$)/i
 

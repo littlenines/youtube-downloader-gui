@@ -4,6 +4,7 @@ import { isAbsolute, join, resolve } from 'node:path'
 import type { Settings } from '@shared/types/app.js'
 import { DATA_DIRECTORY, DEFAULT_DOWNLOAD_FOLDER } from '@server/config.js'
 import { HttpError } from '@server/lib/http/http-error.js'
+import { isClockTime } from '@server/services/downloads/download-window.js'
 import { JsonFile } from '@server/lib/json-file.js'
 import { asRecord, stringOrDefault } from './stored-values.js'
 
@@ -32,7 +33,15 @@ export const parseSettings = (content: unknown): Settings => {
     subscriptionCheckHours: isValidSubscriptionCheckHours(subscriptionCheckHours)
       ? subscriptionCheckHours
       : ONLY_AT_START_UP,
+    laterStartTime: isClockTime(stored.laterStartTime) ? stored.laterStartTime : null,
+    laterStopTime: isClockTime(stored.laterStopTime) ? stored.laterStopTime : null,
   }
+}
+
+const changedClockTime = (value: unknown): string | null | undefined => {
+  if (value === null || value === '') return null
+
+  return isClockTime(value) ? value : undefined
 }
 
 export const absoluteFolder = (input: string): string => {
@@ -86,6 +95,12 @@ export class SettingsStore {
     if (isValidSubscriptionCheckHours(subscriptionCheckHours)) {
       this.settings.subscriptionCheckHours = subscriptionCheckHours
     }
+
+    const laterStartTime = changedClockTime(changes.laterStartTime)
+    const laterStopTime = changedClockTime(changes.laterStopTime)
+
+    if (laterStartTime !== undefined) this.settings.laterStartTime = laterStartTime
+    if (laterStopTime !== undefined) this.settings.laterStopTime = laterStopTime
 
     await this.file.save(this.settings)
 

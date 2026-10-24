@@ -50,6 +50,26 @@ dialog::backdrop {
   gap: 8px;
 }
 
+.later-times {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.later-times input {
+  width: auto;
+}
+
+.later-times input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.later-times .inline-label {
+  margin: 0;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
 .dialog-actions {
   display: flex;
   justify-content: flex-end;

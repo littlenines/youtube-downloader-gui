@@ -36,6 +36,8 @@ export const isTextEntryField = (target: EventTarget | null): boolean =>
 
 export const errorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error))
 
+export const LONG_TOAST_MILLISECONDS = 6000
+
 let toastTimer: ReturnType<typeof setTimeout> | undefined
 
 export const showToast = (message: string, durationMilliseconds = 3500): void => {

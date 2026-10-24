@@ -102,6 +102,7 @@ const handleMediaPanelClick = (event: Event): void => {
 
   if (action === 'load-playlist') void loadMediaInfo(state.url, true, { fromSearch: state.openedFromSearch })
   else if (action === 'download' && state.info) void startMediaDownload(state.info, button)
+  else if (action === 'download-later' && state.info) void startMediaDownload(state.info, button, { later: true })
   else if (action === 'subscribe' && state.info?.kind === 'playlist') void subscribeToMedia(state.info, button)
   else if (action === 'preview' && state.info?.kind === 'video') startPreview(mediaPanel(), state.info)
   else if ((action === 'save-cover' || action === 'save-square-cover') && state.info?.kind === 'video') {

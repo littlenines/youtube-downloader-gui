@@ -1,0 +1,51 @@
+# Tests
+
+Tests live in `test/` and cover:
+
+| File | Covers |
+|---|---|
+| `download-options.test.ts` | Validating download requests, playlist selections, and job labels. |
+| `download-arguments.test.ts` | Choices → yt-dlp arguments: MP3 320, Opus original, cover art, video codec preferences, progress and file markers, playlists, the `--` safety rule. |
+| `cover-image.test.ts` | Saving only the cover: the yt-dlp arguments, the square crop for wide and tall pictures, finding the saved file, numbered names that never overwrite a file, checking the request, and its history entry. |
+| `cover-image-save.test.ts` | The whole cover save with fake tools: the work folder removed after success, failure or cancel, and the crop only for square. |
+| `tag-and-clip-arguments.test.ts` | Edited tags and their escaping, and clip sections with their file names. |
+| `clip-range.test.ts` | Reading and writing clip times. |
+| `media-info.test.ts` | Parsing `yt-dlp -J` output: one row per resolution, vertical video, best audio, playlists and their positions. |
+| `ytdlp-output.test.ts` | Readable error messages, the preview stream choice, and yt-dlp's progress and file lines. |
+| `search-results.test.ts` | Search results (videos, playlists, verified channels) and what is searched for each kind. |
+| `search-filters.test.ts` | Narrowing search results by length and to verified channels, the edges between lengths, results without a duration, playlists ignoring the video filters, reading the chips, and **Show all**. |
+| `tags-and-links.test.ts` | Tag suggestions from video titles and channels, and finding links in pasted or dropped text. |
+| `archive.test.ts` | Zip and tar.gz reading and writing, including refusing zip entries and symbolic links that escape the target folder. |
+| `json-file.test.ts` | Validation on load, concurrent saves keeping the last value, and keeping a copy of a damaged file. |
+| `stores.test.ts` | Defaults, reading settings and history saved by earlier versions, and reading the saved queue safely. |
+| `queue.test.ts` | The download queue with a fake download engine: cancel then retry while the old process is still exiting, failures, success, playlists that skip videos. |
+| `queue-pause.test.ts` | Pausing and resuming in the same partial folder, cancelling a paused download, and a pause racing a finished download. |
+| `download-window.test.ts` | The download window (across midnight, without a stop time, the same start and stop), the "Later" times in settings, and what the window does to jobs: starting due ones, stopping running ones at the stop time, moving a missed start time, and moving to new times. |
+| `queue-later.test.ts` | The queue with a fake clock: waiting until the start time, pausing at the stop time and continuing the next night in the same partial folder, Start now, changing or clearing the times, saving a setting just after the start time, saving and restoring a waiting download with how far it got, and the waiting count for the quit question. |
+| `queue-saving.test.ts` | Saving unfinished downloads, restoring them, pausing on shutdown and waiting for the last save. |
+| `subscription-subscribe.test.ts` | Subscribing without downloading the back catalogue, refusing the same channel twice (also when two requests arrive at once), following only Shorts from the Shorts tab, and never skipping Shorts for playlists. |
+| `subscription-new-videos.test.ts` | New videos downloading with the subscription's choices and folder, skipped Shorts and restricted videos, waiting for premieres, giving up after repeated failures or two weeks of waiting, YouTube's dates instead of the computer's clock, and playlist listings that miss videos not causing downloads again. |
+| `subscription-check-runs.test.ts` | Errors shown and cleared, saving failures, no work without subscriptions, missing tools, one check at a time, and unsubscribing mid-check. |
+| `subscription-schedule.test.ts` | The schedule with fake timers: the start-up check, only at start-up by default, the interval, one retry after a failed check, and a new interval chosen during a check. |
+| `subscription-sources.test.ts` | Reading YouTube channel feeds and flat playlists, and reading saved subscriptions. |
+| `subscription-targets.test.ts` | What a link subscribes to, recognizing channel links and their tabs, and safe folder names in the output template. |
+| `video-availability.test.ts` | Whether a new video can be downloaded yet: premieres, live streams, restricted videos and yt-dlp errors. |
+| `partial-folders.test.ts` | Removing partial folders left by a crash, while keeping ones in use or belonging to saved downloads. |
+| `request-guard.test.ts` | Refusing cross-site requests and DNS rebinding, and allowing the app's own page. |
+| `access.test.ts` | The access key (cookie, access link, refusals), the Content-Security-Policy, and malformed addresses answering 400. |
+| `verified-download.test.ts` | Checksum match and mismatch, stalled downloads, reading checksum files and release tags (against a local test server). |
+| `tool-setup.test.ts` | The setup states with fake tools: missing, installing, ready, a tool lost later, failed installs, and the update-check schedule. |
+| `app-update.test.ts` | Comparing app versions and offering a newer release. |
+| `release-notes.test.ts` | Finding a version's section in `CHANGELOG.md` and building the release notes from it. |
+| `locale.test.ts` | Turning the system locale into a language tag, passing it to the page, and formatting dates with it. |
+
+Shared fakes and helpers for these live in `test/support/`.
+
+Everything that needs yt-dlp, the network or a window is checked by running the app. A useful end-to-end pass:
+
+1. Start with an empty `tools/` folder and check that the setup dialog appears and installs the tools.
+2. Search for a song, preview it (play and seek), edit its tags and download it as MP3.
+3. Paste or drop several links and download them all.
+4. Download a 1080p MP4.
+5. Cancel a 4K download halfway and confirm no `.part` files or yt-dlp/ffmpeg processes are left.
+6. Close the window while downloading and confirm the quit question appears.

@@ -1,17 +1,18 @@
 import assert from 'node:assert/strict'
 import { existsSync } from 'node:fs'
-import { rm, writeFile } from 'node:fs/promises'
+import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { after, describe, it } from 'node:test'
 import { normalizeDownloadRequest } from '@server/services/downloads/download-options.js'
 import { DownloadQueue } from '@server/services/downloads/download-queue.js'
 import { PARTIAL_FOLDER_NAME } from '@server/services/downloads/partial-folders.js'
 import { createFakeEngine, createQueueTestSetup, noSavedQueue, waitFor, waitUntil } from './support/queue-fakes.js'
+import { removeFolder } from './support/temporary-folder.js'
 
 describe('DownloadQueue', async () => {
   const { downloadFolder, settings, history, options } = await createQueueTestSetup('queue-test-')
 
-  after(() => rm(downloadFolder, { recursive: true, force: true }))
+  after(() => removeFolder(downloadFolder))
 
   it('waits for a cancelled run to exit before retrying, and keeps the new run cancellable', async () => {
     const { engine, runs } = createFakeEngine()

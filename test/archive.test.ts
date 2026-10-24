@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, readFile, rm, stat } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { after, describe, it } from 'node:test'
 import { deflateRawSync } from 'node:zlib'
 import { createTarGz, extractTarGzEntry } from '@server/lib/archive/tar.js'
 import { extractZip, extractZipEntry } from '@server/lib/archive/zip.js'
+import { createTemporaryFolder, removeFolder } from './support/temporary-folder.js'
 
 interface ZipFixtureEntry {
   name: string
@@ -78,13 +79,13 @@ describe('extractZipEntry', () => {
 describe('extractZip', () => {
   const directories: string[] = []
   const temporaryDirectory = async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'archive-test-'))
+    const directory = await createTemporaryFolder('archive-test-')
 
     directories.push(directory)
     return directory
   }
 
-  after(() => Promise.all(directories.map((directory) => rm(directory, { recursive: true, force: true }))))
+  after(() => Promise.all(directories.map((directory) => removeFolder(directory))))
 
   it('extracts folders and files', async () => {
     const directory = await temporaryDirectory()

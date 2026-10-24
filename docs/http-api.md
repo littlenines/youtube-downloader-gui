@@ -120,6 +120,7 @@ Request (`DownloadRequest`):
 | `subtitles` | Embed English subtitles (not for WebM) | `false` |
 | `tags` | `{ artist, title, album }` written into the file and used as its name (`Artist - Title.mp3`). Single audio downloads only; empty fields are left as found. | `null` |
 | `folder` | A folder inside the download folder to save into. Reduced to one safe folder name; `null` saves directly in the download folder. Subscriptions use it for their channel or playlist folder. | `null` |
+| `later` | Wait for the "Later" time in Settings instead of starting now (the job is `scheduled`). Answers `400` when no start time is set. | `false` |
 
 Unknown values fall back to the defaults.
 
@@ -132,7 +133,8 @@ Unknown values fall back to the defaults.
 
 A `Job` has:
 
-- `status`: `queued`, `downloading`, `paused`, `done`, `error` or `cancelled`.
+- `status`: `scheduled` (waiting for the "Later" time), `queued`, `downloading`, `paused`, `done`, `error` or `cancelled`.
+- `downloadLater`: it belongs to the "Later" time, so it pauses at the stop time. `startsAt`: when a `scheduled` job starts, otherwise `null`.
 - `progress`: from 0 to 1.
 - `stage`: a readable step, for example "Downloading video".
 - `bytesPerSecond` and `secondsLeft`.
@@ -147,13 +149,14 @@ A `Job` has:
 |---|---|
 | `POST /api/downloads/:id/pause` | Stops a waiting or running download and keeps its partial files. |
 | `POST /api/downloads/:id/resume` | Queues a paused download again; it continues where it stopped. |
+| `POST /api/downloads/:id/start-now` | Starts a `scheduled` download now. It then runs until it finishes, ignoring the stop time. |
 | `POST /api/downloads/:id/cancel` | Stops it (running, waiting or paused) and deletes its partial files. |
 | `POST /api/downloads/:id/retry` | Queues a failed or cancelled download again. |
 | `POST /api/downloads/:id/reveal` | Shows the file in the file manager. Falls back to its folder, or the download folder. |
 | `DELETE /api/downloads/:id` | Removes a finished download from the list and history. The file stays. |
 | `DELETE /api/downloads` | Clears every finished download and the history. |
 
-`pause`, `resume`, `cancel` and `retry` answer `404` for unknown ids.
+`pause`, `resume`, `start-now`, `cancel` and `retry` answer `404` for unknown ids.
 
 ### `POST /api/covers` → `HistoryEntry`
 
@@ -197,8 +200,9 @@ Request: any of:
 
 - `downloadFolder`: an absolute path. It is created if missing; answers `400` if that isn't possible.
 - `simultaneousDownloads`: 1 to 4.
-- `lowLatencyRendering`: `true` or `false`. The desktop app on Windows reads it at start-up (see architecture.md, Smooth rendering).
+- `lowLatencyRendering`: `true` or `false`. The desktop app on Windows reads it at start-up (see *Smooth rendering* in [architecture.md](architecture.md#smooth-rendering)).
 - `subscriptionCheckHours`: 0, 1, 2, 3, 6, 12 or 24. How often subscriptions are checked after the start-up check; `0` (the default) means only at start-up. The next check moves at once.
+- `laterStartTime`, `laterStopTime`: local clock times like `"02:00"`, or `null`. When "Later" downloads start, and when unfinished ones pause (`null`: they run until done; the same as the start time counts as `null`). Clearing the start time starts every waiting download now. Waiting downloads move to the new time at once.
 
 ### `POST /api/open-folder`
 

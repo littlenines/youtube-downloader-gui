@@ -1,22 +1,22 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 import { createServer, type Server } from 'node:http'
-import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { after, before, describe, it } from 'node:test'
 import { gzipSync } from 'node:zlib'
 import { parseSha256 } from '@server/lib/checksums.js'
 import { releaseTagFromLocation } from '@server/lib/github-releases.js'
 import { downloadVerifiedFile, IntegrityError } from '@server/lib/verified-download.js'
+import { createTemporaryFolder, removeFolder } from './support/temporary-folder.js'
 
 const content = Buffer.from('pretend this is ffmpeg '.repeat(2000))
 const compressed = gzipSync(content)
 const sha256 = (data: Buffer) => createHash('sha256').update(data).digest('hex')
 
 describe('downloadVerifiedFile', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'verified-download-test-'))
+  const directory = await createTemporaryFolder('verified-download-test-')
   let server: Server
   let baseUrl = ''
 
@@ -40,7 +40,7 @@ describe('downloadVerifiedFile', async () => {
   after(async () => {
     server.closeAllConnections()
     server.close()
-    await rm(directory, { recursive: true, force: true })
+    await removeFolder(directory)
   })
 
   it('saves the unpacked file when the checksum matches', async () => {

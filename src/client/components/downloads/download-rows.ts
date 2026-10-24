@@ -1,6 +1,6 @@
 import { isActiveJob, isFinishedJob, isUnfinishedJob } from '@shared/jobs.js'
 import type { HistoryEntry, Job } from '@shared/types/downloads.js'
-import { formatDateTime } from '@client/locale.js'
+import { formatDateTime, formatStartTime } from '@client/locale.js'
 import { escapeHtml, formatBytes, formatSpeed, formatTimeLeft } from '@client/utils/format.js'
 
 export interface RowContent {
@@ -34,6 +34,11 @@ const playlistPositionText = (job: Job): string => {
 
 const jobStatusText = (job: Job): string => {
   switch (job.status) {
+    case 'scheduled':
+      return joinNonEmpty([
+        `${job.progress ? 'Continues' : 'Starts'} ${formatStartTime(job.startsAt)}`,
+        job.progress ? `${Math.round(job.progress * 100)}%` : '',
+      ])
     case 'queued':
       return 'Waiting…'
     case 'downloading':
@@ -85,6 +90,7 @@ const jobActionsHtml = (job: Job): string => {
     job.status === 'done' ? actionButtonHtml('reveal', job.id, 'Show in folder') : '',
     isActiveJob(job) ? actionButtonHtml('pause', job.id, 'Pause') : '',
     job.status === 'paused' ? actionButtonHtml('resume', job.id, 'Resume', 'primary') : '',
+    job.status === 'scheduled' ? actionButtonHtml('start-now', job.id, 'Start now', 'primary') : '',
     isUnfinishedJob(job) ? actionButtonHtml('cancel', job.id, 'Cancel') : '',
     canRetry ? actionButtonHtml('retry', job.id, 'Retry') : '',
     isFinishedJob(job) ? removeButtonHtml(job.id) : '',

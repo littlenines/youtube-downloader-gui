@@ -1,6 +1,3 @@
-import { mkdtemp } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import type { Settings } from '@shared/types/app.js'
 import type { DownloadEngine } from '@server/services/downloads/download-engine.js'
 import { normalizeDownloadRequest } from '@server/services/downloads/download-options.js'
@@ -8,6 +5,7 @@ import type { HistoryStore } from '@server/services/stores/history-store.js'
 import type { SavedJob, SavedQueue } from '@server/services/stores/queue-store.js'
 import type { SettingsStore } from '@server/services/stores/settings-store.js'
 import type { DownloadResult } from '@server/services/ytdlp/download-process.js'
+import { createTemporaryFolder } from './temporary-folder.js'
 
 export interface FakeRun {
   finish(skippedItems?: string[]): void
@@ -74,13 +72,15 @@ export const createRecordingQueue = () => {
 }
 
 export const createQueueTestSetup = async (folderPrefix: string) => {
-  const downloadFolder = await mkdtemp(join(tmpdir(), folderPrefix))
+  const downloadFolder = await createTemporaryFolder(folderPrefix)
   const settings = {
     get: (): Settings => ({
       downloadFolder,
       simultaneousDownloads: 2,
       lowLatencyRendering: true,
       subscriptionCheckHours: 1,
+      laterStartTime: null,
+      laterStopTime: null,
     }),
   } as unknown as SettingsStore
   const history = { add: async () => {} } as unknown as HistoryStore
@@ -95,6 +95,9 @@ export const savedJobFor = (overrides: Partial<SavedJob> & Pick<SavedJob, 'id' |
   label: '',
   createdAt: '2026-01-01T00:00:00.000Z',
   paused: false,
+  progress: 0,
+  later: false,
+  startsAt: null,
   downloadFolder: null,
   ...overrides,
 })

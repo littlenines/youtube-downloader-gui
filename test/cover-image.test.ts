@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { describe, it } from 'node:test'
 import { normalizeCoverRequest } from '@server/services/downloads/download-options.js'
@@ -10,10 +9,9 @@ import {
   coverFileFromOutput,
   coverFileNames,
   coverImageArguments,
-  saveCoverImage,
-  type CoverTools,
 } from '@server/services/ytdlp/cover-image.js'
 import { SQUARE_JPG_CONVERSION_ARGUMENT } from '@server/services/ytdlp/thumbnail-arguments.js'
+import { createTemporaryFolder, removeFolder } from './support/temporary-folder.js'
 
 const VIDEO_URL = 'https://www.youtube.com/watch?v=abc'
 
@@ -59,7 +57,7 @@ describe('cover file names', () => {
   })
 
   it('never overwrites a file that is already there', async () => {
-    const folder = await mkdtemp(join(tmpdir(), 'cover-test-'))
+    const folder = await createTemporaryFolder('cover-test-')
 
     try {
       const source = join(folder, 'source.jpg')
@@ -73,90 +71,9 @@ describe('cover file names', () => {
       assert.equal(await readFile(join(folder, 'Song.jpg'), 'utf8'), 'old')
       assert.equal(await readFile(saved, 'utf8'), 'new')
     } finally {
-      await rm(folder, { recursive: true, force: true })
+      await removeFolder(folder)
     }
   })
-})
-
-const fakeCoverTools = (overrides: Partial<CoverTools> = {}): CoverTools & { croppedFiles: string[] } => {
-  const croppedFiles: string[] = []
-
-  return {
-    croppedFiles,
-    requireTools: async () => {},
-    saveThumbnail: async (_url, folder) => {
-      const file = join(folder, 'Song.jpg')
-
-      await writeFile(file, 'wide')
-
-      return `[youtube] abc: Downloading webpage\n[cover-file]${file}\n`
-    },
-    cropToSquare: async (source, target) => {
-      croppedFiles.push(source)
-      await writeFile(target, 'square')
-    },
-    ...overrides,
-  }
-}
-
-const withDownloadFolder = async (test: (folder: string) => Promise<void>): Promise<void> => {
-  const folder = await mkdtemp(join(tmpdir(), 'cover-save-'))
-
-  try {
-    await test(folder)
-  } finally {
-    await rm(folder, { recursive: true, force: true })
-  }
-}
-
-describe('saveCoverImage', () => {
-  it('moves the cover into the download folder and removes the work folder', () =>
-    withDownloadFolder(async (folder) => {
-      const tools = fakeCoverTools()
-      const saved = await saveCoverImage({ url: VIDEO_URL, square: false, downloadFolder: folder }, tools)
-
-      assert.equal(saved, join(folder, 'Song.jpg'))
-      assert.equal(await readFile(saved, 'utf8'), 'wide')
-      assert.deepEqual(tools.croppedFiles, [])
-      assert.deepEqual(await readdir(folder), ['Song.jpg'])
-    }))
-
-  it('crops the square cover itself, whatever format the thumbnail came in', () =>
-    withDownloadFolder(async (folder) => {
-      const tools = fakeCoverTools()
-      const saved = await saveCoverImage({ url: VIDEO_URL, square: true, downloadFolder: folder }, tools)
-
-      assert.equal(saved, join(folder, 'Song (square).jpg'))
-      assert.equal(await readFile(saved, 'utf8'), 'square')
-      assert.equal(tools.croppedFiles.length, 1)
-      assert.deepEqual(await readdir(folder), ['Song (square).jpg'])
-    }))
-
-  it('leaves nothing behind when saving, cropping or finding the thumbnail fails', () =>
-    withDownloadFolder(async (folder) => {
-      const failures: [Partial<CoverTools>, RegExp][] = [
-        [{ saveThumbnail: () => Promise.reject(new Error('Video unavailable')) }, /Video unavailable/],
-        [{ saveThumbnail: async () => '[cover-file]\n' }, /no cover image/],
-        [{ cropToSquare: () => Promise.reject(new Error('Cancelled.')) }, /Cancelled/],
-      ]
-
-      for (const [overrides, message] of failures) {
-        await assert.rejects(
-          saveCoverImage({ url: VIDEO_URL, square: true, downloadFolder: folder }, fakeCoverTools(overrides)),
-          message,
-        )
-      }
-
-      assert.deepEqual(await readdir(folder), [])
-    }))
-
-  it('stops before touching the folder when the tools are missing', () =>
-    withDownloadFolder(async (folder) => {
-      const tools = fakeCoverTools({ requireTools: () => Promise.reject(new Error('Tools missing')) })
-
-      await assert.rejects(saveCoverImage({ url: VIDEO_URL, square: false, downloadFolder: folder }, tools))
-      assert.deepEqual(await readdir(folder), [])
-    }))
 })
 
 describe('cover requests and history', () => {

@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict'
 import { existsSync } from 'node:fs'
-import { mkdir, mkdtemp, rm, utimes, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { mkdir, utimes, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { after, describe, it } from 'node:test'
 import { PARTIAL_FOLDER_NAME, removeStalePartialFolders } from '@server/services/downloads/partial-folders.js'
+import { createTemporaryFolder, removeFolder } from './support/temporary-folder.js'
 
 describe('removeStalePartialFolders', async () => {
-  const downloadFolder = await mkdtemp(join(tmpdir(), 'stale-test-'))
+  const downloadFolder = await createTemporaryFolder('stale-test-')
 
-  after(() => rm(downloadFolder, { recursive: true, force: true }))
+  after(() => removeFolder(downloadFolder))
 
   it('removes folders a crashed app left hours ago and keeps ones still in use', async () => {
     const staleFolder = join(downloadFolder, PARTIAL_FOLDER_NAME, 'crashed-job')

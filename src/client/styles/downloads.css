@@ -80,7 +80,8 @@
   transform-origin: left;
 }
 
-.job-row.paused .progress-fill {
+.job-row.paused .progress-fill,
+.job-row.scheduled .progress-fill {
   background: var(--text-faint);
 }
 

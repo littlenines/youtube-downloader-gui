@@ -169,6 +169,18 @@
         <p class="hint">
           Every choice also checks right after the app starts. Checks only happen while the app is open.
         </p>
+        <label for="laterStartInput">Start “Later” downloads at</label>
+        <div class="field-row later-times">
+          <input id="laterStartInput" type="time" />
+          <label for="laterStopInput" class="inline-label">and pause them at</label>
+          <input id="laterStopInput" type="time" disabled title="Choose a start time first" />
+          <button class="button" type="button" id="clearLaterTimesButton">Turn off</button>
+        </div>
+        <p class="hint">
+          <b>🌙 Later</b> next to Download waits for this time, for example overnight. Leave the second time empty to
+          let them run until they finish; otherwise unfinished ones pause then and continue the next time. The app has
+          to be open.
+        </p>
         <div id="renderingSetting" hidden>
           <label class="checkbox-label settings-checkbox">
             <input type="checkbox" id="lowLatencyRenderingCheckbox" /> Faster screen updates

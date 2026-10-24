@@ -14,6 +14,7 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 
   Searches now find 30 results instead of 12. The app remembers the length and Verified filters, and shows "13 of 30 shown · **Show all**" when they hide something.
 - **Save the cover image.** **🖼 Save cover** under a video's title saves its thumbnail in full size as a JPG, and **Save square** crops it like album art. They go to the downloads folder and show in the downloads list.
+- **Download later.** **🌙 Later** next to Download waits for the time you set in Settings, for example overnight. Optionally, unfinished downloads pause at a stop time and continue the next night where they stopped. Waiting downloads show when they start, and **Start now** starts one anyway. They survive closing the app.
 
 ### Fixed
 
