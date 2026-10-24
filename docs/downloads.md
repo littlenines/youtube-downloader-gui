@@ -5,10 +5,10 @@
 3. When a slot is free (Settings → downloads at the same time), the queue waits for the tools and starts yt-dlp with `buildDownloadArguments`. The link always comes after `--`, so it can never be read as an option.
 4. Each job gets its own partial folder, `<download folder>/.yt-downloader-partial/<job id>`, passed as `-P temp:`. yt-dlp keeps everything unfinished there (stream parts, fragments, thumbnails, merge and conversion output) and moves each file to the download folder only once it is complete.
 5. yt-dlp prints marker lines that the app reads (`parseOutputLine`):
-   - `VITEM`: an item starts, with its playlist position and title.
+   - `VITEM`: an item starts, with its position among the videos being downloaded (`playlist_autonumber`: 2 of 2 when videos 1 and 3 were picked), the count, and the title. Files keep the position in the whole playlist (`playlist_index`, `003 - Title`).
    - `VPROG`: progress, with the stream's video and audio codec, bytes, total, speed and seconds left.
    - `VFILE`: the final file after merging and conversion.
-6. The codecs tell the streams apart: picture only, sound only, both in one stream, or neither (subtitles). For a video, the picture fills the progress bar to 85% and the sound the rest.
+6. The codecs tell the streams apart: picture only, sound only, both in one stream, or neither (subtitles). For a video, the picture fills the progress bar to 85% and the sound the rest. For a playlist, each video fills its share of the bar, so the second of four goes from 25% to 50%.
 
 **What the list shows.** A download spends most of its time outside the actual download, so each job has an `activity` (`job-progress.ts`), and the list shows it:
 
@@ -22,6 +22,14 @@ Music often downloads in a fraction of a second, faster than the list refreshes 
 7. When the job ends in any way, its partial folder is deleted. On success the job is added to the history. On cancel the process tree is stopped (process group on Linux and macOS, `taskkill /T` on Windows), so nothing unfinished reaches the download folder at any stage.
 
 A job keeps its slot until its yt-dlp process has exited, even after it was cancelled. Retrying a cancelled job queues it, and it starts only once the previous run has fully ended, so two runs never write the same file.
+
+**Notifications.** The desktop app shows a system notification when a download finishes or fails while its window isn't focused (Settings → **Notify me when downloads finish**, on by default; desktop only, so the setting is hidden in browser mode):
+
+- **Finding finished downloads:** `download-watcher.ts` checks the queue once a second and remembers the `finishedAt` it has reported for each job. A done or failed job with a different `finishedAt` is new, so even a download that starts and ends between two checks is noticed, a retried one is reported again, and a clock moved backwards can't repeat old notifications. Cancelled ones get no notification. Each listener (taskbar, notifications) runs on its own, so one that fails doesn't stop the other.
+- **What it says** (`notification-text.ts`): the title and "Downloaded · MP3 · 320 kbps", or "Download failed: <reason>". A playlist is one job, so it gets one notification ("12 of 14 videos downloaded").
+- **One notification for a batch** (`notification-batch.ts`): finishes are collected until 10 seconds pass without a new one, then shown together ("10 downloads finished", "9 downloaded, 1 failed", or "3 downloads failed"). So the several-links panel, a subscription check or an overnight **Later** queue sends one notification, not one per download, and a single download is shown 10 seconds after it finishes. Only finishes that happen while the window isn't focused are collected, and the window, the setting and support are checked again before showing.
+- **Clicking it** brings the window back. The last 20 notifications are kept referenced, so the click still works after a while.
+- **Windows** needs a Start Menu shortcut with the app's ID (`app.setAppUserModelId`) to show notifications, and Electron creates one the first time a notification is shown, named after the executable ("YT Downloader"). Windows names the notifications after that shortcut. Running from source (`npm run dev`) uses its own ID, "YT Downloader (development)", because otherwise its shortcut, named "Electron" after `electron.exe`, would carry the release app's ID and Windows could label the real app's notifications "Electron". Do Not Disturb, which Windows 11 also turns on by itself during full-screen apps and games, keeps the popup back; the notification still goes to the notification list (Win + N).
 
 **Reusing the media panel's read.** Opening a video in the media panel already runs `yt-dlp -J`, which reads the page, the player and solves YouTube's checks. Each such read (not live streams) is kept for 30 minutes, up to 20 of them (`video-info-cache.ts`; about 150 KB for a song, up to about 0.9 MB for a talk with auto-generated captions, whose list of 160+ caption languages makes up most of it, so at most about 18 MB in all). When a single-video download starts from that link, the job runner writes the read into the job's partial folder as `video-info.json`, and yt-dlp gets `--load-info-json <file>` instead of `-- <link>`, so it skips straight to choosing formats and downloading:
 

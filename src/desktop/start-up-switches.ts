@@ -22,7 +22,7 @@ const hasRemoteDebuggingSwitch = (): boolean =>
 export const applyStartUpSwitches = (): void => {
   app.setPath('userData', join(DATA_DIRECTORY, 'window'))
   app.setName(APP_NAME)
-  app.setAppUserModelId(APP_NAME)
+  app.setAppUserModelId(IS_PACKAGED ? APP_NAME : `${APP_NAME} (development)`)
   app.commandLine.appendSwitch('disk-cache-size', String(DISK_CACHE_BYTES))
 
   if (IS_WINDOWS && readStoredSettings().lowLatencyRendering) app.commandLine.appendSwitch('disable-direct-composition')

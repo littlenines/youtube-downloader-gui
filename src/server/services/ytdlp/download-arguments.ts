@@ -73,7 +73,7 @@ const reportingArguments = ({ downloadFolder, partialFolder }: DownloadFolders):
   '--progress-template',
   `download:${OUTPUT_MARKERS.progress}${PROGRESS_TEMPLATE}`,
   '--print',
-  `before_dl:${OUTPUT_MARKERS.item}%(playlist_index|)s|%(n_entries|)s|%(title)s`,
+  `before_dl:${OUTPUT_MARKERS.item}%(playlist_autonumber|)s|%(n_entries|)s|%(title)s`,
   '--print',
   `after_move:${OUTPUT_MARKERS.file}%(filepath)s`,
 ]

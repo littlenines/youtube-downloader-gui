@@ -2,6 +2,7 @@ export interface Settings {
   downloadFolder: string
   simultaneousDownloads: number
   lowLatencyRendering: boolean
+  notifyWhenFinished: boolean
   subscriptionCheckHours: number
   laterStartTime: string | null
   laterStopTime: string | null

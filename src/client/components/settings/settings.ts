@@ -1,4 +1,4 @@
-import type { StatusResponse } from '@shared/types/app.js'
+import type { Settings, StatusResponse } from '@shared/types/app.js'
 import { api } from '@client/api.js'
 import { desktopBridge } from '@client/desktop.js'
 import { announceSubscriptionsChanged } from '@client/events.js'
@@ -10,6 +10,7 @@ const settingsDialog = () => findElement<HTMLDialogElement>('#settingsDialog')
 const downloadFolderInput = () => findElement<HTMLInputElement>('#downloadFolderInput')
 const simultaneousDownloadsSelect = () => findElement<HTMLSelectElement>('#simultaneousDownloadsSelect')
 const lowLatencyRenderingCheckbox = () => findElement<HTMLInputElement>('#lowLatencyRenderingCheckbox')
+const notifyWhenFinishedCheckbox = () => findElement<HTMLInputElement>('#notifyWhenFinishedCheckbox')
 const subscriptionCheckSelect = () => findElement<HTMLSelectElement>('#subscriptionCheckSelect')
 
 const fillSettingsDialog = (status: StatusResponse): void => {
@@ -18,9 +19,11 @@ const fillSettingsDialog = (status: StatusResponse): void => {
   downloadFolderInput().value = status.downloadFolder
   simultaneousDownloadsSelect().value = String(status.simultaneousDownloads)
   lowLatencyRenderingCheckbox().checked = status.lowLatencyRendering
+  notifyWhenFinishedCheckbox().checked = status.notifyWhenFinished
   subscriptionCheckSelect().value = String(status.subscriptionCheckHours)
   fillLaterTimes(status)
   findElement('#renderingSetting').hidden = !desktopBridge || !isWindows
+  findElement('#notificationSetting').hidden = !desktopBridge
   findElement('#folderExample').textContent = isWindows ? 'D:\\Music\\YouTube' : '/home/you/Music/YouTube'
   findElement('#versionInfo').textContent =
     `App ${status.appVersion} · yt-dlp ${status.ytdlpVersion ?? '(not installed yet)'} · ${status.platform}`
@@ -54,6 +57,14 @@ const saveDownloadFolder = async (folder: string): Promise<void> => {
   if (settings) downloadFolderInput().value = settings.downloadFolder
 }
 
+const saveCheckbox = async (
+  checkbox: HTMLInputElement,
+  changes: (checked: boolean) => Partial<Settings>,
+  savedMessage?: string,
+): Promise<void> => {
+  if (!(await saveSetting(changes(checkbox.checked), savedMessage))) checkbox.checked = !checkbox.checked
+}
+
 const enableFolderPicker = (): void => {
   const bridge = desktopBridge
 
@@ -85,9 +96,14 @@ export const initializeSettings = (): void => {
     }
   })
 
+  notifyWhenFinishedCheckbox().addEventListener('change', () => {
+    void saveCheckbox(notifyWhenFinishedCheckbox(), (checked) => ({ notifyWhenFinished: checked }))
+  })
+
   lowLatencyRenderingCheckbox().addEventListener('change', () => {
-    void saveSetting(
-      { lowLatencyRendering: lowLatencyRenderingCheckbox().checked },
+    void saveCheckbox(
+      lowLatencyRenderingCheckbox(),
+      (checked) => ({ lowLatencyRendering: checked }),
       'Saved. Restart the app to apply it.',
     )
   })

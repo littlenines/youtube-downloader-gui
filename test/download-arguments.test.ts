@@ -106,4 +106,12 @@ describe('buildDownloadArguments: safety and playlists', () => {
 
     assert.equal(valueAfter(commandArguments, '--playlist-items'), '1-3,7,9-10')
   })
+
+  it('counts progress among the picked videos, while files keep their playlist number', () => {
+    const commandArguments = argumentsFor({ url: 'https://x', playlist: true, playlistItems: [1, 3, 12] })
+    const itemLine = commandArguments.find((argument) => argument.startsWith('before_dl:'))
+
+    assert.match(itemLine ?? '', /%\(playlist_autonumber\|\)s\|%\(n_entries\|\)s/)
+    assert.match(valueAfter(commandArguments, '-o') ?? '', /%\(playlist_index\)03d/)
+  })
 })

@@ -2,7 +2,7 @@ import { app, BrowserWindow, dialog, nativeTheme, shell } from 'electron'
 import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { APP_NAME } from './app-identity.js'
+import { APP_ICON_PATH, APP_NAME } from './app-identity.js'
 import { systemLocaleArguments } from './system-locale.js'
 import { isOnScreen, loadWindowState } from './window-state.js'
 
@@ -37,7 +37,7 @@ export const createMainWindow = (origin: string): BrowserWindow => {
     minWidth: MINIMUM_WINDOW_SIZE.width,
     minHeight: MINIMUM_WINDOW_SIZE.height,
     title: APP_NAME,
-    icon: join(moduleDirectory, 'icon.png'),
+    icon: APP_ICON_PATH,
     show: false,
     backgroundColor: nativeTheme.shouldUseDarkColors ? BACKGROUND_COLORS.dark : BACKGROUND_COLORS.light,
     webPreferences: {

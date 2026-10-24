@@ -13,11 +13,19 @@ const isSeparateVideoStream = (job: Job, event: ProgressEvent): boolean =>
 const isLastStream = (job: Job, event: ProgressEvent): boolean =>
   !isSeparateVideoStream(job, event) || event.stream === 'sound'
 
-const overallProgress = (job: Job, event: ProgressEvent, fraction: number): number => {
+const videoProgress = (job: Job, event: ProgressEvent, fraction: number): number => {
   if (!isSeparateVideoStream(job, event)) return fraction
   if (event.stream === 'picture') return fraction * PICTURE_STREAM_PROGRESS_SHARE
 
   return PICTURE_STREAM_PROGRESS_SHARE + fraction * (1 - PICTURE_STREAM_PROGRESS_SHARE)
+}
+
+const overallProgress = (job: Job, event: ProgressEvent, fraction: number): number => {
+  const position = job.playlistPosition
+
+  if (!job.options.playlist || !position?.count || !position.index) return videoProgress(job, event, fraction)
+
+  return (position.index - 1 + videoProgress(job, event, fraction)) / position.count
 }
 
 const downloadingText = (job: Job, event: ProgressEvent): string => {

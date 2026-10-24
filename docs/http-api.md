@@ -20,6 +20,10 @@ The page talks to the local server through this JSON API. The types are defined 
   "downloadFolder": "D:\\yt-downloader\\downloads",
   "simultaneousDownloads": 2,
   "lowLatencyRendering": true,
+  "notifyWhenFinished": true,
+  "subscriptionCheckHours": 0,
+  "laterStartTime": "02:00",
+  "laterStopTime": null,
   "appVersion": "1.0.0",
   "ytdlpVersion": "2026.10.21",
   "platform": "win32/x64",
@@ -203,6 +207,7 @@ Request: any of:
 - `downloadFolder`: an absolute path. It is created if missing; answers `400` if that isn't possible.
 - `simultaneousDownloads`: 1 to 4.
 - `lowLatencyRendering`: `true` or `false`. The desktop app on Windows reads it at start-up (see *Smooth rendering* in [architecture.md](architecture.md#smooth-rendering)).
+- `notifyWhenFinished`: `true` (the default) or `false`. The desktop app shows a system notification when downloads finish while its window isn't focused.
 - `subscriptionCheckHours`: 0, 1, 2, 3, 6, 12 or 24. How often subscriptions are checked after the start-up check; `0` (the default) means only at start-up. The next check moves at once.
 - `laterStartTime`, `laterStopTime`: local clock times like `"02:00"`, or `null`. When "Later" downloads start, and when unfinished ones pause (`null`: they run until done; the same as the start time counts as `null`). Clearing the start time starts every waiting download now. Waiting downloads move to the new time at once.
 

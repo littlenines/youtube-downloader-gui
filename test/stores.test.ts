@@ -14,6 +14,7 @@ describe('parseSettings', () => {
       downloadFolder: DEFAULT_DOWNLOAD_FOLDER,
       simultaneousDownloads: 2,
       lowLatencyRendering: true,
+      notifyWhenFinished: true,
       subscriptionCheckHours: 0,
       laterStartTime: null,
       laterStopTime: null,
@@ -22,6 +23,7 @@ describe('parseSettings', () => {
       downloadFolder: DEFAULT_DOWNLOAD_FOLDER,
       simultaneousDownloads: 2,
       lowLatencyRendering: true,
+      notifyWhenFinished: true,
       subscriptionCheckHours: 0,
       laterStartTime: null,
       laterStopTime: null,
@@ -33,6 +35,7 @@ describe('parseSettings', () => {
       downloadFolder: '/music',
       simultaneousDownloads: 3,
       lowLatencyRendering: true,
+      notifyWhenFinished: true,
       subscriptionCheckHours: 0,
       laterStartTime: null,
       laterStopTime: null,
@@ -89,6 +92,14 @@ describe('parseSettings: rendering', () => {
   it('uses low-latency rendering unless it was turned off', () => {
     assert.equal(parseSettings(undefined).lowLatencyRendering, true)
     assert.equal(parseSettings({ lowLatencyRendering: false }).lowLatencyRendering, false)
+  })
+})
+
+describe('parseSettings: notifications', () => {
+  it('notifies unless it was turned off', () => {
+    assert.equal(parseSettings(undefined).notifyWhenFinished, true)
+    assert.equal(parseSettings({ notifyWhenFinished: 'no' }).notifyWhenFinished, true)
+    assert.equal(parseSettings({ notifyWhenFinished: false }).notifyWhenFinished, false)
   })
 })
 

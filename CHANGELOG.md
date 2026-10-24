@@ -17,9 +17,11 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 - **Download later.** **🌙 Later** next to Download waits for the time you set in Settings, for example overnight. Optionally, unfinished downloads pause at a stop time and continue the next night where they stopped. Waiting downloads show when they start, and **Start now** starts one anyway. They survive closing the app.
 - **Clearer download progress.** The list now says what a download is doing at every step: "Getting the video info…", "Converting to MP3…" or "Merging picture and sound…", with a moving bar while there's no percent to show. While downloading it shows the sizes ("41 of 246 MB") next to the percent, speed and time left, and a finished download shows how long it took.
 - **Downloads start sooner.** A video opened in the app is no longer read a second time when you click Download: the download starts right away instead of after a few seconds of "Getting the video info".
+- **Notifications when downloads finish.** With the app in the background, a system notification says when a download is done or failed, and clicking it brings the app back. A playlist gets one notification, not one per video, and downloads that finish one after another, like several links or new subscription videos, are summed up in one. Settings → **Notify me when downloads finish** turns it off.
 
 ### Fixed
 
+- **Playlist progress.** The bar no longer starts over for every video of a playlist, and picked videos are counted among themselves: "Video 2 of 2", not "Video 3 of 2" when videos 1 and 3 were picked.
 - **Less space on disk.** The app keeps its own cache under 10 MB; it used to grow past 17 MB.
 - **No more out-of-date speed while converting.** After the download, the list kept showing the last download speed during the conversion.
 - **Playlist and channel links open in seconds.** Pasting a playlist or channel link used to read every video in it and gave up after two minutes. Channels now get their own panel with **Subscribe**.

@@ -9,6 +9,8 @@ import { checkForAppUpdateOnStartup } from '@server/services/app-updates/app-upd
 import { toolSetup } from '@server/services/tools/app-tool-setup.js'
 import { APP_NAME } from './app-identity.js'
 import { confirmCloseWhileDownloading } from './close-confirmation.js'
+import { notifyWhenDownloadsFinish } from './download-notifications.js'
+import { watchDownloads } from './download-watcher.js'
 import { createMainWindow, pickFolder } from './main-window.js'
 import { applyStartUpSwitches } from './start-up-switches.js'
 import { showProgressOnTaskbar } from './taskbar-progress.js'
@@ -82,7 +84,10 @@ const startDesktopApp = async (): Promise<void> => {
   mainWindow = window
   window.on('closed', () => (mainWindow = null))
   answerFolderPicker(window, origin)
-  showProgressOnTaskbar(window, services)
+  watchDownloads(window, services, [
+    showProgressOnTaskbar(window),
+    notifyWhenDownloadsFinish(window, services, focusMainWindow),
+  ])
   confirmCloseWhileDownloading(window, services)
   quitWhenAllWindowsClose(server, services)
   toolSetup.initialize()

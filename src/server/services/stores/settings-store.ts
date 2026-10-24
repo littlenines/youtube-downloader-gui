@@ -30,6 +30,7 @@ export const parseSettings = (content: unknown): Settings => {
       ? simultaneousDownloads
       : DEFAULT_SIMULTANEOUS_DOWNLOADS,
     lowLatencyRendering: stored.lowLatencyRendering !== false,
+    notifyWhenFinished: stored.notifyWhenFinished !== false,
     subscriptionCheckHours: isValidSubscriptionCheckHours(subscriptionCheckHours)
       ? subscriptionCheckHours
       : ONLY_AT_START_UP,
@@ -92,6 +93,7 @@ export class SettingsStore {
     if (isValidSimultaneousDownloads(simultaneousDownloads)) this.settings.simultaneousDownloads = simultaneousDownloads
     if (typeof changes.lowLatencyRendering === 'boolean')
       this.settings.lowLatencyRendering = changes.lowLatencyRendering
+    if (typeof changes.notifyWhenFinished === 'boolean') this.settings.notifyWhenFinished = changes.notifyWhenFinished
     if (isValidSubscriptionCheckHours(subscriptionCheckHours)) {
       this.settings.subscriptionCheckHours = subscriptionCheckHours
     }

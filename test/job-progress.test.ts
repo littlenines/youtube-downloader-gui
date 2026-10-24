@@ -82,6 +82,17 @@ describe('download progress', () => {
     applyDownloadEvent(job, { type: 'file', file: '/music/Next song.mp3' })
     assert.deepEqual([job.activity, job.stage], [null, 'Saved'])
   })
+
+  it('fills the bar across the whole playlist, not again for every video', () => {
+    const job = downloading({ kind: 'audio', playlist: true })
+
+    applyDownloadEvent(job, { type: 'item', index: 2, count: 4, title: 'Second song' })
+    applyDownloadEvent(job, progress('sound', 50, 100))
+    assert.equal(job.progress, 0.375)
+
+    applyDownloadEvent(job, progress('sound', 100, 100, true))
+    assert.equal(job.progress, 0.5)
+  })
 })
 
 describe('progress edge cases', () => {
