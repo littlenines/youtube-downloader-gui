@@ -23,6 +23,7 @@ const finishJob = async (job: Job, { skippedItems }: DownloadResult, history: Hi
   job.warning = skippedItemsWarning(skippedItems)
   job.progress = 1
   job.stage = null
+  job.activity = null
   job.sizeBytes = await totalFileSize(job.files)
   await history.add(historyEntryFromJob(job)).catch(ignoreFailure)
 }
@@ -41,7 +42,8 @@ export const runDownloadJob = async (
 
     if (run.stopReason) return
 
-    job.stage = job.options.clip ? 'Downloading the clip' : 'Starting'
+    job.stage = job.options.clip ? 'Downloading the clip' : 'Getting the video info'
+    job.activity = job.options.clip ? 'processing' : 'preparing'
 
     const download = engine.startDownload(job.options, { downloadFolder, partialFolder }, (event) =>
       applyDownloadEvent(job, event),
@@ -59,6 +61,7 @@ export const runDownloadJob = async (
 
     job.status = 'error'
     job.error = errorText(error)
+    job.activity = null
   } finally {
     if (run.stopReason === 'cancel' || isFinishedJob(job)) await jobFolders.discardPartialFiles(job.id)
   }

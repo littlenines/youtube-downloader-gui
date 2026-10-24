@@ -77,7 +77,12 @@ describe('parseOutputLine', () => {
       totalBytes: null,
       bytesPerSecond: 250.5,
       secondsLeft: null,
+      isFinished: false,
     })
+
+    const finished = parseOutputLine('VPROG none|opus|4000|4000|NA|0|finished')
+
+    assert.equal(finished?.type === 'progress' && finished.isFinished, true)
   })
 
   it('reads items, keeping a "|" inside the title, and finished files', () => {

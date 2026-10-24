@@ -17,6 +17,7 @@ export interface SavedJob {
   createdAt: string
   paused: boolean
   progress: number
+  activeSeconds: number
   later: boolean
   startsAt: string | null
   downloadFolder: string | null
@@ -52,6 +53,7 @@ const parseSavedJob = (stored: StoredRecord): SavedJob | null => {
     createdAt: stringOrDefault(stored.createdAt, new Date().toISOString()),
     paused: stored.paused === true,
     progress: savedProgress(stored.progress),
+    activeSeconds: typeof stored.activeSeconds === 'number' && stored.activeSeconds > 0 ? stored.activeSeconds : 0,
     later: stored.later === true,
     startsAt: savedTime(stored.startsAt),
     downloadFolder: savedDownloadFolder(stored.downloadFolder),

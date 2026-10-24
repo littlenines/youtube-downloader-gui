@@ -10,7 +10,7 @@ export interface JobDisplayDetails {
   videoCount?: number | undefined
 }
 
-const nowAsText = () => new Date().toISOString()
+export const nowAsText = (): string => new Date().toISOString()
 
 export const createQueuedJob = (id: string, options: DownloadOptions, details: JobDisplayDetails): Job => {
   const playlistLabel = options.playlist ? ` · playlist (${details.videoCount ?? '?'})` : ''
@@ -25,6 +25,11 @@ export const createQueuedJob = (id: string, options: DownloadOptions, details: J
     createdAt: nowAsText(),
     finishedAt: null,
     progress: 0,
+    activity: null,
+    downloadedBytes: null,
+    totalBytes: null,
+    runStartedAt: null,
+    activeSeconds: 0,
     downloadLater: false,
     startsAt: null,
     stage: null,
@@ -44,6 +49,10 @@ export const resetJobForRetry = (job: Job): void => {
     error: null,
     warning: null,
     progress: 0,
+    activity: null,
+    downloadedBytes: null,
+    totalBytes: null,
+    activeSeconds: 0,
     downloadLater: false,
     startsAt: null,
     files: [],

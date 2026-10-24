@@ -15,9 +15,11 @@ Everything that changed in YT Downloader, newest first. Download any version fro
   Searches now find 30 results instead of 12. The app remembers the length and Verified filters, and shows "13 of 30 shown · **Show all**" when they hide something.
 - **Save the cover image.** **🖼 Save cover** under a video's title saves its thumbnail in full size as a JPG, and **Save square** crops it like album art. They go to the downloads folder and show in the downloads list.
 - **Download later.** **🌙 Later** next to Download waits for the time you set in Settings, for example overnight. Optionally, unfinished downloads pause at a stop time and continue the next night where they stopped. Waiting downloads show when they start, and **Start now** starts one anyway. They survive closing the app.
+- **Clearer download progress.** The list now says what a download is doing at every step: "Getting the video info…", "Converting to MP3…" or "Merging picture and sound…", with a moving bar while there's no percent to show. While downloading it shows the sizes ("41 of 246 MB") next to the percent, speed and time left, and a finished download shows how long it took.
 
 ### Fixed
 
+- **No more out-of-date speed while converting.** After the download, the list kept showing the last download speed during the conversion.
 - **Playlist and channel links open in seconds.** Pasting a playlist or channel link used to read every video in it and gave up after two minutes. Channels now get their own panel with **Subscribe**.
 - **Search results and the video panel can be closed.** A **✕** button closes them, and so do <kbd>Esc</kbd> and clearing the link box. Closing also stops a search or link that is still loading.
 - **No more jumping panels.** Searching while a link is still loading, or opening a link while a search is still loading, used to swap the screen back when the older one finished.

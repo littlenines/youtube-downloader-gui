@@ -9,6 +9,7 @@ export interface ProgressEvent {
   totalBytes: number | null
   bytesPerSecond: number | null
   secondsLeft: number | null
+  isFinished: boolean
 }
 
 export interface PlaylistItemEvent {
@@ -43,9 +44,10 @@ export const streamKind = (videoCodec: string | undefined, audioCodec: string | 
 }
 
 const parseProgressLine = (fields: string): ProgressEvent => {
-  const [videoCodec, audioCodec, ...numbers] = fields.split('|')
-  const [downloadedBytes = null, totalBytes = null, bytesPerSecond = null, secondsLeft = null] =
-    numbers.map(parseNumber)
+  const [videoCodec, audioCodec, ...values] = fields.split('|')
+  const [downloadedBytes = null, totalBytes = null, bytesPerSecond = null, secondsLeft = null] = values
+    .slice(0, 4)
+    .map(parseNumber)
 
   return {
     type: 'progress',
@@ -54,6 +56,7 @@ const parseProgressLine = (fields: string): ProgressEvent => {
     totalBytes,
     bytesPerSecond,
     secondsLeft,
+    isFinished: values[4] === 'finished',
   }
 }
 

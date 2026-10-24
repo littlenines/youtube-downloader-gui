@@ -9,7 +9,7 @@ import { appDownloadEngine, type DownloadEngine } from './download-engine.js'
 import { downloadWindowFromSettings, type DownloadWindow } from './download-window.js'
 import { JobFolders } from './job-folders.js'
 import { runDownloadJob } from './job-runner.js'
-import { createQueuedJob, resetJobForRetry, type JobDisplayDetails } from './jobs.js'
+import { createQueuedJob, nowAsText, resetJobForRetry, type JobDisplayDetails } from './jobs.js'
 import { applyWindowToJobs, moveWaitingJobs, waitForWindow } from './later-jobs.js'
 import { jobFromSavedJob, savedJobFromJob } from './saved-jobs.js'
 
@@ -87,6 +87,7 @@ export class DownloadQueue {
     Object.assign(job, {
       status: 'paused',
       stage: null,
+      activity: null,
       bytesPerSecond: null,
       secondsLeft: null,
     } satisfies Partial<Job>)
@@ -135,8 +136,13 @@ export class DownloadQueue {
     if (!job) return undefined
 
     if (isUnfinishedJob(job)) {
-      job.status = 'cancelled'
-      job.stage = null
+      Object.assign(job, {
+        status: 'cancelled',
+        stage: null,
+        activity: null,
+        bytesPerSecond: null,
+        secondsLeft: null,
+      } satisfies Partial<Job>)
       this.activeRuns.stop(id, 'cancel')
 
       if (!this.activeRuns.has(id)) void this.jobFolders.discardPartialFiles(id)
@@ -248,8 +254,12 @@ export class DownloadQueue {
     const run = this.activeRuns.start(job.id)
 
     this.jobFolders.folderFor(job.id)
-    job.status = 'downloading'
-    job.stage = 'Waiting for the download tools'
+    Object.assign(job, {
+      status: 'downloading',
+      stage: 'Waiting for the download tools',
+      activity: 'preparing',
+      runStartedAt: nowAsText(),
+    } satisfies Partial<Job>)
     void this.saveUnfinishedJobs()
 
     await runDownloadJob(job, run, { engine: this.engine, history: this.history, jobFolders: this.jobFolders })
@@ -259,7 +269,11 @@ export class DownloadQueue {
   private afterRun(job: Job): void {
     this.activeRuns.finish(job.id)
 
-    if (isFinishedJob(job)) job.finishedAt = new Date().toISOString()
+    if (job.runStartedAt) job.activeSeconds += Math.max(0, (Date.now() - Date.parse(job.runStartedAt)) / 1000)
+
+    job.runStartedAt = null
+
+    if (isFinishedJob(job)) job.finishedAt = nowAsText()
 
     job.bytesPerSecond = null
     job.secondsLeft = null

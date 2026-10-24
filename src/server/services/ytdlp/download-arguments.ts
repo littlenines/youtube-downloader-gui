@@ -20,6 +20,7 @@ const PROGRESS_TEMPLATE = [
   '%(progress.total_bytes,progress.total_bytes_estimate)s',
   '%(progress.speed)s',
   '%(progress.eta)s',
+  '%(progress.status)s',
 ].join('|')
 
 const EMPTY_TEMPLATE = '%(id&|)s'

@@ -4,6 +4,8 @@ export type AudioFormat = 'mp3' | 'm4a' | 'opus' | 'original' | 'flac' | 'wav'
 
 export type Container = 'mp4' | 'mkv' | 'webm'
 
+export type JobActivity = 'preparing' | 'downloading' | 'processing'
+
 export type JobStatus = 'scheduled' | 'queued' | 'downloading' | 'paused' | 'done' | 'error' | 'cancelled'
 
 export interface AudioTags {
@@ -78,6 +80,11 @@ export interface Job {
   createdAt: string
   finishedAt: string | null
   progress: number
+  activity: JobActivity | null
+  downloadedBytes: number | null
+  totalBytes: number | null
+  runStartedAt: string | null
+  activeSeconds: number
   downloadLater: boolean
   startsAt: string | null
   stage: string | null

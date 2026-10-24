@@ -85,6 +85,41 @@
   background: var(--text-faint);
 }
 
+.progress-track.indeterminate .progress-fill {
+  width: 35%;
+  animation: progress-sweep 1.3s ease-in-out infinite;
+}
+
+@keyframes progress-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(290%);
+  }
+}
+
+@keyframes progress-pulse {
+  from,
+  to {
+    opacity: 1;
+    transform: none;
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-track.indeterminate .progress-fill {
+    width: 100%;
+    animation: progress-pulse 1.6s ease-in-out infinite;
+  }
+}
+
 .empty-state {
   padding: 26px;
   text-align: center;

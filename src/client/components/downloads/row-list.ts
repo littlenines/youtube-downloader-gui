@@ -1,4 +1,4 @@
-import { createElement, setProgress } from '@client/utils/dom.js'
+import { createElement, setProgress, showIndeterminate } from '@client/utils/dom.js'
 import type { RowContent } from './download-rows.js'
 
 interface RenderedRow {
@@ -31,6 +31,7 @@ const createOrUpdateRow = (content: RowContent): HTMLElement => {
 
   const progressFill = row.element.querySelector<HTMLElement>('.progress-fill')
 
+  if (progressFill) showIndeterminate(progressFill, content.isIndeterminate)
   if (progressFill && content.progressPercent !== null) setProgress(progressFill, content.progressPercent / 100)
 
   return row.element

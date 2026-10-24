@@ -82,4 +82,39 @@ describe('DownloadQueue: pause and resume', async () => {
     assert.equal(job.status, 'done')
     assert.deepEqual(lastSavedIds(), [])
   })
+
+  it('clears what a cancelled download was doing', async () => {
+    const { engine, runs } = createFakeEngine()
+    const queue = new DownloadQueue({ settings, history, savedQueue: noSavedQueue, engine })
+    const job = queue.add(options, {})
+
+    await waitUntil(() => runs.length === 1)
+    queue.cancel(job.id)
+
+    assert.deepEqual([job.status, job.activity, job.bytesPerSecond], ['cancelled', null, null])
+    runs[0]?.fail('killed')
+  })
+
+  it('counts only the time spent downloading, across a pause, for "took"', async (context) => {
+    context.mock.timers.enable({ apis: ['Date'], now: 0 })
+
+    const { engine, runs } = createFakeEngine()
+    const queue = new DownloadQueue({ settings, history, savedQueue: noSavedQueue, engine })
+    const job = queue.add(options, {})
+
+    await waitUntil(() => runs.length === 1)
+    context.mock.timers.tick(10_000)
+    queue.pause(job.id)
+    runs[0]?.fail('killed')
+    await waitUntil(() => job.runStartedAt === null)
+
+    context.mock.timers.tick(60 * 60_000)
+    queue.resume(job.id)
+    await waitUntil(() => runs.length === 2)
+    context.mock.timers.tick(5_000)
+    runs[1]?.finish()
+    await waitUntil(() => job.finishedAt !== null)
+
+    assert.equal(job.activeSeconds, 15)
+  })
 })

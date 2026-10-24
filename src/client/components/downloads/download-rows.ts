@@ -1,7 +1,7 @@
 import { isActiveJob, isFinishedJob, isUnfinishedJob } from '@shared/jobs.js'
 import type { HistoryEntry, Job } from '@shared/types/downloads.js'
 import { formatDateTime, formatStartTime } from '@client/locale.js'
-import { escapeHtml, formatBytes, formatSpeed, formatTimeLeft } from '@client/utils/format.js'
+import { escapeHtml, formatBytes, formatSeconds, formatSpeed, formatTimeLeft } from '@client/utils/format.js'
 
 export interface RowContent {
   key: string
@@ -10,6 +10,7 @@ export interface RowContent {
   title: string
   statusText: string
   progressPercent: number | null
+  isIndeterminate: boolean
 }
 
 interface RowHtmlOptions {
@@ -32,29 +33,49 @@ const playlistPositionText = (job: Job): string => {
   return position?.count ? `Video ${position.index ?? '?'} of ${position.count}: ${position.title} · ` : ''
 }
 
+const isWorkingWithoutProgress = (job: Job): boolean =>
+  job.status === 'downloading' && (job.activity === 'preparing' || job.activity === 'processing')
+
+const percentText = (job: Job): string => `${Math.round(job.progress * 100)}%`
+
+const sizeText = (job: Job): string =>
+  job.downloadedBytes && job.totalBytes ? `${formatBytes(job.downloadedBytes)} of ${formatBytes(job.totalBytes)}` : ''
+
+const downloadingStatusText = (job: Job): string => {
+  const stage = `${playlistPositionText(job)}${job.stage ?? 'Downloading'}`
+
+  if (isWorkingWithoutProgress(job)) return `${stage}…`
+
+  return joinNonEmpty([
+    stage,
+    job.activity === 'downloading' ? percentText(job) : '',
+    sizeText(job),
+    formatSpeed(job.bytesPerSecond),
+    formatTimeLeft(job.secondsLeft),
+  ])
+}
+
+const tookText = ({ activeSeconds }: Job): string => (activeSeconds ? `took ${formatSeconds(activeSeconds)}` : '')
+
 const jobStatusText = (job: Job): string => {
   switch (job.status) {
     case 'scheduled':
       return joinNonEmpty([
         `${job.progress ? 'Continues' : 'Starts'} ${formatStartTime(job.startsAt)}`,
-        job.progress ? `${Math.round(job.progress * 100)}%` : '',
+        job.progress ? percentText(job) : '',
       ])
     case 'queued':
       return 'Waiting…'
     case 'downloading':
-      return joinNonEmpty([
-        `${playlistPositionText(job)}${job.stage ?? 'Downloading'}`,
-        job.stage?.startsWith('Download') ? `${Math.round(job.progress * 100)}%` : '',
-        formatSpeed(job.bytesPerSecond),
-        formatTimeLeft(job.secondsLeft),
-      ])
+      return downloadingStatusText(job)
     case 'paused':
-      return joinNonEmpty(['Paused', job.progress ? `${Math.round(job.progress * 100)}%` : ''])
+      return joinNonEmpty(['Paused', job.progress ? percentText(job) : ''])
     case 'done':
       return joinNonEmpty([
         'Done',
         formatBytes(job.sizeBytes),
         job.files.length > 1 ? `${job.files.length} files` : '',
+        tookText(job),
         job.warning ?? '',
       ])
     case 'cancelled':
@@ -115,6 +136,7 @@ export const jobRow = (job: Job): RowContent => {
     title: job.title,
     statusText: jobStatusText(job),
     progressPercent: showsProgress ? Math.round(job.progress * 100) : null,
+    isIndeterminate: isWorkingWithoutProgress(job),
   }
 }
 
@@ -132,6 +154,7 @@ export const historyRow = (entry: HistoryEntry): RowContent => ({
   title: entry.title,
   statusText: joinNonEmpty([formatBytes(entry.sizeBytes), formatDateTime(entry.finishedAt)]),
   progressPercent: null,
+  isIndeterminate: false,
 })
 
 export const staticRow = (key: string, html: string): RowContent => ({
@@ -141,4 +164,5 @@ export const staticRow = (key: string, html: string): RowContent => ({
   title: '',
   statusText: '',
   progressPercent: null,
+  isIndeterminate: false,
 })

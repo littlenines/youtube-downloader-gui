@@ -96,6 +96,7 @@ export const savedJobFor = (overrides: Partial<SavedJob> & Pick<SavedJob, 'id' |
   createdAt: '2026-01-01T00:00:00.000Z',
   paused: false,
   progress: 0,
+  activeSeconds: 0,
   later: false,
   startsAt: null,
   downloadFolder: null,

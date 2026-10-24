@@ -9,6 +9,16 @@
    - `VPROG`: progress, with the stream's video and audio codec, bytes, total, speed and seconds left.
    - `VFILE`: the final file after merging and conversion.
 6. The codecs tell the streams apart: picture only, sound only, both in one stream, or neither (subtitles). For a video, the picture fills the progress bar to 85% and the sound the rest.
+
+**What the list shows.** A download spends most of its time outside the actual download, so each job has an `activity` (`job-progress.ts`), and the list shows it:
+
+| Activity | When | Shown |
+|---|---|---|
+| `preparing` | Waiting for the tools, reading the video page (3–8 s on YouTube, while yt-dlp solves its checks), and between a video's picture and sound | The step ("Getting the video info…") and a moving bar |
+| `downloading` | A `VPROG` line arrived for a stream yt-dlp doesn't report as `finished` yet | The step, percent, "2.0 MB of 4.0 MB", speed and time left |
+| `processing` | yt-dlp reported the last stream as `finished` (`progress.status`, the last field of `VPROG`). Not "downloaded ≥ total", because the total can be an estimate that a stream outgrows: converting or saving the audio (named per format, for example "Converting to MP3"), merging picture and sound, or a clip (whose progress yt-dlp only reports at the end, so a new item doesn't replace "Downloading the clip") | The step and a moving bar, without the last speed |
+
+Music often downloads in a fraction of a second, faster than the list refreshes (every 0.7 s), while reading the page and converting take several seconds each, so the moving bar is what keeps those phases from looking stuck. A finished job also shows how long it took ("took 12s"): `activeSeconds` adds up each run, from `runStartedAt` to its end, so time spent paused or waiting for the next "Later" window doesn't count, and it's saved in `queue.json` across restarts. Progress that arrives after Pause or Cancel, while yt-dlp is still exiting, is ignored, and cancelling clears the activity, speed and time left. Subtitles clear the previous stream's numbers and show the moving bar. The moving bar sweeps across; with reduced motion turned on in the system, it pulses instead.
 7. When the job ends in any way, its partial folder is deleted. On success the job is added to the history. On cancel the process tree is stopped (process group on Linux and macOS, `taskkill /T` on Windows), so nothing unfinished reaches the download folder at any stage.
 
 A job keeps its slot until its yt-dlp process has exited, even after it was cancelled. Retrying a cancelled job queues it, and it starts only once the previous run has fully ended, so two runs never write the same file.

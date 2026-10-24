@@ -136,8 +136,10 @@ A `Job` has:
 - `status`: `scheduled` (waiting for the "Later" time), `queued`, `downloading`, `paused`, `done`, `error` or `cancelled`.
 - `downloadLater`: it belongs to the "Later" time, so it pauses at the stop time. `startsAt`: when a `scheduled` job starts, otherwise `null`.
 - `progress`: from 0 to 1.
-- `stage`: a readable step, for example "Downloading video".
-- `bytesPerSecond` and `secondsLeft`.
+- `stage`: a readable step, for example "Downloading video" or "Converting to MP3".
+- `activity`: `preparing`, `downloading` or `processing` while it runs (only `downloading` has a meaningful percent), otherwise `null`.
+- `downloadedBytes` and `totalBytes` of the stream being downloaded, `bytesPerSecond` and `secondsLeft`.
+- `runStartedAt`: when the current run started, or `null`. `activeSeconds`: the time spent running so far, added up across pauses and restarts (shown as "took …" when done).
 - `files` and `sizeBytes`.
 - `error`.
 - `warning`: for a playlist that finished but had to skip videos, how many and why.

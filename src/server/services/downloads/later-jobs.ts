@@ -13,6 +13,7 @@ export const waitForWindow = (job: Job, window: DownloadWindow, now: Date): void
     downloadLater: true,
     startsAt: nextStartTime(window, now).toISOString(),
     stage: null,
+    activity: null,
     bytesPerSecond: null,
     secondsLeft: null,
   } satisfies Partial<Job>)

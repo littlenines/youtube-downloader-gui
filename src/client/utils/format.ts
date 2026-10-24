@@ -32,10 +32,20 @@ export const formatDuration = (totalSeconds: number | null | undefined): string 
 export const formatSpeed = (bytesPerSecond: number | null | undefined): string =>
   bytesPerSecond ? `${formatBytes(bytesPerSecond)}/s` : ''
 
+export const formatSeconds = (totalSeconds: number | null | undefined): string => {
+  if (totalSeconds == null || !Number.isFinite(totalSeconds) || totalSeconds < 0) return ''
+
+  const seconds = Math.round(totalSeconds)
+
+  if (seconds < 60) return `${seconds}s`
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`
+  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
+}
+
 export const formatTimeLeft = (seconds: number | null | undefined): string => {
-  if (seconds == null || !Number.isFinite(seconds) || seconds < 0) return ''
-  if (seconds < 60) return `${Math.round(seconds)}s left`
-  return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s left`
+  const duration = formatSeconds(seconds)
+
+  return duration ? `${duration} left` : ''
 }
 
 const DATE_TIME_PARTS: Intl.DateTimeFormatOptions = {

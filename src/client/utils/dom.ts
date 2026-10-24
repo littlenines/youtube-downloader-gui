@@ -18,11 +18,16 @@ export const createElement = (html: string): HTMLElement => {
 export const setProgress = (progressFill: HTMLElement, fraction: number): void => {
   const clampedFraction = Math.min(1, Math.max(0, fraction))
   const transform = `scaleX(${clampedFraction.toFixed(3)})`
+  const track = progressFill.parentElement
 
-  if (progressFill.style.transform === transform) return
+  if (progressFill.style.transform !== transform) progressFill.style.transform = transform
 
-  progressFill.style.transform = transform
-  progressFill.parentElement?.setAttribute('aria-valuenow', String(Math.round(clampedFraction * 100)))
+  if (track?.classList.contains('indeterminate')) track.removeAttribute('aria-valuenow')
+  else track?.setAttribute('aria-valuenow', String(Math.round(clampedFraction * 100)))
+}
+
+export const showIndeterminate = (progressFill: HTMLElement, isIndeterminate: boolean): void => {
+  progressFill.parentElement?.classList.toggle('indeterminate', isIndeterminate)
 }
 
 const TEXT_ENTRY_SELECTOR = [

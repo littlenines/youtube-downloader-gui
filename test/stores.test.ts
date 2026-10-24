@@ -128,15 +128,29 @@ describe('parseSavedQueue', () => {
         later: true,
         startsAt: '2026-10-25T00:00:00.000Z',
         progress: 0.6,
+        activeSeconds: 42,
       },
-      { id: 'broken', options: { url: 'https://youtu.be/x' }, later: 'yes', startsAt: 'tonight', progress: 7 },
+      {
+        id: 'broken',
+        options: { url: 'https://youtu.be/x' },
+        later: 'yes',
+        startsAt: 'tonight',
+        progress: 7,
+        activeSeconds: -5,
+      },
     ])
 
     assert.deepEqual(
-      savedJobs.map(({ id, later, startsAt, progress }) => [id, later, startsAt, progress]),
+      savedJobs.map(({ id, later, startsAt, progress, activeSeconds }) => [
+        id,
+        later,
+        startsAt,
+        progress,
+        activeSeconds,
+      ]),
       [
-        ['later', true, '2026-10-25T00:00:00.000Z', 0.6],
-        ['broken', false, null, 1],
+        ['later', true, '2026-10-25T00:00:00.000Z', 0.6, 42],
+        ['broken', false, null, 1, 0],
       ],
     )
   })
