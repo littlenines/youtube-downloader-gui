@@ -14,7 +14,7 @@ import { enableAppUpdates } from './app-updates.js'
 import { confirmCloseWhileDownloading } from './close-confirmation.js'
 import { notifyWhenDownloadsFinish } from './download-notifications.js'
 import { watchDownloads } from './download-watcher.js'
-import { createMainWindow, pickFolder } from './main-window.js'
+import { createMainWindow, openWebAddressOutside, pickFolder } from './main-window.js'
 import { stopServing } from './shut-down.js'
 import { applyStartUpSwitches } from './start-up-switches.js'
 import { showProgressOnTaskbar } from './taskbar-progress.js'
@@ -52,7 +52,7 @@ const storeAccessCookie = (origin: string, accessKey: string): Promise<void> =>
 
 const useElectronShell = (): void => {
   useDesktopShell({
-    openUrl: (url) => void shell.openExternal(url),
+    openUrl: openWebAddressOutside,
     reveal: (target) => (statSync(target).isFile() ? shell.showItemInFolder(target) : void shell.openPath(target)),
   })
 }

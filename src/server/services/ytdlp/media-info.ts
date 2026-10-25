@@ -5,7 +5,7 @@ import { runYtdlpForJson } from './run-ytdlp.js'
 import { videoInfoCache } from './video-info-cache.js'
 import { bestAudioSource, isUsableFormat, videoQualities } from './video-qualities.js'
 import { isYoutubeChannel, isYoutubeChannelLink, playlistIdFromUrl } from './youtube-links.js'
-import type { YtdlpEntry, YtdlpInfo } from './ytdlp-json.js'
+import { finiteNumberOrNull, type YtdlpEntry, type YtdlpInfo } from './ytdlp-json.js'
 
 const MAXIMUM_PLAYLIST_ENTRIES = 500
 const UNTITLED = '(untitled)'
@@ -21,7 +21,7 @@ const withPlaylistPositions = (entries: (YtdlpEntry | null)[]): PositionedEntry[
 const parsePlaylistInfo = (info: YtdlpInfo, requestedUrl: string): PlaylistInfo => {
   const isChannel = isYoutubeChannel(info, requestedUrl)
   const positionedEntries = isChannel ? [] : withPlaylistPositions(info.entries ?? [])
-  const totalSeconds = positionedEntries.reduce((sum, { entry }) => sum + (entry.duration ?? 0), 0)
+  const totalSeconds = positionedEntries.reduce((sum, { entry }) => sum + (finiteNumberOrNull(entry.duration) ?? 0), 0)
 
   return {
     kind: 'playlist',
@@ -37,7 +37,7 @@ const parsePlaylistInfo = (info: YtdlpInfo, requestedUrl: string): PlaylistInfo 
       .map(({ entry, position }) => ({
         position,
         title: entry.title ?? UNTITLED,
-        durationSeconds: entry.duration ?? null,
+        durationSeconds: finiteNumberOrNull(entry.duration),
         url: entry.url ?? entry.webpage_url ?? '',
       })),
   }
@@ -54,8 +54,8 @@ const parseVideoInfo = (info: YtdlpInfo, requestedUrl: string): VideoInfo => {
     uploader: info.uploader ?? info.channel ?? null,
     url: info.webpage_url ?? requestedUrl,
     thumbnailUrl: info.thumbnail ?? null,
-    durationSeconds: info.duration ?? null,
-    viewCount: info.view_count ?? null,
+    durationSeconds: finiteNumberOrNull(info.duration),
+    viewCount: finiteNumberOrNull(info.view_count),
     isLive: Boolean(info.is_live),
     artist: info.artist ?? info.creator ?? null,
     track: info.track ?? null,

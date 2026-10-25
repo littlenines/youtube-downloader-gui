@@ -30,6 +30,14 @@ describe('parseSearchResults', () => {
     })
   })
 
+  it('drops a length or view count that is not a number, since the page shows them as they are', () => {
+    const [result] = parseSearchResults({
+      entries: [{ id: 'abc', title: 'Song', duration: '3:20', view_count: '<b>many</b>' }],
+    })
+
+    assert.deepEqual([result?.durationSeconds, result?.viewCount], [null, null])
+  })
+
   it('marks verified and Topic channels as verified, and tells playlists apart', () => {
     const results = parseSearchResults({
       entries: [

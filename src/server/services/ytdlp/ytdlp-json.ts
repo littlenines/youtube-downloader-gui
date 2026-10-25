@@ -5,16 +5,16 @@ export interface YtdlpFormat {
   http_headers?: Record<string, string>
   vcodec?: string
   acodec?: string
-  audio_channels?: number
-  width?: number
-  height?: number
-  fps?: number
-  abr?: number
-  tbr?: number
+  audio_channels?: unknown
+  width?: unknown
+  height?: unknown
+  fps?: unknown
+  abr?: unknown
+  tbr?: unknown
   ext?: string
   format_note?: string
-  filesize?: number
-  filesize_approx?: number
+  filesize?: unknown
+  filesize_approx?: unknown
   dynamic_range?: string
 }
 
@@ -28,13 +28,13 @@ export interface YtdlpEntry {
   ie_key?: string
   id?: string
   title?: string
-  duration?: number
+  duration?: unknown
   url?: string
   webpage_url?: string
   channel?: string
   channel_is_verified?: boolean
   uploader?: string
-  view_count?: number
+  view_count?: unknown
   thumbnails?: YtdlpThumbnail[]
 }
 
@@ -51,8 +51,8 @@ export interface YtdlpInfo {
   webpage_url?: string
   thumbnail?: string
   thumbnails?: YtdlpThumbnail[]
-  duration?: number
-  view_count?: number
+  duration?: unknown
+  view_count?: unknown
   is_live?: boolean
   artist?: string
   creator?: string
@@ -62,6 +62,9 @@ export interface YtdlpInfo {
   subtitles?: Record<string, unknown>
   entries?: (YtdlpEntry | null)[]
 }
+
+export const finiteNumberOrNull = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null
 
 export const hasVideo = (format: YtdlpFormat): boolean => Boolean(format.vcodec) && format.vcodec !== 'none'
 export const hasAudio = (format: YtdlpFormat): boolean => Boolean(format.acodec) && format.acodec !== 'none'

@@ -1,6 +1,6 @@
 import { resolutionTag } from '@shared/resolution.js'
 import type { AudioSource, VideoQuality } from '@shared/types/media.js'
-import { hasAudio, hasVideo, type YtdlpFormat } from './ytdlp-json.js'
+import { finiteNumberOrNull, hasAudio, hasVideo, type YtdlpFormat } from './ytdlp-json.js'
 
 const HIGH_FRAME_RATE_THRESHOLD = 30
 
@@ -22,10 +22,15 @@ export const codecName = (codec = ''): string => {
   return codec.split('.')[0]?.toUpperCase() ?? codec
 }
 
-const shortSide = (format: YtdlpFormat): number | null =>
-  format.width && format.height ? Math.min(format.width, format.height) : (format.height ?? null)
+const shortSide = (format: YtdlpFormat): number | null => {
+  const width = finiteNumberOrNull(format.width)
+  const height = finiteNumberOrNull(format.height)
 
-const formatSizeBytes = (format: YtdlpFormat): number | null => format.filesize ?? format.filesize_approx ?? null
+  return width && height ? Math.min(width, height) : height
+}
+
+const formatSizeBytes = (format: YtdlpFormat): number | null =>
+  finiteNumberOrNull(format.filesize) ?? finiteNumberOrNull(format.filesize_approx)
 
 export const isUsableFormat = (format: YtdlpFormat): boolean =>
   format.ext !== 'mhtml' && !/storyboard|premium/i.test(format.format_note ?? '')
@@ -33,13 +38,13 @@ export const isUsableFormat = (format: YtdlpFormat): boolean =>
 export const bestAudioSource = (formats: YtdlpFormat[]): AudioSource | null => {
   const bestAudio = formats
     .filter((format) => hasAudio(format) && !hasVideo(format))
-    .sort((first, second) => (second.abr ?? 0) - (first.abr ?? 0))[0]
+    .sort((first, second) => (finiteNumberOrNull(second.abr) ?? 0) - (finiteNumberOrNull(first.abr) ?? 0))[0]
 
   if (!bestAudio) return null
 
   return {
     codec: codecName(bestAudio.acodec),
-    bitrateKbps: Math.round(bestAudio.abr ?? bestAudio.tbr ?? 0),
+    bitrateKbps: Math.round(finiteNumberOrNull(bestAudio.abr) ?? finiteNumberOrNull(bestAudio.tbr) ?? 0),
     sizeBytes: formatSizeBytes(bestAudio),
   }
 }
@@ -59,7 +64,7 @@ const summarizeByResolution = (formats: YtdlpFormat[]): Map<number, ResolutionSu
       hdr: false,
     }
 
-    summary.framesPerSecond = Math.max(summary.framesPerSecond, Math.round(format.fps ?? 0))
+    summary.framesPerSecond = Math.max(summary.framesPerSecond, Math.round(finiteNumberOrNull(format.fps) ?? 0))
     summary.codecs.add(codecName(format.vcodec))
     summary.largestBytes = Math.max(summary.largestBytes, formatSizeBytes(format) ?? 0)
 

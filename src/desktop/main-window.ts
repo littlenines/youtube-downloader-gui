@@ -2,6 +2,8 @@ import { app, BrowserWindow, dialog, nativeTheme, shell } from 'electron'
 import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { isWebAddress } from '@server/lib/desktop-shell.js'
+import { ignoreFailure } from '@server/lib/ignore-failure.js'
 import { APP_ICON_PATH, APP_NAME } from './app-identity.js'
 import { systemLocaleArguments } from './system-locale.js'
 import { isOnScreen, loadWindowState } from './window-state.js'
@@ -10,8 +12,8 @@ const moduleDirectory = dirname(fileURLToPath(import.meta.url))
 const MINIMUM_WINDOW_SIZE = { width: 520, height: 560 }
 const BACKGROUND_COLORS = { dark: '#111110', light: '#f6f6f4' }
 
-const openWebAddressOutside = (url: string): void => {
-  if (/^https?:\/\//i.test(url)) void shell.openExternal(url)
+export const openWebAddressOutside = (url: string): void => {
+  if (isWebAddress(url)) shell.openExternal(url).catch(ignoreFailure)
 }
 
 const keepNavigationInsideApp = (window: BrowserWindow, origin: string): void => {

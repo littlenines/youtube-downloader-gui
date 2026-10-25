@@ -95,7 +95,7 @@ export const describeStartTime = (
 }
 
 export const formatCount = (count: number | null | undefined): string => {
-  if (!count) return ''
+  if (typeof count !== 'number' || !Number.isFinite(count) || !count) return ''
   if (count >= 1e9) return `${(count / 1e9).toFixed(1)}B`
   if (count >= 1e6) return `${(count / 1e6).toFixed(1)}M`
   if (count >= 1e3) return `${(count / 1e3).toFixed(1)}K`

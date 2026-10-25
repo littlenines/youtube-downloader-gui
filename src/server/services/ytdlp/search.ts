@@ -1,7 +1,7 @@
 import type { SearchKind, SearchResult } from '@shared/types/media.js'
 import { toolSetup } from '@server/services/tools/app-tool-setup.js'
 import { runYtdlpForJson } from './run-ytdlp.js'
-import type { YtdlpEntry, YtdlpInfo } from './ytdlp-json.js'
+import { finiteNumberOrNull, type YtdlpEntry, type YtdlpInfo } from './ytdlp-json.js'
 
 const SEARCH_RESULT_COUNT = 30
 const YOUTUBE_SEARCH_URL = 'https://www.youtube.com/results'
@@ -31,8 +31,8 @@ export const parseSearchResults = (ytdlpOutput: unknown): SearchResult[] =>
       title: entry.title ?? '(untitled)',
       url: entryUrl(entry, isPlaylist),
       channel,
-      durationSeconds: entry.duration ?? null,
-      viewCount: entry.view_count ?? null,
+      durationSeconds: finiteNumberOrNull(entry.duration),
+      viewCount: finiteNumberOrNull(entry.view_count),
       thumbnailUrl: entry.thumbnails?.at(-1)?.url ?? null,
       isVerified: isVerifiedChannel(entry, channel),
     }

@@ -17,7 +17,8 @@ const launchDetached = (command: string, commandArguments: string[], options: Sp
   } catch {}
 }
 
-const isWebAddress = (url: string) => /^https?:\/\//i.test(url)
+export const isWebAddress = (url: string): boolean => /^https?:\/\//i.test(url)
+
 const isExistingFile = (path: string) => existsSync(path) && statSync(path).isFile()
 
 const systemShell: DesktopShell = {

@@ -76,6 +76,28 @@ describe('parseMediaInfo: video', () => {
 
     assert.equal(vertical.kind === 'video' && vertical.qualities[0]?.label, '1080p')
   })
+
+  it('drops numbers a site sent as text, since the page shows them as they are', () => {
+    const fromSite = parseMediaInfo(
+      {
+        duration: '3:20',
+        view_count: '<b>many</b>',
+        formats: [
+          { vcodec: 'avc1', height: '"><form action=https://example.com>', fps: '60' },
+          { vcodec: 'avc1', width: 1280, height: 720, fps: 30, filesize: 'big' },
+        ],
+      },
+      'https://x',
+    )
+
+    if (fromSite.kind !== 'video') return assert.fail('expected a video')
+
+    assert.deepEqual([fromSite.durationSeconds, fromSite.viewCount], [null, null])
+    assert.deepEqual(
+      fromSite.qualities.map((quality) => [quality.resolution, quality.estimatedBytes]),
+      [[720, null]],
+    )
+  })
 })
 
 describe('parseMediaInfo: playlist', () => {
@@ -111,6 +133,27 @@ describe('parseMediaInfo: playlist', () => {
         [1, 'a'],
         [3, 'b'],
       ],
+    )
+  })
+
+  it('drops video lengths a site sent as text, from each video and from the total', () => {
+    const playlist = parseMediaInfo(
+      {
+        _type: 'playlist',
+        entries: [
+          { title: 'a', duration: '03', url: 'u1' },
+          { title: 'b', duration: 20, url: 'u2' },
+        ],
+      },
+      'https://x',
+    )
+
+    if (playlist.kind !== 'playlist') return assert.fail('expected a playlist')
+
+    assert.equal(playlist.durationSeconds, 20)
+    assert.deepEqual(
+      playlist.entries.map((entry) => entry.durationSeconds),
+      [null, 20],
     )
   })
 })
