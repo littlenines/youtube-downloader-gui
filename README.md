@@ -43,6 +43,7 @@
 
 - **MP3 320 kbps, original Opus, M4A, FLAC or WAV.** Pick the one that fits where you'll play it.
 - **Album art** cut square from the thumbnail and saved in the file.
+- **Save the cover image.** Save a video's thumbnail in full size as a JPG, or cropped square to use as album art.
 - **Artist, Title and Album filled in for you.** "Daft Punk - Get Lucky (Official Video)" becomes artist *Daft Punk*, title *Get Lucky*, and the file is named `Daft Punk - Get Lucky.mp3`. Change anything before downloading.
 - **Cut out the talking.** Intros and non-music parts can be removed automatically when the community has marked them (SponsorBlock).
 
@@ -56,6 +57,7 @@
 
 - **Paste a link,** or press <kbd>Ctrl</kbd>+<kbd>V</kbd> anywhere in the window.
 - **Search without a browser:** type a song or video name and press <kbd>Enter</kbd>.
+- **Search filters:** search for playlists to find full albums, show only verified channels, or filter videos by length (under 4 minutes for songs, or over 20 for mixes).
 - **Drag and drop** a link from your browser onto the window.
 - **Preview** a video right in the app, with seeking, before you download it.
 - **YouTube, YouTube Music and 1000+ other sites**, everything [yt-dlp](https://github.com/yt-dlp/yt-dlp) supports.
@@ -69,8 +71,13 @@
 ### Downloading
 
 - **Pause and resume** any download, and it continues from where it stopped.
+- **Pause all** and **Resume all** above the downloads list, for when you need the connection back for a moment.
+- **Clear progress:** every download shows what it's doing, with sizes, speed and time left, and starts right away when you've just opened the video.
+- **Download later,** for example overnight. Click **Later** instead of Download, and it starts at the time set in Settings. Unfinished downloads can pause in the morning and continue the next night.
+- **Subscribe to channels and playlists.** Open one, choose the format and click **Subscribe**: every new video then downloads by itself into its own folder. Shorts can be skipped, and premieres wait until they're out. **Subscriptions** at the top shows them. New videos are checked when the app starts, and Settings can add a check every few hours.
 - **Nothing gets lost.** Close the app in the middle of a download and it continues the next time you open it.
 - **Several downloads at the same time,** as many as you set in Settings.
+- **Notifications** when downloads finish while the app is in the background; click one to bring the app back.
 - **Progress on the taskbar** (Windows), and the button flashes when a download finishes in the background.
 - **Download history** with **Show in folder** for every finished file.
 
@@ -78,7 +85,7 @@
 
 - **Everything happens on your computer.** No account, no ads, and nothing is uploaded.
 - **Sets itself up.** On first start it downloads the two free tools it needs and checks that they are genuine.
-- **Tells you when a new version is out,** once when it starts and never more.
+- **Updates in one click.** When a new version is out, click **Update now**: the app downloads it, checks that it's genuine and restarts. Or let it install updates by itself when you close it (Settings).
 - **No installation.** Everything stays in one folder; delete the folder and the app is gone.
 
 ---
@@ -156,7 +163,11 @@ Click **Download tools** and wait until you see **"You're all set"**.
 <details>
 <summary><b>How do I update to a new version?</b></summary>
 
-When a new version is out, the app tells you when it starts.
+Click **Update now** in the notice. Running downloads pause and continue after the restart, and your settings, history, tools and downloads stay.
+
+To have it done for you, turn on **Install updates automatically** in Settings: new versions then download in the background and are installed when you close the app.
+
+**Coming from version 1.2.0 or older?** Those versions can't update themselves, so update by hand once:
 
 1. Close the app.
 2. Download and unzip the new version.
