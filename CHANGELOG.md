@@ -30,6 +30,8 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 - **No more jumping panels.** Searching while a link is still loading, or opening a link while a search is still loading, used to swap the screen back when the older one finished.
 - **Square album art from tall thumbnails.** Cropping a thumbnail that is taller than wide failed with the old crop. It now takes the middle square of any shape.
 - **The preview stops when you leave it.** Going back to the results or starting a new search used to leave the preview playing out of sight.
+- **Linux: the app starts when another tool opens it.** Started by a VS Code extension or task, or by another app built on Electron, it used to close at once without opening a window.
+- **Linux: the menu entry works from any folder.** `./yt-downloader --install` made a menu entry that did nothing when the app's folder had `%`, `$`, `"` or a backslash in its name. The entry is also listed only under Multimedia now, not under Internet too; run `--install` again to update an existing one.
 
 ## 1.2.0
 
