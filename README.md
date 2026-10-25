@@ -28,7 +28,7 @@
 
 <p align="center">Free · No ads · No account · Nothing is uploaded anywhere</p> <br>
 
-![](https://github.com/littlenines/youtube-downloader-gui/blob/c10ae759399cadb2af15b917fdc857fe87e2b913/demo.png)
+![](https://github.com/littlenines/youtube-downloader-gui/blob/43b284f7b3a99d7c91e8a736246984e3c3de1c7d/demo.png)
 
 ---
 
