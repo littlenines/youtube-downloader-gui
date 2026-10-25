@@ -11,7 +11,25 @@ The page talks to the local server through this JSON API. The types are defined 
 
 ### `GET /api/app-update` → `AppUpdateResponse`
 
-`{ "currentVersion": "1.0.0", "update": { "version": "1.1.0", "releaseUrl": "https://github.com/littlenines/youtube-downloader-gui/releases/tag/v1.1.0" } }`. `update` is `null` when the app is up to date, its own version is unknown, or GitHub couldn't be reached. The server checks once per run, starting at start-up; a request made before that check finishes waits for it.
+```json
+{
+  "currentVersion": "1.2.0",
+  "update": {
+    "version": "1.3.0",
+    "tag": "v1.3.0",
+    "releaseUrl": "https://github.com/littlenines/youtube-downloader-gui/releases/tag/v1.3.0"
+  },
+  "installation": { "canInstall": true, "installsOnQuit": false, "state": "downloading", "progress": 0.42, "message": null }
+}
+```
+
+`update` is `null` when the app is up to date, its own version is unknown, or GitHub couldn't be reached. The server checks once per run, starting at start-up; a request made before that check finishes waits for it.
+
+`installation` is how far installing it is (see *Update now* in [tools-and-updates.md](tools-and-updates.md)). `canInstall` is `true` only in the desktop release. `state` is `idle`, `downloading` (`progress` from 0 to 1), `ready` (downloaded in the background), `installing` (the app restarts in a moment) or `error` (`message` says why). `installsOnQuit` is `true` when a ready update will be installed when the app closes.
+
+### `POST /api/app-update/install` → `AppUpdateInstallation`
+
+Downloads the new version unless it is ready already, installs it and restarts the app. Returns immediately; poll `GET /api/app-update` until the server goes away for the restart. Calling it again while it runs is harmless. Answers `400` where the app can't update itself (`canInstall` is `false`).
 
 ### `GET /api/status` → `StatusResponse`
 
@@ -21,12 +39,14 @@ The page talks to the local server through this JSON API. The types are defined 
   "simultaneousDownloads": 2,
   "lowLatencyRendering": true,
   "notifyWhenFinished": true,
+  "installUpdatesAutomatically": false,
   "subscriptionCheckHours": 0,
   "laterStartTime": "02:00",
   "laterStopTime": null,
   "appVersion": "1.0.0",
   "ytdlpVersion": "2026.10.21",
   "platform": "win32/x64",
+  "canInstallUpdates": true,
   "setup": { "state": "ready", "installed": true, "message": null, "progress": null, "downloadSizeMegabytes": 0 }
 }
 ```

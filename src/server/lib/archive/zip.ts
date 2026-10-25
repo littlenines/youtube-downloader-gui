@@ -1,7 +1,8 @@
-import { chmod, mkdir, symlink, writeFile } from 'node:fs/promises'
-import { dirname, resolve, sep } from 'node:path'
+import { mkdir, symlink } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
 import { promisify } from 'node:util'
 import { inflateRaw } from 'node:zlib'
+import { archiveFolder, writeArchiveFile } from './archive-folder.js'
 
 const inflateRawAsync = promisify(inflateRaw)
 
@@ -149,15 +150,12 @@ export const extractZipEntry = async (zip: Buffer, matchesName: (name: string) =
 }
 
 export const extractZip = async (zip: Buffer, directory: string): Promise<string[]> => {
-  const rootDirectory = resolve(directory)
-  const isInsideRoot = (path: string) => path === rootDirectory || path.startsWith(rootDirectory + sep)
+  const folder = archiveFolder(directory, 'zip')
   const extractedNames: string[] = []
   const isWindows = process.platform === 'win32'
 
   for (const entry of readZipEntries(zip)) {
-    const targetPath = resolve(rootDirectory, entry.name)
-
-    if (!isInsideRoot(targetPath)) throw new Error(`Unsafe path in zip: ${entry.name}`)
+    const targetPath = folder.pathFor(entry.name)
 
     extractedNames.push(entry.name)
 
@@ -166,22 +164,22 @@ export const extractZip = async (zip: Buffer, directory: string): Promise<string
       continue
     }
 
-    await mkdir(dirname(targetPath), { recursive: true })
-
     if (isSymbolicLinkEntry(entry)) {
       const linkTarget = (await entry.read()).toString('utf8')
 
-      if (!isInsideRoot(resolve(dirname(targetPath), linkTarget))) throw new Error(`Unsafe link in zip: ${entry.name}`)
-      if (!isWindows) await symlink(linkTarget, targetPath)
+      if (!folder.isInside(resolve(dirname(targetPath), linkTarget))) {
+        throw new Error(`Unsafe link in zip: ${entry.name}`)
+      }
+
+      if (!isWindows) {
+        await mkdir(dirname(targetPath), { recursive: true })
+        await symlink(linkTarget, targetPath)
+      }
 
       continue
     }
 
-    await writeFile(targetPath, await entry.read())
-
-    const permissions = entry.unixModeBits & UNIX_PERMISSION_MASK
-
-    if (!isWindows && permissions) await chmod(targetPath, permissions)
+    await writeArchiveFile(targetPath, await entry.read(), entry.unixModeBits & UNIX_PERMISSION_MASK)
   }
 
   return extractedNames

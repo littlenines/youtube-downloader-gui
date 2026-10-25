@@ -154,6 +154,7 @@
 }
 
 .update-banner {
+  flex-wrap: wrap;
   padding: 6px 8px 6px 14px;
   background: var(--accent-soft);
   border-color: var(--accent);

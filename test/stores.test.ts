@@ -15,6 +15,7 @@ describe('parseSettings', () => {
       simultaneousDownloads: 2,
       lowLatencyRendering: true,
       notifyWhenFinished: true,
+      installUpdatesAutomatically: false,
       subscriptionCheckHours: 0,
       laterStartTime: null,
       laterStopTime: null,
@@ -24,6 +25,7 @@ describe('parseSettings', () => {
       simultaneousDownloads: 2,
       lowLatencyRendering: true,
       notifyWhenFinished: true,
+      installUpdatesAutomatically: false,
       subscriptionCheckHours: 0,
       laterStartTime: null,
       laterStopTime: null,
@@ -36,6 +38,7 @@ describe('parseSettings', () => {
       simultaneousDownloads: 3,
       lowLatencyRendering: true,
       notifyWhenFinished: true,
+      installUpdatesAutomatically: false,
       subscriptionCheckHours: 0,
       laterStartTime: null,
       laterStopTime: null,
@@ -100,6 +103,14 @@ describe('parseSettings: notifications', () => {
     assert.equal(parseSettings(undefined).notifyWhenFinished, true)
     assert.equal(parseSettings({ notifyWhenFinished: 'no' }).notifyWhenFinished, true)
     assert.equal(parseSettings({ notifyWhenFinished: false }).notifyWhenFinished, false)
+  })
+})
+
+describe('parseSettings: updates', () => {
+  it('installs updates automatically only when it was turned on', () => {
+    assert.equal(parseSettings(undefined).installUpdatesAutomatically, false)
+    assert.equal(parseSettings({ installUpdatesAutomatically: 'yes' }).installUpdatesAutomatically, false)
+    assert.equal(parseSettings({ installUpdatesAutomatically: true }).installUpdatesAutomatically, true)
   })
 })
 

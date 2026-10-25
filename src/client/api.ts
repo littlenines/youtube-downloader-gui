@@ -1,4 +1,10 @@
-import type { AppUpdateResponse, Settings, SetupStatus, StatusResponse } from '@shared/types/app.js'
+import type {
+  AppUpdateInstallation,
+  AppUpdateResponse,
+  Settings,
+  SetupStatus,
+  StatusResponse,
+} from '@shared/types/app.js'
 import type { CoverRequest, DownloadRequest, DownloadsResponse, HistoryEntry, Job } from '@shared/types/downloads.js'
 import type { MediaInfo, SearchKind, SearchResult } from '@shared/types/media.js'
 import type { Subscription, SubscriptionRequest, SubscriptionsResponse } from '@shared/types/subscriptions.js'
@@ -56,6 +62,7 @@ const subscriptionPath = (id: string) => `/api/subscriptions/${encodeURIComponen
 export const api = {
   status: () => sendRequest<StatusResponse>('GET', '/api/status'),
   appUpdate: () => sendRequest<AppUpdateResponse>('GET', '/api/app-update'),
+  installAppUpdate: () => sendRequest<AppUpdateInstallation>('POST', '/api/app-update/install'),
   startSetup: () => sendRequest<SetupStatus>('POST', '/api/setup'),
   mediaInfo: (url: string, playlist: boolean, signal: AbortSignal) =>
     sendRequest<MediaInfo>('POST', '/api/info', { url, playlist }, signal),

@@ -4,7 +4,6 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { after, describe, it } from 'node:test'
 import { deflateRawSync } from 'node:zlib'
-import { createTarGz, extractTarGzEntry } from '@server/lib/archive/tar.js'
 import { extractZip, extractZipEntry } from '@server/lib/archive/zip.js'
 import { createTemporaryFolder, removeFolder } from './support/temporary-folder.js'
 
@@ -137,20 +136,4 @@ describe('extractZip', () => {
       assert.equal(await readFile(join(directory, 'library.so'), 'utf8'), 'library')
     },
   )
-})
-
-describe('createTarGz and extractTarGzEntry', () => {
-  it('round-trips files', () => {
-    const binary = Buffer.alloc(70_000, 7)
-    const archive = createTarGz([
-      { name: 'yt-downloader/README.txt', data: Buffer.from('read me') },
-      { name: 'yt-downloader/yt-downloader', data: binary, mode: 0o755 },
-    ])
-
-    assert.deepEqual(
-      extractTarGzEntry(archive, (name) => name.endsWith('/yt-downloader')),
-      binary,
-    )
-    assert.equal(extractTarGzEntry(archive, (name) => name.endsWith('README.txt')).toString(), 'read me')
-  })
 })

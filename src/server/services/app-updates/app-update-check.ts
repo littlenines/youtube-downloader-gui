@@ -4,7 +4,7 @@ import { APP_VERSION } from '@server/app-version.js'
 import { errorText } from '@server/lib/http/http-error.js'
 import { latestReleaseTag } from '@server/lib/github-releases.js'
 
-const APP_REPOSITORY = 'littlenines/youtube-downloader-gui'
+export const APP_REPOSITORY = 'littlenines/youtube-downloader-gui'
 
 let startupCheck: Promise<AppUpdate | null> | null = null
 
@@ -13,6 +13,7 @@ export const appUpdateFromTag = (tag: string, currentVersion: string): AppUpdate
 
   return {
     version: tag.replace(/^v/, ''),
+    tag,
     releaseUrl: `https://github.com/${APP_REPOSITORY}/releases/tag/${encodeURIComponent(tag)}`,
   }
 }

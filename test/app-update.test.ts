@@ -27,6 +27,7 @@ describe('appUpdateFromTag', () => {
   it('offers a newer release with a link to its page', () => {
     assert.deepEqual(appUpdateFromTag('v1.1.0', '1.0.0'), {
       version: '1.1.0',
+      tag: 'v1.1.0',
       releaseUrl: 'https://github.com/littlenines/youtube-downloader-gui/releases/tag/v1.1.0',
     })
   })

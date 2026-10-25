@@ -67,6 +67,13 @@
           </div>
           <div class="banner update-banner" id="updateBanner" hidden>
             <span id="updateBannerText"></span>
+            <button
+              class="button small primary"
+              type="button"
+              id="updateInstallButton"
+              title="Running downloads pause and continue after the restart."
+              hidden
+            ></button>
             <a class="button small primary" id="updateDownloadLink" href="#" target="_blank" rel="noopener noreferrer"
               >Download</a
             >
@@ -186,6 +193,12 @@
             <input type="checkbox" id="notifyWhenFinishedCheckbox" /> Notify me when downloads finish
           </label>
           <p class="hint">Only while the app is in the background. Click the notification to bring the app back.</p>
+        </div>
+        <div id="autoUpdateSetting" hidden>
+          <label class="checkbox-label settings-checkbox">
+            <input type="checkbox" id="installUpdatesAutomaticallyCheckbox" /> Install updates automatically
+          </label>
+          <p class="hint">New versions download in the background and are installed when you close the app.</p>
         </div>
         <div id="renderingSetting" hidden>
           <label class="checkbox-label settings-checkbox">

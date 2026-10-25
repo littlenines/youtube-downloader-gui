@@ -18,6 +18,7 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 - **Clearer download progress.** The list now says what a download is doing at every step: "Getting the video info…", "Converting to MP3…" or "Merging picture and sound…", with a moving bar while there's no percent to show. While downloading it shows the sizes ("41 of 246 MB") next to the percent, speed and time left, and a finished download shows how long it took.
 - **Downloads start sooner.** A video opened in the app is no longer read a second time when you click Download: the download starts right away instead of after a few seconds of "Getting the video info".
 - **Notifications when downloads finish.** With the app in the background, a system notification says when a download is done or failed, and clicking it brings the app back. A playlist gets one notification, not one per video, and downloads that finish one after another, like several links or new subscription videos, are summed up in one. Settings → **Notify me when downloads finish** turns it off.
+- **Update in one click.** When a new version is out, **Update now** in the notice downloads it, checks it against the release's checksums, installs it and restarts the app. Settings, history, tools and downloads stay, and running downloads continue after the restart. If anything goes wrong, the current version keeps running. Settings → **Install updates automatically** downloads new versions in the background and installs them when you close the app. Windows and Linux.
 
 ### Fixed
 

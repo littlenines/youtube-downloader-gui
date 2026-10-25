@@ -1,17 +1,21 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, session, shell } from 'electron'
 import { statSync } from 'node:fs'
+import type { Server } from 'node:http'
 import { createApp } from '@server/app.js'
 import { useDesktopShell } from '@server/lib/desktop-shell.js'
 import { ACCESS_COOKIE_NAME } from '@server/security/access-cookie.js'
 import { loadOrCreateAccessKey } from '@server/security/access-key-file.js'
 import { createServices, listen, type Services } from '@server/server.js'
 import { checkForAppUpdateOnStartup } from '@server/services/app-updates/app-update-check.js'
+import { appUpdater } from '@server/services/app-updates/app-updater.js'
 import { toolSetup } from '@server/services/tools/app-tool-setup.js'
 import { APP_NAME } from './app-identity.js'
+import { enableAppUpdates } from './app-updates.js'
 import { confirmCloseWhileDownloading } from './close-confirmation.js'
 import { notifyWhenDownloadsFinish } from './download-notifications.js'
 import { watchDownloads } from './download-watcher.js'
 import { createMainWindow, pickFolder } from './main-window.js'
+import { stopServing } from './shut-down.js'
 import { applyStartUpSwitches } from './start-up-switches.js'
 import { showProgressOnTaskbar } from './taskbar-progress.js'
 
@@ -59,10 +63,11 @@ const answerFolderPicker = (window: BrowserWindow, origin: string): void => {
   )
 }
 
-const quitWhenAllWindowsClose = (server: ReturnType<typeof createApp>, services: Services): void => {
+const quitWhenAllWindowsClose = (server: Server, services: Services): void => {
   app.on('window-all-closed', () => {
-    server.close()
-    void services.queue.pauseForShutdown().finally(() => app.quit())
+    void stopServing(server, services)
+      .then(() => appUpdater.installOnQuit())
+      .finally(() => app.quit())
   })
 }
 
@@ -92,6 +97,7 @@ const startDesktopApp = async (): Promise<void> => {
   quitWhenAllWindowsClose(server, services)
   toolSetup.initialize()
   checkForAppUpdateOnStartup()
+  enableAppUpdates(window, server, services)
 }
 
 const showStartFailure = (error: unknown): void => {

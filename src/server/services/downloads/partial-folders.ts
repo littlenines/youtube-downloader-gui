@@ -1,14 +1,13 @@
 import { execFile } from 'node:child_process'
-import { mkdir, readdir, rm, rmdir, stat } from 'node:fs/promises'
+import { mkdir, readdir, rmdir, stat } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { IS_WINDOWS } from '@server/config.js'
 import { ignoreFailure } from '@server/lib/ignore-failure.js'
+import { removeFolderWithRetries } from '@server/lib/remove-folder.js'
 
 export const PARTIAL_FOLDER_NAME = '.yt-downloader-partial'
 
 const STALE_PARTIAL_FOLDER_MILLISECONDS = 6 * 3600 * 1000
-const REMOVE_RETRY_COUNT = 5
-const REMOVE_RETRY_DELAY_MILLISECONDS = 400
 
 export const partialFolderFor = (downloadFolder: string, jobId: string): string =>
   join(downloadFolder, PARTIAL_FOLDER_NAME, jobId)
@@ -22,12 +21,7 @@ export const createPartialFolder = async (folder: string): Promise<void> => {
 }
 
 export const removePartialFolder = async (folder: string): Promise<void> => {
-  await rm(folder, {
-    recursive: true,
-    force: true,
-    maxRetries: REMOVE_RETRY_COUNT,
-    retryDelay: REMOVE_RETRY_DELAY_MILLISECONDS,
-  }).catch(ignoreFailure)
+  await removeFolderWithRetries(folder).catch(ignoreFailure)
   await rmdir(dirname(folder)).catch(ignoreFailure)
 }
 

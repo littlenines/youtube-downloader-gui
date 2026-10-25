@@ -15,7 +15,8 @@ Tests live in `test/` and cover:
 | `search-results.test.ts` | Search results (videos, playlists, verified channels) and what is searched for each kind. |
 | `search-filters.test.ts` | Narrowing search results by length and to verified channels, the edges between lengths, results without a duration, playlists ignoring the video filters, reading the chips, and **Show all**. |
 | `tags-and-links.test.ts` | Tag suggestions from video titles and channels, and finding links in pasted or dropped text. |
-| `archive.test.ts` | Zip and tar.gz reading and writing, including refusing zip entries and symbolic links that escape the target folder. |
+| `zip-archive.test.ts` | Reading and unpacking zip files, including file permissions, and refusing entries and symbolic links that escape the target folder. |
+| `tar-archive.test.ts` | Writing and reading tar.gz files, and unpacking them with their permissions, refusing entries that escape the target folder. |
 | `json-file.test.ts` | Validation on load, concurrent saves keeping the last value, and keeping a copy of a damaged file. |
 | `stores.test.ts` | Defaults, reading settings and history saved by earlier versions, and reading the saved queue safely. |
 | `queue.test.ts` | The download queue with a fake download engine: cancel then retry while the old process is still exiting, failures, success, playlists that skip videos. |
@@ -39,6 +40,9 @@ Tests live in `test/` and cover:
 | `verified-download.test.ts` | Checksum match and mismatch, stalled downloads, reading checksum files and release tags (against a local test server). |
 | `tool-setup.test.ts` | The setup states with fake tools: missing, installing, ready, a tool lost later, failed installs, and the update-check schedule. |
 | `app-update.test.ts` | Comparing app versions and offering a newer release. |
+| `app-updater.test.ts` | Update now, its progress, clicking twice, and failed downloads and installs, with fake files (`support/updater-fakes.ts`). |
+| `app-updater-automatic.test.ts` | Installing automatically: downloading in the background, installing on closing, staying idle without a new version, and turning it off again. |
+| `app-update-files.test.ts` | Swapping the app files while keeping the user's folders, putting every file back when one can't be replaced, and finding the app in a release. |
 | `release-notes.test.ts` | Finding a version's section in `CHANGELOG.md` and building the release notes from it. |
 | `locale.test.ts` | Turning the system locale into a language tag, passing it to the page, and formatting dates with it. |
 

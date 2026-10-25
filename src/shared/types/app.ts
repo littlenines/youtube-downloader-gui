@@ -3,6 +3,7 @@ export interface Settings {
   simultaneousDownloads: number
   lowLatencyRendering: boolean
   notifyWhenFinished: boolean
+  installUpdatesAutomatically: boolean
   subscriptionCheckHours: number
   laterStartTime: string | null
   laterStopTime: string | null
@@ -18,18 +19,29 @@ export interface SetupStatus {
 
 export interface AppUpdate {
   version: string
+  tag: string
   releaseUrl: string
+}
+
+export interface AppUpdateInstallation {
+  canInstall: boolean
+  state: 'idle' | 'downloading' | 'ready' | 'installing' | 'error'
+  progress: number | null
+  message: string | null
+  installsOnQuit: boolean
 }
 
 export interface AppUpdateResponse {
   currentVersion: string
   update: AppUpdate | null
+  installation: AppUpdateInstallation
 }
 
 export interface StatusResponse extends Settings {
   appVersion: string
   ytdlpVersion: string | null
   platform: string
+  canInstallUpdates: boolean
   setup: SetupStatus
 }
 

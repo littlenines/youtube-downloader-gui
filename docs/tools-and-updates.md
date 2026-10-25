@@ -40,9 +40,36 @@ YouTube requires yt-dlp to run JavaScript. The runtime depends on how the app ru
 
 ## New app versions
 
-The app doesn't update itself, but it tells the user when a newer release exists:
+The app tells the user when a newer release exists, and the desktop release can install it itself.
+
+### Finding a new version
 
 - **Its own version** comes from `package.json`, baked into every Node bundle at build time (`__APP_VERSION__` in `scripts/build.ts`). Running from source, it reads `package.json` directly. If neither works the version is `unknown`, and no update is offered rather than a false one.
 - **The check** runs once, when the app starts: it asks GitHub for `littlenines/youtube-downloader-gui/releases/latest`, using the same redirect as the tools setup, so there is no API rate limit. Only full versions like `v1.2.3` count; anything else is ignored. A failed check is written to the console and means no notice this run.
 - **The page** asks `GET /api/app-update` once when it opens; the request waits for the start-up check, so a slow connection can't make the notice go missing.
-- **The notice** is a banner under the link box: "Version 1.1.0 is available (you have 1.0.0)", with **Download**, which opens the release page in the browser, and **Not now**, which hides it until a newer version than the dismissed one appears.
+- **The notice** is a banner under the link box: "Version 1.3.0 is available (you have 1.2.0)". **Not now** hides it until a newer version than the dismissed one appears. In the desktop release it offers **Update now** and **What's new** (the release page). Running from source, in browser mode or as the server edition, it offers **Download**, which opens the release page, as before.
+
+### Update now
+
+`AppUpdater` (`services/app-updates/updater.ts`) owns the state: `idle`, `downloading` (with progress), `ready`, `installing` or `error` (with the reason). Its file work is passed in, so `app-updater.test.ts` drives every state with fakes. Only the packaged desktop app on a system with a release file (Windows x64, Linux x64 and ARM64) enables it (`desktop/app-updates.ts`); everywhere else `canInstall` is `false`.
+
+1. **Download and check.** `app-update-files.ts` downloads `SHA256SUMS.txt` and the release file (`yt-downloader-win-x64.zip` or `yt-downloader-linux-<arch>.tar.gz`) of the same tag into `.update/download/` in the app folder, through the same verified download as the tools. A file that doesn't match its checksum is never unpacked. Being in the app folder keeps every later move on the same disk, so it is a rename, not a copy.
+2. **Unpack** with the app's own zip or tar reader, which also keeps the Linux executable bits. The app is the folder holding `yt-downloader.exe` (or `yt-downloader.bin`), which the archives put in one top folder.
+3. **Swap the files** (`file-swap.ts`), one file at a time: the current file moves to `.update/previous/`, and the new one takes its place. Windows can't overwrite a running `.exe` or a loaded DLL, but it can rename them. It can't rename a *folder* with an open file inside (`locales/` holds the open `en-US.pak`), so whole folders are never moved. `data/`, `tools/`, `downloads/` and `.update/` are never touched, even if a release contained them, and files the new version doesn't have stay where they are.
+4. **If any file can't be moved,** every file already moved goes back, the app keeps running on the current version, and the banner says why, with **Try again** (which downloads again). If a file can't even be put back, the message says how many and asks to download the app again. The swap happens before the downloads pause, so a failed swap interrupts nothing.
+5. **Restart.** Running downloads are paused as when quitting, the window position is saved, and Electron's `app.relaunch` starts the new version once this one has exited. On Linux it starts the `yt-downloader` launcher script, not the `.bin`, so the sandbox check still runs. Paused downloads continue in the new version.
+6. **Clean up.** The new version deletes `.update/` when it starts (retrying for a few seconds while the old process is still exiting), and waits for that before downloading another update.
+
+Tested on Windows against the real v1.2.0 release: a 1.1.9 build updated itself with **Update now**, kept `data/` and `tools/`, and restarted as 1.2.0. With automatic updates, it downloaded v1.2.0 in the background and installed it when the window closed. While the app ran, every file could be renamed but the `locales` folder couldn't (`EPERM`), which is why the swap goes file by file.
+
+### Install updates automatically
+
+**Settings → Install updates automatically** (off by default, desktop release only) downloads a new version in the background after the start-up check, or as soon as the setting is turned on. It is installed when the app closes, after the downloads are paused, without restarting, so the next start is the new version. The banner then says "Version 1.3.0 is ready. It's installed when you close the app.", with **Restart now** to install it at once. Turned off again, nothing is installed on closing.
+
+### What it doesn't protect against
+
+The checksums come from the same release, so they catch a corrupted or swapped download, not a compromised release. The release files also carry a build attestation, which the app doesn't check.
+
+**Linux `chrome-sandbox`.** If it was made setuid root by hand (`chown root` and `chmod 4755`), the update replaces it with the release's plain copy. The launcher then uses unprivileged user namespaces, or `--no-sandbox` where those are turned off. Run the two commands again after updating.
+
+**Memory.** The release file is read and unpacked in memory, as for the tools: a few hundred MB for a moment, once per update.

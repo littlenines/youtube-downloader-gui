@@ -2,6 +2,7 @@ import type { Settings, StatusResponse } from '@shared/types/app.js'
 import { api } from '@client/api.js'
 import { desktopBridge } from '@client/desktop.js'
 import { announceSubscriptionsChanged } from '@client/events.js'
+import { refreshUpdateNotice } from '@client/components/update-notice/update-notice.js'
 import { errorMessage, findElement, LONG_TOAST_MILLISECONDS, showToast } from '@client/utils/dom.js'
 import { fillLaterTimes, focusLaterStartTime, initializeLaterTimes } from './later-times.js'
 import { saveSetting } from './save-setting.js'
@@ -11,6 +12,7 @@ const downloadFolderInput = () => findElement<HTMLInputElement>('#downloadFolder
 const simultaneousDownloadsSelect = () => findElement<HTMLSelectElement>('#simultaneousDownloadsSelect')
 const lowLatencyRenderingCheckbox = () => findElement<HTMLInputElement>('#lowLatencyRenderingCheckbox')
 const notifyWhenFinishedCheckbox = () => findElement<HTMLInputElement>('#notifyWhenFinishedCheckbox')
+const installUpdatesAutomaticallyCheckbox = () => findElement<HTMLInputElement>('#installUpdatesAutomaticallyCheckbox')
 const subscriptionCheckSelect = () => findElement<HTMLSelectElement>('#subscriptionCheckSelect')
 
 const fillSettingsDialog = (status: StatusResponse): void => {
@@ -20,10 +22,12 @@ const fillSettingsDialog = (status: StatusResponse): void => {
   simultaneousDownloadsSelect().value = String(status.simultaneousDownloads)
   lowLatencyRenderingCheckbox().checked = status.lowLatencyRendering
   notifyWhenFinishedCheckbox().checked = status.notifyWhenFinished
+  installUpdatesAutomaticallyCheckbox().checked = status.installUpdatesAutomatically
   subscriptionCheckSelect().value = String(status.subscriptionCheckHours)
   fillLaterTimes(status)
   findElement('#renderingSetting').hidden = !desktopBridge || !isWindows
   findElement('#notificationSetting').hidden = !desktopBridge
+  findElement('#autoUpdateSetting').hidden = !status.canInstallUpdates
   findElement('#folderExample').textContent = isWindows ? 'D:\\Music\\YouTube' : '/home/you/Music/YouTube'
   findElement('#versionInfo').textContent =
     `App ${status.appVersion} · yt-dlp ${status.ytdlpVersion ?? '(not installed yet)'} · ${status.platform}`
@@ -98,6 +102,11 @@ export const initializeSettings = (): void => {
 
   notifyWhenFinishedCheckbox().addEventListener('change', () => {
     void saveCheckbox(notifyWhenFinishedCheckbox(), (checked) => ({ notifyWhenFinished: checked }))
+  })
+
+  installUpdatesAutomaticallyCheckbox().addEventListener('change', async () => {
+    await saveCheckbox(installUpdatesAutomaticallyCheckbox(), (checked) => ({ installUpdatesAutomatically: checked }))
+    refreshUpdateNotice()
   })
 
   lowLatencyRenderingCheckbox().addEventListener('change', () => {
