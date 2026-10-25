@@ -76,6 +76,7 @@ export const createRecordingQueue = () => {
     savedQueue,
     lastSavedIds: () => savedJobsHistory.at(-1)?.map((savedJob) => savedJob.id),
     lastSavedJobs: () => savedJobsHistory.at(-1),
+    saveCount: () => savedJobsHistory.length,
   }
 }
 

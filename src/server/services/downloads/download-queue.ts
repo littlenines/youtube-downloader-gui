@@ -1,10 +1,10 @@
-import { isActiveJob, isFinishedJob, isUnfinishedJob } from '@shared/jobs.js'
+import { isActiveJob, isFinishedJob, isPausedJob, isUnfinishedJob } from '@shared/jobs.js'
 import type { DownloadOptions, Job } from '@shared/types/downloads.js'
 import { ignoreFailure } from '@server/lib/ignore-failure.js'
 import type { HistoryStore } from '@server/services/stores/history-store.js'
 import type { SavedJob, SavedQueue } from '@server/services/stores/queue-store.js'
 import type { SettingsStore } from '@server/services/stores/settings-store.js'
-import { ActiveRuns } from './active-runs.js'
+import { ActiveRuns, type StopReason } from './active-runs.js'
 import { appDownloadEngine, type DownloadEngine } from './download-engine.js'
 import { downloadWindowFromSettings, type DownloadWindow } from './download-window.js'
 import { JobFolders } from './job-folders.js'
@@ -25,6 +25,10 @@ export interface AddOptions {
 }
 
 const WINDOW_CHECK_MILLISECONDS = 30_000
+
+type StoppedStatus = 'paused' | 'cancelled'
+
+const STOP_REASONS: Record<StoppedStatus, StopReason> = { paused: 'pause', cancelled: 'cancel' }
 
 export class DownloadQueue {
   private readonly jobs = new Map<string, Job>()
@@ -84,29 +88,41 @@ export class DownloadQueue {
 
     if (!job || !isActiveJob(job)) return job
 
-    Object.assign(job, {
-      status: 'paused',
-      stage: null,
-      activity: null,
-      bytesPerSecond: null,
-      secondsLeft: null,
-    } satisfies Partial<Job>)
-    this.activeRuns.stop(id, 'pause')
+    this.stopJob(job, 'paused')
     this.queueChanged()
 
     return job
   }
 
+  pauseAll(): void {
+    const activeJobs = [...this.jobs.values()].filter(isActiveJob)
+
+    if (!activeJobs.length) return
+
+    for (const job of activeJobs) this.stopJob(job, 'paused')
+
+    this.queueChanged()
+  }
+
   resume(id: string): Job | undefined {
     const job = this.jobs.get(id)
 
-    if (job?.status !== 'paused') return job
+    if (!job || !isPausedJob(job)) return job
 
-    job.status = 'queued'
-    job.downloadLater = false
+    Object.assign(job, { status: 'queued', downloadLater: false } satisfies Partial<Job>)
     this.queueChanged()
 
     return job
+  }
+
+  resumeAll(): void {
+    const pausedJobs = [...this.jobs.values()].filter(isPausedJob)
+
+    if (!pausedJobs.length) return
+
+    for (const job of pausedJobs) job.status = 'queued'
+
+    this.queueChanged()
   }
 
   startNow(id: string): Job | undefined {
@@ -136,14 +152,7 @@ export class DownloadQueue {
     if (!job) return undefined
 
     if (isUnfinishedJob(job)) {
-      Object.assign(job, {
-        status: 'cancelled',
-        stage: null,
-        activity: null,
-        bytesPerSecond: null,
-        secondsLeft: null,
-      } satisfies Partial<Job>)
-      this.activeRuns.stop(id, 'cancel')
+      this.stopJob(job, 'cancelled')
 
       if (!this.activeRuns.has(id)) void this.jobFolders.discardPartialFiles(id)
     }
@@ -172,6 +181,17 @@ export class DownloadQueue {
 
   clearFinished(): void {
     for (const [id, job] of this.jobs) if (isFinishedJob(job)) this.jobs.delete(id)
+  }
+
+  private stopJob(job: Job, status: StoppedStatus): void {
+    Object.assign(job, {
+      status,
+      stage: null,
+      activity: null,
+      bytesPerSecond: null,
+      secondsLeft: null,
+    } satisfies Partial<Job>)
+    this.activeRuns.stop(job.id, STOP_REASONS[status])
   }
 
   private startQueuedJobs(): void {

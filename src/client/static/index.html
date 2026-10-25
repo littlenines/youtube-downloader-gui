@@ -89,7 +89,11 @@
       <section class="downloads">
         <div class="section-header">
           <h2>Downloads</h2>
-          <button class="button ghost small" id="clearHistoryButton" hidden>Clear finished</button>
+          <span class="section-actions">
+            <button class="button ghost small" type="button" id="pauseAllButton" hidden>Pause all</button>
+            <button class="button ghost small" type="button" id="resumeAllButton" hidden>Resume all</button>
+            <button class="button ghost small" type="button" id="clearHistoryButton" hidden>Clear finished</button>
+          </span>
         </div>
         <div id="jobs"></div>
       </section>
@@ -184,9 +188,9 @@
           <button class="button" type="button" id="clearLaterTimesButton">Turn off</button>
         </div>
         <p class="hint">
-          <b>🌙 Later</b> next to Download waits for this time, for example overnight. Leave the second time empty to
-          let them run until they finish; otherwise unfinished ones pause then and continue the next time. The app has
-          to be open.
+          <b>Later</b> next to Download waits for this time, for example overnight. Leave the second time empty to let
+          them run until they finish; otherwise unfinished ones pause then and continue the next time. The app has to be
+          open.
         </p>
         <div id="notificationSetting" hidden>
           <label class="checkbox-label settings-checkbox">

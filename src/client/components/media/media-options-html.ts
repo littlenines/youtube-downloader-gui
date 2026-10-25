@@ -150,7 +150,7 @@ const footerHtml = (info: MediaInfo): string => {
 }
 
 export const laterButtonHtml = (disabled = ''): string =>
-  `<button class="button large" data-action="download-later" ${disabled} title="Download at the time chosen in ⚙ Settings, for example overnight">🌙 Later</button>`
+  `<button class="button large" data-action="download-later" ${disabled} title="Download at the time chosen in ⚙ Settings, for example overnight">Later</button>`
 
 const SHORTS_TAB_PATTERN = /\/shorts\/?(?:[?#]|$)/i
 

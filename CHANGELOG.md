@@ -19,6 +19,7 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 - **Downloads start sooner.** A video opened in the app is no longer read a second time when you click Download: the download starts right away instead of after a few seconds of "Getting the video info".
 - **Notifications when downloads finish.** With the app in the background, a system notification says when a download is done or failed, and clicking it brings the app back. A playlist gets one notification, not one per video, and downloads that finish one after another, like several links or new subscription videos, are summed up in one. Settings → **Notify me when downloads finish** turns it off.
 - **Update in one click.** When a new version is out, **Update now** in the notice downloads it, checks it against the release's checksums, installs it and restarts the app. Settings, history, tools and downloads stay, and running downloads continue after the restart. If anything goes wrong, the current version keeps running. Settings → **Install updates automatically** downloads new versions in the background and installs them when you close the app. Windows and Linux.
+- **Pause all and Resume all** above the downloads list, shown when two or more downloads can be paused or resumed. Pause all also holds queued downloads, and **Later** downloads running in their time, but downloads still waiting for their **Later** time keep waiting. **Later** downloads keep their times when resumed this way.
 
 ### Fixed
 

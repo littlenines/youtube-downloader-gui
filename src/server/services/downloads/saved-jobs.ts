@@ -1,3 +1,4 @@
+import { isPausedJob } from '@shared/jobs.js'
 import type { Job } from '@shared/types/downloads.js'
 import type { SavedJob } from '@server/services/stores/queue-store.js'
 import { createQueuedJob } from './jobs.js'
@@ -9,7 +10,7 @@ export const savedJobFromJob = (job: Job, downloadFolder: string | null): SavedJ
   thumbnailUrl: job.thumbnailUrl,
   label: job.label,
   createdAt: job.createdAt,
-  paused: job.status === 'paused',
+  paused: isPausedJob(job),
   progress: job.progress,
   activeSeconds: job.activeSeconds,
   later: job.downloadLater,

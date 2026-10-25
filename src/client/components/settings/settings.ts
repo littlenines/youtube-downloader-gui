@@ -50,7 +50,7 @@ export const isLaterTimeChosen = async (): Promise<boolean> => {
 
   openSettingsDialog()
   focusLaterStartTime()
-  showToast('Choose when “Later” downloads start, then click 🌙 Later again.', LONG_TOAST_MILLISECONDS)
+  showToast('Choose when “Later” downloads start, then click the Later button again.', LONG_TOAST_MILLISECONDS)
 
   return false
 }

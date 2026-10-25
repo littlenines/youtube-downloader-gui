@@ -9,6 +9,12 @@
   margin-bottom: 10px;
 }
 
+.section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .section-header h2 {
   font-size: 17px;
   margin: 0;

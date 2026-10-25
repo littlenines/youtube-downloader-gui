@@ -175,6 +175,8 @@ A `Job` has:
 |---|---|
 | `POST /api/downloads/:id/pause` | Stops a waiting or running download and keeps its partial files. |
 | `POST /api/downloads/:id/resume` | Queues a paused download again; it continues where it stopped. |
+| `POST /api/downloads/pause-all` | Pauses every queued or running download, **Later** ones in their time included. `scheduled` downloads stay as they are. |
+| `POST /api/downloads/resume-all` | Queues every paused download again, oldest first. **Later** downloads keep their times, unlike with a single resume. |
 | `POST /api/downloads/:id/start-now` | Starts a `scheduled` download now. It then runs until it finishes, ignoring the stop time. |
 | `POST /api/downloads/:id/cancel` | Stops it (running, waiting or paused) and deletes its partial files. |
 | `POST /api/downloads/:id/retry` | Queues a failed or cancelled download again. |

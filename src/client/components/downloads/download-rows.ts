@@ -1,4 +1,4 @@
-import { isActiveJob, isFinishedJob, isUnfinishedJob } from '@shared/jobs.js'
+import { isActiveJob, isFinishedJob, isPausedJob, isUnfinishedJob } from '@shared/jobs.js'
 import type { HistoryEntry, Job } from '@shared/types/downloads.js'
 import { formatDateTime, formatStartTime } from '@client/locale.js'
 import { escapeHtml, formatBytes, formatSeconds, formatSpeed, formatTimeLeft } from '@client/utils/format.js'
@@ -110,7 +110,7 @@ const jobActionsHtml = (job: Job): string => {
   return [
     job.status === 'done' ? actionButtonHtml('reveal', job.id, 'Show in folder') : '',
     isActiveJob(job) ? actionButtonHtml('pause', job.id, 'Pause') : '',
-    job.status === 'paused' ? actionButtonHtml('resume', job.id, 'Resume', 'primary') : '',
+    isPausedJob(job) ? actionButtonHtml('resume', job.id, 'Resume', 'primary') : '',
     job.status === 'scheduled' ? actionButtonHtml('start-now', job.id, 'Start now', 'primary') : '',
     isUnfinishedJob(job) ? actionButtonHtml('cancel', job.id, 'Cancel') : '',
     canRetry ? actionButtonHtml('retry', job.id, 'Retry') : '',

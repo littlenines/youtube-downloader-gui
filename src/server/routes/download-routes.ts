@@ -65,6 +65,8 @@ export const registerDownloadRoutes = (router: Router, { settings, history, queu
     return entry
   })
 
+  router.post('/api/downloads/pause-all', () => queue.pauseAll())
+  router.post('/api/downloads/resume-all', () => queue.resumeAll())
   router.post('/api/downloads/:id/cancel', ({ parameters: [id = ''] }) => queue.cancel(id) ?? throwNoSuchDownload())
   router.post('/api/downloads/:id/retry', ({ parameters: [id = ''] }) => queue.retry(id) ?? throwNoSuchDownload())
   router.post('/api/downloads/:id/pause', ({ parameters: [id = ''] }) => queue.pause(id) ?? throwNoSuchDownload())
