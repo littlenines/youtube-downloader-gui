@@ -17,7 +17,7 @@ git push --follow-tags     # pushes the commit and the tag; the workflow does th
 The workflow (on a Windows runner):
 
 1. Stops if the tag doesn't match the version in `package.json`.
-2. Writes the release notes: that version's section of `CHANGELOG.md` under **What's new**, then a download table linking to this release's files (`releaseNotes` in `scripts/release-texts.ts`). It stops if the section is missing or empty.
+2. Writes the release notes (`releaseNotes` in `scripts/release-texts.ts`): first a download table linking to this release's files, then that version's section of `CHANGELOG.md` under **What's new**, folded into a collapsed "All changes in 1.2.0" dropdown (`<details>`) so the page stays short. It stops if the section is missing or empty.
 3. Runs the typecheck and tests.
 4. Builds all three packages and zips the Windows folder.
 5. Writes `SHA256SUMS.txt` and a build attestation for each file, so anyone can verify where a file came from with `gh attestation verify <file> --repo littlenines/youtube-downloader-gui`.
@@ -38,7 +38,13 @@ If a release run fails, delete the tag (`git push --delete origin v1.1.0` and `g
 
 The Linux archive contains:
 
-- `yt-downloader`: a launcher script. It keeps Chromium's sandbox when the system allows it, and `--install` adds a menu entry.
+- `yt-downloader`: a launcher script (`LINUX_LAUNCHER` in `scripts/release-texts.ts`, tested by `linux-launcher.test.ts`):
+  - **Sandbox:** it keeps Chromium's sandbox when the system allows it (a setuid `chrome-sandbox`, or unprivileged user namespaces), and starts with `--no-sandbox` otherwise.
+  - **`ELECTRON_RUN_AS_NODE`:** it clears this first. VS Code, its tasks and extensions, and other apps built on Electron export it, and with it set Electron starts as plain Node and closes without a window.
+  - **`--install`** writes a menu entry to `~/.local/share/applications` (or `$XDG_DATA_HOME/applications`), listed under Multimedia. The entry has to escape the app's folder, so it works wherever the app is unpacked:
+    - `Exec` reads `\`, `"`, `` ` ``, `$` and `%` specially. A backslash becomes four backslashes, and `"`, `` ` `` and `$` get two before them: one escape for the quoted argument, then one for the entry's string value. `%` becomes `%%`, since `%` starts a field code.
+    - GNOME looks for the program before it turns `%%` back into `%`, so it can't find a launcher whose folder has a `%`. Then the entry runs `/bin/sh "<launcher>"` instead.
+    - `Icon` is a plain string value, so only its backslashes are doubled.
 - `yt-downloader.bin`: Electron itself.
 - `icon.png` and `README.txt`.
 

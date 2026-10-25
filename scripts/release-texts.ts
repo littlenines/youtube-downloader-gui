@@ -75,11 +75,7 @@ export const changelogSection = (changelog: string, version: string): string => 
 export const releaseNotes = (changelog: string, version: string): string => {
   const downloadLink = (file: string) => `[\`${file}\`](${REPOSITORY_URL}/releases/download/v${version}/${file})`
 
-  return `## What's new
-
-${changelogSection(changelog, version)}
-
-## Download
+  return `## Download
 
 | System | File | Start it |
 |---|---|---|
@@ -92,6 +88,15 @@ On the first start the app offers to download yt-dlp and ffmpeg (about 75–90 M
 Windows may say "Windows protected your PC" because the app isn't code-signed yet: click **More info**, then **Run anyway**.
 
 \`SHA256SUMS.txt\` lists the checksums of the files. Every version is in the [changelog](${REPOSITORY_URL}/blob/master/CHANGELOG.md).
+
+## What's new
+
+<details>
+<summary>All changes in ${version}</summary>
+
+${changelogSection(changelog, version)}
+
+</details>
 `
 }
 
@@ -101,9 +106,8 @@ DIR=$(dirname "$(readlink -f "$0")")
 if [ "$1" = "--install" ]; then
   APPS="\${XDG_DATA_HOME:-$HOME/.local/share}/applications"
   mkdir -p "$APPS"
-  # Desktop entries read \\ " \` $ and % in Exec specially, so a folder name with them needs escaping.
   EXEC=$(printf '%s' "$DIR/yt-downloader" | sed -e 's/\\\\/\\\\\\\\\\\\\\\\/g' -e 's/["\`$]/\\\\\\\\&/g' -e 's/%/%%/g')
-  # GNOME looks for the program before decoding %%, so a path with % is passed to sh instead.
+  ICON=$(printf '%s' "$DIR/icon.png" | sed -e 's/\\\\/\\\\\\\\/g')
   case "$DIR" in *%*) RUN='/bin/sh ' ;; *) RUN='' ;; esac
   cat > "$APPS/yt-downloader.desktop" <<EOF
 [Desktop Entry]
@@ -111,14 +115,13 @@ Type=Application
 Name=${APP_NAME}
 Comment=Download music and video in high quality
 Exec=$RUN"$EXEC"
-Icon=$DIR/icon.png
+Icon=$ICON
 Terminal=false
 Categories=AudioVideo;
 EOF
   echo "Added ${APP_NAME} to the applications menu."
   exit 0
 fi
-# VS Code and other Electron apps export this, which would start the app as plain Node.
 unset ELECTRON_RUN_AS_NODE
 if [ -u "$DIR/chrome-sandbox" ] || unshare -Ur true 2>/dev/null; then
   exec "$DIR/yt-downloader.bin" "$@"

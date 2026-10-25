@@ -6,15 +6,15 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 
 ### Added
 
-- **Subscriptions.** Open a channel or playlist and click **🔔 Subscribe**: its new videos then download automatically, with the format you chose, into a folder named after it. Videos already there are skipped, Shorts can be skipped, and premieres and live streams wait until they can be downloaded. The app checks when it starts; in Settings it can also check every 1 to 24 hours while it's open. **Check now** checks at once. The **🔔 Subscriptions** button in the header lists them, with ✕ to unsubscribe.
+- **Subscriptions.** Open a channel or playlist and click **Subscribe**: its new videos then download automatically, with the format you chose, into a folder named after it. Videos already there are skipped, Shorts can be skipped, and premieres and live streams wait until they can be downloaded. The app checks when it starts; in Settings it can also check every 1 to 24 hours while it's open. **Check now** checks at once. The **Subscriptions** button in the header lists them, each with a button to unsubscribe.
 - **Search filters.** Chips above the search results:
-  - **📃 Playlists** searches for playlists instead of videos, the easy way to find and download a full album.
+  - **Playlists** searches for playlists instead of videos, the easy way to find and download a full album.
   - **Length:** only videos under 4 minutes for songs, 4 to 20, or over 20.
-  - **✓ Verified only** hides re-uploads and fan channels, keeping the artist's own and other channels YouTube has verified. Their results show a ✓.
+  - **Verified only** hides re-uploads and fan channels, keeping the artist's own and other channels YouTube has verified. Their results show a check mark.
 
   Searches now find 30 results instead of 12. The app remembers the length and Verified filters, and shows "13 of 30 shown · **Show all**" when they hide something.
-- **Save the cover image.** **🖼 Save cover** under a video's title saves its thumbnail in full size as a JPG, and **Save square** crops it like album art. They go to the downloads folder and show in the downloads list.
-- **Download later.** **🌙 Later** next to Download waits for the time you set in Settings, for example overnight. Optionally, unfinished downloads pause at a stop time and continue the next night where they stopped. Waiting downloads show when they start, and **Start now** starts one anyway. They survive closing the app.
+- **Save the cover image.** **Save cover** under a video's title saves its thumbnail in full size as a JPG, and **Save square** crops it like album art. They go to the downloads folder and show in the downloads list.
+- **Download later.** **Later** next to Download waits for the time you set in Settings, for example overnight. Optionally, unfinished downloads pause at a stop time and continue the next night where they stopped. Waiting downloads show when they start, and **Start now** starts one anyway. They survive closing the app.
 - **Clearer download progress.** The list now says what a download is doing at every step: "Getting the video info…", "Converting to MP3…" or "Merging picture and sound…", with a moving bar while there's no percent to show. While downloading it shows the sizes ("41 of 246 MB") next to the percent, speed and time left, and a finished download shows how long it took.
 - **Downloads start sooner.** A video opened in the app is no longer read a second time when you click Download: the download starts right away instead of after a few seconds of "Getting the video info".
 - **Notifications when downloads finish.** With the app in the background, a system notification says when a download is done or failed, and clicking it brings the app back. A playlist gets one notification, not one per video, and downloads that finish one after another, like several links or new subscription videos, are summed up in one. Settings → **Notify me when downloads finish** turns it off.
@@ -26,7 +26,7 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 - **Less space on disk.** The app keeps its own cache under 10 MB; it used to grow past 17 MB.
 - **No more out-of-date speed while converting.** After the download, the list kept showing the last download speed during the conversion.
 - **Playlist and channel links open in seconds.** Pasting a playlist or channel link used to read every video in it and gave up after two minutes. Channels now get their own panel with **Subscribe**.
-- **Search results and the video panel can be closed.** A **✕** button closes them, and so do <kbd>Esc</kbd> and clearing the link box. Closing also stops a search or link that is still loading.
+- **Search results and the video panel can be closed.** A close button closes them, and so do <kbd>Esc</kbd> and clearing the link box. Closing also stops a search or link that is still loading.
 - **No more jumping panels.** Searching while a link is still loading, or opening a link while a search is still loading, used to swap the screen back when the older one finished.
 - **Square album art from tall thumbnails.** Cropping a thumbnail that is taller than wide failed with the old crop. It now takes the middle square of any shape.
 - **The preview stops when you leave it.** Going back to the results or starting a new search used to leave the preview playing out of sight.

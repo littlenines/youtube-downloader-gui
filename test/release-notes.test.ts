@@ -39,11 +39,21 @@ describe('changelogSection', () => {
 })
 
 describe('releaseNotes', () => {
-  it('puts the changes above download links for that version', () => {
+  it('starts with the download links for that version', () => {
     const notes = releaseNotes(CHANGELOG, '1.2.0')
 
-    assert.ok(notes.indexOf('Pause and resume') < notes.indexOf('## Download'))
+    assert.ok(notes.startsWith('## Download'))
     assert.match(notes, /releases\/download\/v1\.2\.0\/yt-downloader-win-x64\.zip/)
+  })
+
+  it('ends with the changes of that version, folded away', () => {
+    const notes = releaseNotes(CHANGELOG, '1.2.0')
+
+    assert.match(
+      notes,
+      /## What's new\n\n<details>\n<summary>All changes in 1\.2\.0<\/summary>\n\n### Added\n\n- \*\*Pause and resume\.\*\*\n\n<\/details>\n$/,
+    )
+    assert.ok(notes.indexOf('## Download') < notes.indexOf('<details>'))
     assert.doesNotMatch(notes, /Not yet|Older/)
   })
 })
