@@ -50,8 +50,10 @@ export const createFakeEngine = ({ recentVideoInfo = (): unknown => null } = {})
   return { engine, runs, forgottenUrls }
 }
 
-export const waitUntil = async (condition: () => boolean): Promise<void> => {
-  for (let waited = 0; waited < 2000; waited += 5) {
+export const waitUntil = async (condition: () => boolean, timeoutMilliseconds = 30_000): Promise<void> => {
+  const deadline = Date.now() + timeoutMilliseconds
+
+  while (Date.now() < deadline) {
     if (condition()) return
 
     await new Promise((resolve) => setTimeout(resolve, 5))

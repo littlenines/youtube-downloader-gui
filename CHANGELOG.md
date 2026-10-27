@@ -2,6 +2,12 @@
 
 Everything that changed in YT Downloader, newest first. Download any version from the [releases page](https://github.com/littlenines/youtube-downloader-gui/releases).
 
+## 1.4.1
+
+### Fixed
+
+- **Windows release test timing.** Queue tests now allow longer for filesystem cleanup retries on Windows runners.
+
 ## 1.4.0
 
 ### Added
