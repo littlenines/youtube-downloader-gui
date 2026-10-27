@@ -5,7 +5,7 @@
 <h1 align="center">YT Downloader</h1>
 
 <p align="center">
-  <b>Download music in high quality and video at the quality you pick, all from one simple window.</b>
+  <b>Download music in high quality and video at the quality you pick, from YouTube and 1000+ other sites, all from one simple window.</b>
 </p>
 
 <p align="center">
@@ -55,12 +55,12 @@
 
 ### Finding what to download
 
+- **Not just YouTube:** YouTube Music, SoundCloud, Vimeo, TikTok and [1000+ other sites](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md), everything [yt-dlp](https://github.com/yt-dlp/yt-dlp) supports. Paste a link from any of them.
 - **Paste a link,** or press <kbd>Ctrl</kbd>+<kbd>V</kbd> anywhere in the window.
 - **Search without a browser:** type a song or video name and press <kbd>Enter</kbd>.
 - **Search filters:** search for playlists to find full albums, show only verified channels, or filter videos by length (under 4 minutes for songs, or over 20 for mixes).
 - **Drag and drop** a link from your browser onto the window.
 - **Preview** a video right in the app, with seeking, before you download it.
-- **YouTube, YouTube Music and 1000+ other sites**, everything [yt-dlp](https://github.com/yt-dlp/yt-dlp) supports.
 
 ### Picking exactly what you want
 
@@ -189,6 +189,18 @@ Delete the app's folder. Nothing is installed anywhere else, so that removes eve
 <summary><b>What happens if I close the app while downloading?</b></summary>
 
 The app asks first. If you quit, the downloads are paused and continue from where they stopped the next time you open the app.
+</details>
+
+<details>
+<summary><b>Which sites can I download from?</b></summary>
+
+YouTube, YouTube Music, SoundCloud, Vimeo, TikTok and [1000+ other sites](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md): paste a link from any of them. Search and its filters look on YouTube only, and only YouTube channels can be subscribed to; a playlist from another site can be subscribed to as well.
+
+Some things can't be downloaded:
+
+- **Posts that need an account,** such as private videos, or some Instagram and Facebook posts. The app doesn't log in to sites.
+- **Copy-protected streaming,** such as Spotify, Netflix or Apple Music. Their streams are encrypted, so no downloader based on yt-dlp can save them.
+- **Region-locked videos,** for example some TV sites that only work from their own country.
 </details>
 
 <details>
