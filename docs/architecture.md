@@ -55,7 +55,7 @@ Everything the app creates lives next to it, so deleting the folder removes the 
 
 | Folder | Contents |
 |---|---|
-| `tools/` | `yt-dlp/` (the folder build), `ffmpeg/ffmpeg`, `ffmpeg/ffprobe`, and `deno` for the single-executable server. |
+| `tools/` | `yt-dlp/` (the folder build), `yt-dlp-plugins/` (the app's thumbnail plugin, see [Tools and updates](tools-and-updates.md#the-thumbnail-plugin)), `ffmpeg/ffmpeg`, `ffmpeg/ffprobe`, and `deno` for the single-executable server. |
 | `data/` | `settings.json`, `history.json`, `queue.json` (downloads that haven't finished), `subscriptions.json` (followed channels and playlists, with the videos already seen), `window.json` (window size and position) and `window/` (the desktop window's browser data). |
 | `downloads/` | The default download folder; changeable in Settings. |
 

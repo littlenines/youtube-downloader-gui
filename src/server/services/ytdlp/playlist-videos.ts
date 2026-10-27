@@ -2,6 +2,7 @@ import { isWebLink } from '@shared/links.js'
 import { ExpiringMap } from '@server/lib/expiring-map.js'
 import { toolSetup } from '@server/services/tools/app-tool-setup.js'
 import { runYtdlpForJson } from './run-ytdlp.js'
+import { linkArguments } from './ytdlp-command.js'
 import { entryPageUrl, type YtdlpEntry, type YtdlpInfo } from './ytdlp-json.js'
 
 export interface PositionedEntry {
@@ -51,7 +52,10 @@ export const listPlaylistVideos = async (url: string, signal?: AbortSignal): Pro
 
   await toolSetup.requireInstalled()
 
-  const info = (await runYtdlpForJson(['-J', '--flat-playlist', '--yes-playlist', '--', url], signal)) as YtdlpInfo
+  const info = (await runYtdlpForJson(
+    ['-J', '--flat-playlist', '--yes-playlist', ...linkArguments(url)],
+    signal,
+  )) as YtdlpInfo
 
   if (info._type !== 'playlist') throw new Error('This link is not a playlist.')
 

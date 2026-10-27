@@ -1,5 +1,6 @@
 import { errorText } from '@server/lib/http/http-error.js'
 import { runYtdlpForJson } from '@server/services/ytdlp/run-ytdlp.js'
+import { linkArguments } from '@server/services/ytdlp/ytdlp-command.js'
 import type { YtdlpInfo } from '@server/services/ytdlp/ytdlp-json.js'
 
 export type VideoAvailability = 'ready' | 'not-yet' | 'never' | 'unknown'
@@ -28,7 +29,7 @@ export const availabilityFromError = (message: string): VideoAvailability => {
 
 export const checkVideoAvailability = async (url: string): Promise<VideoAvailability> => {
   try {
-    return availabilityFromInfo((await runYtdlpForJson(['-J', '--no-playlist', '--', url])) as YtdlpInfo)
+    return availabilityFromInfo((await runYtdlpForJson(['-J', '--no-playlist', ...linkArguments(url)])) as YtdlpInfo)
   } catch (error) {
     return availabilityFromError(errorText(error))
   }

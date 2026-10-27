@@ -11,8 +11,10 @@ import {
 } from '@server/services/downloads/partial-folders.js'
 import { toolSetup } from '@server/services/tools/app-tool-setup.js'
 import { toolPaths } from '@server/services/tools/tool-paths.js'
+import { readableThumbnailsArguments } from './readable-thumbnails-plugin.js'
 import { runYtdlpForText } from './run-ytdlp.js'
 import { BEST_JPG_CONVERSION_ARGUMENT, BEST_JPG_OUTPUT, SQUARE_CROP_FILTER } from './thumbnail-arguments.js'
+import { linkArguments } from './ytdlp-command.js'
 
 const COVER_FILE_MARKER = '[cover-file]'
 const COVER_TIMEOUT_MESSAGE = 'Saving the cover took too long. Check the internet connection and try again.'
@@ -35,8 +37,7 @@ export const coverImageArguments = (url: string, thumbnailFolder: string): strin
   '%(title)s.%(ext)s',
   '--print',
   `after_video:${COVER_FILE_MARKER}%(thumbnails.-1.filepath|)s`,
-  '--',
-  url,
+  ...linkArguments(url),
 ]
 
 export const coverFileFromOutput = (output: string): string | null =>
@@ -100,7 +101,11 @@ export interface CoverTools {
 export const appCoverTools: CoverTools = {
   requireTools: () => toolSetup.requireInstalled(),
   saveThumbnail: (url, folder, signal) =>
-    runYtdlpForText(coverImageArguments(url, folder), signal, COVER_TIMEOUT_MESSAGE),
+    runYtdlpForText(
+      [...readableThumbnailsArguments(), ...coverImageArguments(url, folder)],
+      signal,
+      COVER_TIMEOUT_MESSAGE,
+    ),
   cropToSquare,
 }
 

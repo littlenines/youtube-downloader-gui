@@ -1,6 +1,7 @@
 import type { SubscriptionSource } from '@shared/types/subscriptions.js'
 import { downloadText } from '@server/lib/http/download-text.js'
 import { runYtdlpForJson } from '@server/services/ytdlp/run-ytdlp.js'
+import { linkArguments } from '@server/services/ytdlp/ytdlp-command.js'
 import { youtubeVideoUrl } from '@server/services/ytdlp/youtube-links.js'
 import { entryPageUrl, type YtdlpInfo } from '@server/services/ytdlp/ytdlp-json.js'
 
@@ -86,7 +87,9 @@ const fetchChannelFeed = async (channelId: string): Promise<ListedVideo[]> =>
   parseYoutubeFeed(await downloadText(`${YOUTUBE_FEED_URL}?channel_id=${encodeURIComponent(channelId)}`))
 
 const fetchPlaylistVideos = async (url: string): Promise<ListedVideo[]> =>
-  parsePlaylistVideos((await runYtdlpForJson(['-J', '--flat-playlist', '--yes-playlist', '--', url])) as YtdlpInfo)
+  parsePlaylistVideos(
+    (await runYtdlpForJson(['-J', '--flat-playlist', '--yes-playlist', ...linkArguments(url)])) as YtdlpInfo,
+  )
 
 export const listVideos = ({ source, url, channelId }: VideoSource): Promise<ListedVideo[]> =>
   source === 'channel' && channelId ? fetchChannelFeed(channelId) : fetchPlaylistVideos(url)

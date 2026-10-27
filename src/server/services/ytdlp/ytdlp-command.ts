@@ -1,8 +1,11 @@
 import { IS_ELECTRON } from '@server/config.js'
 import { NEEDS_DENO, toolPaths } from '@server/services/tools/tool-paths.js'
+import { vimeoPlayerLink } from './vimeo-links.js'
 
 export const ytdlpEnvironment = (): NodeJS.ProcessEnv =>
   IS_ELECTRON ? { ...process.env, ELECTRON_RUN_AS_NODE: '1' } : process.env
+
+export const linkArguments = (url: string): string[] => ['--', vimeoPlayerLink(url)]
 
 export const ytdlpCommonArguments = (): string[] => {
   const javaScriptRuntime = NEEDS_DENO ? `deno:${toolPaths.deno}` : `node:${process.execPath}`

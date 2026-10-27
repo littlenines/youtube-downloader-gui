@@ -8,6 +8,11 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 
 - **Playlists list their videos.** A playlist now downloads as one download per video, shown under the playlist's name in the downloads list. Each video can be paused, cancelled or retried on its own, and the playlist's own **Pause**, **Resume** and **Cancel** act on all of its videos, with an arrow to fold its videos away. Videos download as many at once as Settings allows, instead of one by one. Songs are now saved by their name only, without a playlist number in front, still in a folder named after the playlist. You still get one notification and one history entry for the whole playlist. Long playlists start folded and show 100 videos at a time, so they stay quick on slower computers.
 
+### Fixed
+
+- **Vimeo videos download again.** Vimeo links failed with "The web client only works when logged-in". They now download without an account.
+- **Downloads from some sites no longer fail** with "Error opening output files: Invalid argument", and neither does Save cover. The cover uses another of the site's thumbnails.
+
 ## 1.3.0
 
 ### Added

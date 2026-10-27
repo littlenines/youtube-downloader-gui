@@ -1,4 +1,5 @@
 import { runYtdlpForJson } from '@server/services/ytdlp/run-ytdlp.js'
+import { linkArguments } from '@server/services/ytdlp/ytdlp-command.js'
 import { isYoutubeChannel, youtubeChannelTab, youtubeChannelUrl } from '@server/services/ytdlp/youtube-links.js'
 import type { YtdlpInfo, YtdlpThumbnail } from '@server/services/ytdlp/ytdlp-json.js'
 import type { VideoSource } from './listed-videos.js'
@@ -42,7 +43,14 @@ export const subscriptionTargetFromInfo = (info: YtdlpInfo, requestedUrl: string
 }
 
 export const resolveSubscriptionTarget = async (url: string): Promise<SubscriptionTarget> => {
-  const info = await runYtdlpForJson(['-J', '--flat-playlist', '--yes-playlist', '--playlist-items', '1', '--', url])
+  const info = await runYtdlpForJson([
+    '-J',
+    '--flat-playlist',
+    '--yes-playlist',
+    '--playlist-items',
+    '1',
+    ...linkArguments(url),
+  ])
 
   return subscriptionTargetFromInfo(info as YtdlpInfo, url)
 }

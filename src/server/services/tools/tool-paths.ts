@@ -5,6 +5,7 @@ import { IS_SINGLE_EXECUTABLE, IS_WINDOWS, TOOLS_DIRECTORY } from '@server/confi
 export const executableName = (name: string): string => (IS_WINDOWS ? `${name}.exe` : name)
 
 export const YTDLP_DIRECTORY = join(TOOLS_DIRECTORY, 'yt-dlp')
+export const YTDLP_PLUGINS_DIRECTORY = join(TOOLS_DIRECTORY, 'yt-dlp-plugins')
 export const YTDLP_UPDATE_CHECK_MARKER = join(TOOLS_DIRECTORY, '.yt-dlp-checked')
 
 export const toolPaths = {

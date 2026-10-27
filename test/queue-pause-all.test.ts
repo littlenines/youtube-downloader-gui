@@ -127,7 +127,7 @@ describe('DownloadQueue: pause all and resume all', async () => {
     )
 
     queue.cancelGroup('album')
-    runs.slice(1).forEach((run) => run.fail('killed'))
+    runs.filter((run) => !run.partialFolder.endsWith(single.id)).forEach((run) => run.fail('killed'))
     await waitFor(30)
     assert.deepEqual([single.status, ...playlist.map((job) => job.status)], ['downloading', 'cancelled', 'cancelled'])
 

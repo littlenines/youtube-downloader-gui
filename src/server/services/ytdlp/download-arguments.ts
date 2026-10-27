@@ -4,6 +4,7 @@ import { AUDIO_PRESETS } from './audio-presets.js'
 import { SQUARE_JPG_CONVERSION_ARGUMENT } from './thumbnail-arguments.js'
 import { OUTPUT_MARKERS } from './download-events.js'
 import type { DownloadFolders } from './download-process.js'
+import { linkArguments } from './ytdlp-command.js'
 
 const CODEC_PREFERENCE: Record<Container, string> = {
   mp4: 'vcodec:h264,acodec:m4a',
@@ -164,6 +165,6 @@ export const buildDownloadArguments = (options: DownloadOptions, folders: Downlo
     ...playlistFolderArguments(options),
     ...clipArguments(options),
     ...formatArguments,
-    ...(folders.infoFile ? ['--load-info-json', folders.infoFile] : ['--', options.url]),
+    ...(folders.infoFile ? ['--load-info-json', folders.infoFile] : linkArguments(options.url)),
   ]
 }

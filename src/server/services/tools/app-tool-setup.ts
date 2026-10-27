@@ -1,6 +1,8 @@
 import { execFile } from 'node:child_process'
 import { existsSync, statSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
+import { ignoreFailure } from '@server/lib/ignore-failure.js'
+import { installReadableThumbnailsPlugin } from '@server/services/ytdlp/readable-thumbnails-plugin.js'
 import { videoInfoCache } from '@server/services/ytdlp/video-info-cache.js'
 import { ytdlpEnvironment } from '@server/services/ytdlp/ytdlp-command.js'
 import { INSTALL_STEPS } from './install-steps.js'
@@ -37,6 +39,7 @@ export const toolSetup = new ToolSetup({
   steps: INSTALL_STEPS,
   prepareFolders: async () => {
     await mkdir(toolPaths.ffmpegDirectory, { recursive: true })
+    await installReadableThumbnailsPlugin().catch(ignoreFailure)
   },
   updateYtdlp,
   readYtdlpVersion,

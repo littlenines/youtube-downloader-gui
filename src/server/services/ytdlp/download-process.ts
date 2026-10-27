@@ -8,6 +8,7 @@ import { ytdlpPath } from '@server/services/tools/tool-paths.js'
 import { buildDownloadArguments } from './download-arguments.js'
 import { parseOutputLine, type DownloadEvent } from './download-events.js'
 import { appendErrorOutput, friendlyErrorMessage } from './error-messages.js'
+import { readableThumbnailsArguments } from './readable-thumbnails-plugin.js'
 import { ytdlpCommonArguments, ytdlpEnvironment } from './ytdlp-command.js'
 
 export interface DownloadResult {
@@ -38,7 +39,12 @@ export const startDownload = (
   folders: DownloadFolders,
   onEvent: (event: DownloadEvent) => void,
 ): RunningDownload => {
-  const child = spawn(ytdlpPath(), [...ytdlpCommonArguments(), ...buildDownloadArguments(options, folders)], {
+  const ytdlpArguments = [
+    ...ytdlpCommonArguments(),
+    ...readableThumbnailsArguments(),
+    ...buildDownloadArguments(options, folders),
+  ]
+  const child = spawn(ytdlpPath(), ytdlpArguments, {
     windowsHide: true,
     detached: !IS_WINDOWS,
     env: ytdlpEnvironment(),

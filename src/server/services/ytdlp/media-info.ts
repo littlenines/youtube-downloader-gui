@@ -5,6 +5,8 @@ import { rememberPlaylistListing, withPlaylistPositions } from './playlist-video
 import { runYtdlpForJson } from './run-ytdlp.js'
 import { videoInfoCache } from './video-info-cache.js'
 import { bestAudioSource, isUsableFormat, videoQualities } from './video-qualities.js'
+import { isVimeoVideoPage } from './vimeo-links.js'
+import { linkArguments } from './ytdlp-command.js'
 import { isYoutubeChannel, isYoutubeChannelLink, playlistIdFromUrl } from './youtube-links.js'
 import { finiteNumberOrNull, type YtdlpInfo } from './ytdlp-json.js'
 
@@ -45,7 +47,7 @@ const parseVideoInfo = (info: YtdlpInfo, requestedUrl: string): VideoInfo => {
     id: info.id ?? '',
     title: info.title ?? UNTITLED,
     uploader: info.uploader ?? info.channel ?? null,
-    url: info.webpage_url ?? requestedUrl,
+    url: isVimeoVideoPage(requestedUrl) ? requestedUrl : (info.webpage_url ?? requestedUrl),
     thumbnailUrl: info.thumbnail ?? null,
     durationSeconds: finiteNumberOrNull(info.duration),
     viewCount: finiteNumberOrNull(info.view_count),
@@ -76,7 +78,7 @@ export const fetchMediaInfo = async (
   const playlistArgument = playlist ? '--yes-playlist' : '--no-playlist'
   const channelArguments = isYoutubeChannelLink(url) ? ['--playlist-items', '1'] : []
   const ytdlpOutput = await runYtdlpForJson(
-    ['-J', '--flat-playlist', playlistArgument, ...channelArguments, '--', url],
+    ['-J', '--flat-playlist', playlistArgument, ...channelArguments, ...linkArguments(url)],
     signal,
   )
   const mediaInfo = parseMediaInfo(ytdlpOutput, url)

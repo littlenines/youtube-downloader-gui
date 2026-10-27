@@ -38,6 +38,19 @@ YouTube requires yt-dlp to run JavaScript. The runtime depends on how the app ru
 
 **Why ffprobe stays.** It is 83 MB, but tested without it, yt-dlp can't cut out non-music parts ("Unable to determine video duration: ffprobe not found") or make MKV files ("ffprobe not found"). Every other format, clips, cover art and Save cover worked with ffmpeg alone.
 
+### The thumbnail plugin
+
+Some sites offer their best thumbnail as AVIF. yt-dlp converts a thumbnail with ffmpeg before using it as cover art (to JPG for audio, to PNG to embed in an MP4), and it always reads the thumbnail with `-f image2`. That reader doesn't know AVIF, so ffmpeg fails ("Decoding requested, but no decoder found for: none") and so does the download: "Preprocessing: Error opening output files: Invalid argument" for audio before it starts, "Postprocessing: …" for video after the whole video has downloaded, and the same for **Save cover**. ffmpeg itself reads AVIF; only the forced reader is the problem, and yt-dlp's latest code still forces it. No yt-dlp option picks a thumbnail by format, and the error doesn't say which step failed (`--print` keeps yt-dlp quiet), so the app can't retry without the cover either.
+
+So the app gives yt-dlp a plugin, `ReadableThumbnailsPP` in `readable-thumbnails-plugin.ts`, which drops AVIF thumbnails before yt-dlp picks one. yt-dlp then uses the next best one, often a JPG, or none, which yt-dlp skips without an error. The plugin's Python is kept as a string in that file, because the tests run through `tsx`, which can't import a `.py` file, and the single executable can't ship a loose one.
+
+- **Where:** setup checks it on every start (and every later setup run, such as the weekly yt-dlp update check) at `tools/yt-dlp-plugins/readable-thumbnails/yt_dlp_plugins/postprocessor/readable_thumbnails.py`. That's yt-dlp's plugin layout: `--plugin-dirs` takes the folder holding one package folder per plugin. It's kept outside `tools/yt-dlp/`, so reinstalling or updating yt-dlp never removes it.
+- **Written only when it differs,** to a `.partial` file that is then renamed over it. Setup can run while yt-dlp is downloading, so yt-dlp never loads a half-written plugin. Writing it is best effort: if it fails (a read-only folder, a file held by an antivirus), setup still succeeds, and yt-dlp runs without the plugin, as before.
+- **When:** downloads and **Save cover**, the two calls that write a thumbnail, get `--plugin-dirs tools/yt-dlp-plugins --use-postprocessor ReadableThumbnails:when=pre_process`, so it runs before yt-dlp writes one. It also runs for a download that reuses the panel's read (`--load-info-json`), since yt-dlp processes a loaded info file again. Reading links, searching and subscription checks don't load it: the media panel keeps showing the site's best thumbnail (browsers show AVIF fine), and if a future yt-dlp breaks the plugin, only downloads are affected. The arguments are added only if the file exists, because yt-dlp crashes when asked for a plugin it can't find.
+- **It can't fail a download:** an error inside it (an unexpected thumbnail entry, a change inside yt-dlp) becomes a warning, "Keeping the thumbnails as they are", and yt-dlp goes on with the thumbnails unchanged.
+- **Only AVIF is dropped,** whatever the case of its extension. A list of allowed formats instead would also drop the many thumbnails whose link has no extension, which convert fine today.
+- **Other plugins:** `--plugin-dirs` adds this folder to yt-dlp's default plugin folders rather than replacing them, so plugins a user installed for yt-dlp still load, as before.
+
 ## New app versions
 
 The app tells the user when a newer release exists, and the desktop release can install it itself.

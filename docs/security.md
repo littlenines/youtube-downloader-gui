@@ -31,12 +31,12 @@ Titles, channel names, descriptions and thumbnail addresses come from the sites,
 - **Numbers are checked once, where yt-dlp's output is read.** Lengths, view counts, sizes, heights, frame rates and bitrates are inserted into the page as numbers, without escaping. `ytdlp-json.ts` therefore types them as `unknown`, so the compiler refuses any use that skips `finiteNumberOrNull`, which keeps only real numbers. The page's `formatCount` also shows nothing for a value that isn't a number.
 - **Content-Security-Policy as the second line.** The page allows only the app's own scripts and styles, so even an escaping mistake can't run a script. Every response also carries `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`.
 - **Folder names.** A subscription saves into a folder named after its channel or playlist. The name loses `/ \ : * ? " < > |` and control characters, `..` is refused, and Windows device names such as `CON` get a `_`, so a title can't point outside the downloads folder. A playlist's songs save into a folder yt-dlp names after the playlist; a title that is only dots, spaces and path characters is dropped first (yt-dlp would keep `..` as it is), and device names get the same `_`.
-- **Links go to yt-dlp after `--`,** so a link can never be read as an option.
+- **Links go to yt-dlp after `--`** (`linkArguments`, used by every call that takes a link), so a link can never be read as an option.
 - **Opening a link in the browser never goes through a shell.** `cmd /c start` would treat an `&` in the link as another command.
 
 ## Downloads and files
 
-- **Tools and app updates are checked** against published SHA-256 checksums before they are used, and a download that stops responding is aborted. See [tools-and-updates.md](tools-and-updates.md) for where each checksum comes from.
+- **Tools and app updates are checked** against published SHA-256 checksums before they are used, and a download that stops responding is aborted. See [tools-and-updates.md](tools-and-updates.md) for where each checksum comes from. The one file the app adds there, yt-dlp's [thumbnail plugin](tools-and-updates.md#the-thumbnail-plugin), is written from the app's own code on every start, so a changed copy is replaced; anyone who could change it could already replace yt-dlp itself.
 - **Installing an update** goes through the same access key. It always installs the newest official release, never a version or address from the request. It never writes into `data/`, `tools/` or `downloads/`.
 - **Archives** (zip and tar) are unpacked only inside their target folder: entries and symbolic links that point outside are refused. File permissions are limited to `rwx`, so an archive can never create a setuid file on Linux.
 - **Static files** are served only from inside the page's folder. A malformed address answers 400, not 500.
