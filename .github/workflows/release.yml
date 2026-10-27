@@ -77,7 +77,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          newest_tag=$(git ls-remote --tags --refs origin 'v*' | sed 's#.*refs/tags/##' | sort -V | tail -n 1)
+          if [ "$newest_tag" = "$GITHUB_REF_NAME" ]; then latest=true; else latest=false; fi
           gh release create "$GITHUB_REF_NAME" \
+            --latest="$latest" \
             --title "YT Downloader $GITHUB_REF_NAME" \
             --notes-file release-notes.md \
             release/yt-downloader-win-x64.zip \

@@ -21,9 +21,9 @@ The workflow (on a Windows runner):
 3. Runs the typecheck and tests.
 4. Builds all three packages and zips the Windows folder.
 5. Writes `SHA256SUMS.txt` and a build attestation for each file, so anyone can verify where a file came from with `gh attestation verify <file> --repo littlenines/youtube-downloader-gui`.
-6. Publishes the release with those notes.
+6. Publishes the release with those notes. It is marked **Latest** only if its tag is the highest version on GitHub (`git ls-remote --tags`, sorted with `sort -V`). Otherwise `gh release create` would mark whichever release was published last, and re-running an older version's failed release would make it **Latest**: that happened with 1.4.0, re-run after 1.4.1 was out. **Latest** is what the README's download links and the app's update check use.
 
-If a release run fails, delete the tag (`git push --delete origin v1.1.0` and `git tag -d v1.1.0`), fix the problem, and tag again.
+If a release run fails, either fix the problem and release the next patch version (as 1.4.1 did for 1.4.0), or delete the tag (`git push --delete origin v1.1.0` and `git tag -d v1.1.0`), fix the problem, and tag again.
 
 ## Packaging
 

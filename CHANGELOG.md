@@ -4,9 +4,7 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 
 ## 1.4.1
 
-### Fixed
-
-- **Windows release test timing.** Queue tests now allow longer for filesystem cleanup retries on Windows runners.
+- **No changes to the app.** 1.4.1 is 1.4.0 rebuilt, after its release stopped on a test that was too strict for GitHub's Windows machines. For what's new, see 1.4.0.
 
 ## 1.4.0
 
