@@ -63,14 +63,21 @@ describe('buildDownloadArguments: clips', () => {
     const commandArguments = argumentsFor({ url: 'https://x', clip })
 
     assert.equal(valueAfter(commandArguments, '--download-sections'), '*83-296.5')
-    assert.ok(!commandArguments.includes('--force-keyframes-at-cuts'))
     assert.match(valueAfter(commandArguments, '-o') ?? '', / \(1m23s-4m57s\)\.%\(ext\)s$/)
   })
 
-  it('cuts video at exact frames', () => {
+  it('cuts an audio clip at the exact time, re-encoding the cut at 320 kbps and copying any picture', () => {
+    const commandArguments = argumentsFor({ url: 'https://x', clip })
+
+    assert.ok(commandArguments.includes('--force-keyframes-at-cuts'))
+    assert.equal(valueAfter(commandArguments, '--downloader-args'), 'ffmpeg_o:-b:a 320k -c:v copy')
+  })
+
+  it('cuts a video clip at the exact frame, re-encoding its sound at 320 kbps', () => {
     const commandArguments = argumentsFor({ url: 'https://x', kind: 'video', clip })
 
     assert.ok(commandArguments.includes('--force-keyframes-at-cuts'))
+    assert.equal(valueAfter(commandArguments, '--downloader-args'), 'ffmpeg_o:-b:a 320k')
     assert.match(valueAfter(commandArguments, '-o') ?? '', /\(1m23s-4m57s\)\.%\(ext\)s$/)
   })
 

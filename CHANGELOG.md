@@ -11,6 +11,7 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 ### Fixed
 
 - **Vimeo videos download again.** Vimeo links failed with "The web client only works when logged-in". They now download without an account.
+- **Audio clips start at the right time.** With **Download only part of it**, an audio clip could start several seconds before the start time (one set to 1:00 started at 0:50). It now starts exactly there, like video clips. Video clips also get better sound: 320 kbps instead of about 128.
 - **Downloads from some sites no longer fail** with "Error opening output files: Invalid argument", and neither does Save cover. The cover uses another of the site's thumbnails.
 
 ## 1.3.0

@@ -60,12 +60,20 @@ const playlistArguments = ({ playlist, playlistItems }: DownloadOptions): string
   return ['--yes-playlist', '--playlist-items', playlistItemsArgument(playlistItems)]
 }
 
+const CUT_AUDIO_ENCODING = '-b:a 320k'
+
 const clipArguments = ({ clip, kind }: DownloadOptions): string[] => {
   if (!clip) return []
 
-  const sectionArguments = ['--download-sections', `*${clip.startSeconds}-${clip.endSeconds}`]
+  const cutEncoding = kind === 'video' ? CUT_AUDIO_ENCODING : `${CUT_AUDIO_ENCODING} -c:v copy`
 
-  return kind === 'video' ? [...sectionArguments, '--force-keyframes-at-cuts'] : sectionArguments
+  return [
+    '--download-sections',
+    `*${clip.startSeconds}-${clip.endSeconds}`,
+    '--force-keyframes-at-cuts',
+    '--downloader-args',
+    `ffmpeg_o:${cutEncoding}`,
+  ]
 }
 
 const reportingArguments = ({ downloadFolder, partialFolder }: DownloadFolders): string[] => [
