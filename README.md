@@ -66,6 +66,7 @@
 
 - **Download only part of a video or song.** Set a start and end time, or pause the preview and click **Use preview time**.
 - **Pick videos from a playlist.** Tick the ones you want, or use **Select all** / **Select none**.
+- **Every video of a playlist is listed** in the downloads, so you can pause, cancel or retry one without stopping the rest.
 - **Many links at once.** Paste a whole list, for example from a chat, choose the format once and click **Download all**.
 
 ### Downloading
@@ -138,7 +139,7 @@ Click **Download tools** and wait until you see **"You're all set"**.
 | Format | Best for |
 |---|---|
 | **MP3 · 320 kbps** | **Not sure? Pick this one.** Plays on everything: phones, cars, speakers and DJ apps. |
-| **Opus · original** | The best quality possible: YouTube's own audio, saved exactly as it is. |
+| **Opus · original** | The best quality possible: YouTube's own audio, saved exactly as it is (a clip is re-encoded at 320 kbps, so it can start at the exact time). |
 | **M4A (AAC)** | iPhone, iTunes and Apple Music. |
 | **FLAC / WAV** | DJ software, music production and editing programs. |
 
