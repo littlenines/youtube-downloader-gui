@@ -9,6 +9,35 @@
   margin-bottom: 10px;
 }
 
+.grouped {
+  margin-left: 28px;
+}
+
+.more-videos-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 7px;
+}
+
+.group-toggle[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+.group-row .job-title {
+  font-weight: 650;
+}
+
 .section-actions {
   display: flex;
   flex-wrap: wrap;

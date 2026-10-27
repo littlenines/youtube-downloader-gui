@@ -57,6 +57,8 @@ const sendRequest = async <ResponseBody>(
 
 const downloadPath = (id: string, action = '') => `/api/downloads/${encodeURIComponent(id)}${action}`
 
+const downloadGroupPath = (id: string, action = '') => `/api/download-groups/${encodeURIComponent(id)}${action}`
+
 const subscriptionPath = (id: string) => `/api/subscriptions/${encodeURIComponent(id)}`
 
 export const api = {
@@ -82,6 +84,10 @@ export const api = {
   clearFinished: () => sendRequest<{ ok: true }>('DELETE', '/api/downloads'),
   pauseAll: () => sendRequest<{ ok: true }>('POST', '/api/downloads/pause-all'),
   resumeAll: () => sendRequest<{ ok: true }>('POST', '/api/downloads/resume-all'),
+  pauseGroup: (id: string) => sendRequest<{ ok: true }>('POST', downloadGroupPath(id, '/pause')),
+  resumeGroup: (id: string) => sendRequest<{ ok: true }>('POST', downloadGroupPath(id, '/resume')),
+  cancelGroup: (id: string) => sendRequest<{ ok: true }>('POST', downloadGroupPath(id, '/cancel')),
+  removeGroup: (id: string) => sendRequest<{ ok: true }>('DELETE', downloadGroupPath(id)),
   saveSettings: (changes: Partial<Settings>) => sendRequest<Settings>('POST', '/api/settings', changes),
   openDownloadFolder: () => sendRequest<{ ok: true }>('POST', '/api/open-folder'),
   subscriptions: () => sendRequest<SubscriptionsResponse>('GET', '/api/subscriptions'),

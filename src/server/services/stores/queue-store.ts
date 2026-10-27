@@ -1,12 +1,22 @@
 import { isAbsolute, join } from 'node:path'
 import { isWebLink } from '@shared/links.js'
-import type { DownloadOptions } from '@shared/types/downloads.js'
+import type { DownloadOptions, JobGroup } from '@shared/types/downloads.js'
 import { DATA_DIRECTORY } from '@server/config.js'
 import { JsonFile } from '@server/lib/json-file.js'
+import { throttleSaves, type SaveOptions } from '@server/lib/throttled-save.js'
 import { normalizeDownloadRequest } from '@server/services/downloads/download-options.js'
 import { asRecord, stringOrDefault, stringOrNull, type StoredRecord } from './stored-values.js'
 
+const QUEUE_SAVE_QUIET_MILLISECONDS = 30_000
 const JOB_ID_PATTERN = /^[\w-]{1,64}$/
+
+export interface SavedFinish {
+  status: 'done' | 'error' | 'cancelled'
+  files: string[]
+  sizeBytes: number | null
+  error: string | null
+  finishedAt: string | null
+}
 
 export interface SavedJob {
   id: string
@@ -21,6 +31,8 @@ export interface SavedJob {
   later: boolean
   startsAt: string | null
   downloadFolder: string | null
+  group: JobGroup | null
+  finished: SavedFinish | null
 }
 
 const savedProgress = (value: unknown): number =>
@@ -36,6 +48,32 @@ const savedDownloadFolder = (value: unknown): string | null => {
   const folder = stringOrNull(value)
 
   return folder && isAbsolute(folder) ? folder : null
+}
+
+const FINISHED_STATUSES: ReadonlySet<unknown> = new Set(['done', 'error', 'cancelled'])
+
+const savedFinish = (value: unknown): SavedFinish | null => {
+  const stored = asRecord(value)
+
+  if (!FINISHED_STATUSES.has(stored.status)) return null
+
+  return {
+    status: stored.status as SavedFinish['status'],
+    files: Array.isArray(stored.files) ? stored.files.filter((file): file is string => typeof file === 'string') : [],
+    sizeBytes: typeof stored.sizeBytes === 'number' && stored.sizeBytes >= 0 ? stored.sizeBytes : null,
+    error: stringOrNull(stored.error),
+    finishedAt: savedTime(stored.finishedAt),
+  }
+}
+
+const savedGroup = (value: unknown): JobGroup | null => {
+  const stored = asRecord(value)
+  const id = stringOrDefault(stored.id, '')
+  const size = Number(stored.size)
+
+  if (!JOB_ID_PATTERN.test(id) || !Number.isSafeInteger(size) || size < 1) return null
+
+  return { id, title: stringOrDefault(stored.title, 'Playlist'), size, url: stringOrDefault(stored.url, '') }
 }
 
 const parseSavedJob = (stored: StoredRecord): SavedJob | null => {
@@ -57,6 +95,8 @@ const parseSavedJob = (stored: StoredRecord): SavedJob | null => {
     later: stored.later === true,
     startsAt: savedTime(stored.startsAt),
     downloadFolder: savedDownloadFolder(stored.downloadFolder),
+    group: savedGroup(stored.group),
+    finished: savedFinish(stored.finished),
   }
 }
 
@@ -70,17 +110,21 @@ export const parseSavedQueue = (content: unknown): SavedJob[] =>
     : []
 
 export interface SavedQueue {
-  save(savedJobs: SavedJob[]): Promise<void>
+  save(savedJobs: SavedJob[], options?: SaveOptions): Promise<void>
 }
 
 export class QueueStore implements SavedQueue {
   private readonly file = new JsonFile(join(DATA_DIRECTORY, 'queue.json'), parseSavedQueue)
+  private readonly throttledSave = throttleSaves(
+    (savedJobs: SavedJob[]) => this.file.save(savedJobs),
+    QUEUE_SAVE_QUIET_MILLISECONDS,
+  )
 
   loadSavedJobs(): Promise<SavedJob[]> {
     return this.file.load()
   }
 
-  save(savedJobs: SavedJob[]): Promise<void> {
-    return this.file.save(savedJobs)
+  save(savedJobs: SavedJob[], options?: SaveOptions): Promise<void> {
+    return this.throttledSave(savedJobs, options)
   }
 }

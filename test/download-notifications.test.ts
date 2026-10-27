@@ -135,3 +135,46 @@ describe('newlyFinishedJobs', () => {
     )
   })
 })
+
+describe('playlists, one download per video', () => {
+  const group = { id: 'album', title: 'Discovery', size: 3, url: 'https://www.youtube.com/playlist?list=PL1' }
+  const finishedAt = '2026-10-24T12:00:01.000Z'
+  const video = (id: string, changes: Partial<Job>) => jobFor({}, { id, group, finishedAt, ...changes })
+
+  it('waits until every video of the playlist is finished, then reports them together', () => {
+    const reported = new Map<string, string>()
+    const first = video('1', { status: 'done' })
+    const second = video('2', { status: 'error', error: 'Private video.' })
+    const third = video('3', { status: 'downloading', finishedAt: null })
+
+    assert.deepEqual(newlyFinishedJobs([first, second, third], reported), [])
+
+    Object.assign(third, { status: 'done', finishedAt })
+    assert.deepEqual(
+      newlyFinishedJobs([first, second, third], reported).map((job) => job.id),
+      ['1', '2', '3'],
+    )
+  })
+
+  it('reports the whole playlist again when a retried video finishes', () => {
+    const reported = new Map<string, string>()
+    const jobs = [video('1', { status: 'done' }), video('2', { status: 'error' }), video('3', { status: 'done' })]
+
+    newlyFinishedJobs(jobs, reported)
+    Object.assign(jobs[1] ?? {}, { status: 'done', finishedAt: '2026-10-24T12:05:00.000Z' })
+
+    assert.equal(newlyFinishedJobs(jobs, reported).length, 3)
+  })
+
+  it('names the playlist and counts its videos in one notification', () => {
+    const jobs = [video('1', { status: 'done' }), video('2', { status: 'error' }), video('3', { status: 'done' })]
+
+    assert.deepEqual(finishedNotificationText(jobs), { title: 'Discovery', body: '2 of 3 videos downloaded, 1 failed' })
+  })
+
+  it('counts a playlist as one download among others', () => {
+    const jobs = [video('1', { status: 'done' }), video('2', { status: 'done' }), jobFor({}, { status: 'done' })]
+
+    assert.deepEqual(finishedNotificationText(jobs), { title: '2 downloads finished', body: 'All 2 downloaded' })
+  })
+})

@@ -1,5 +1,6 @@
 import { countText } from '@shared/count-text.js'
-import type { Job } from '@shared/types/downloads.js'
+import { countJobs, groupDownloads, isDoneJob, isFailedJob } from '@shared/jobs.js'
+import type { Job, JobGroup } from '@shared/types/downloads.js'
 
 export interface NotificationText {
   title: string
@@ -20,23 +21,38 @@ const jobText = (job: Job): NotificationText => {
   return { title: job.title, body: job.options.playlist ? playlistText(job) : `Downloaded · ${job.label}` }
 }
 
-const severalJobsText = (jobs: Job[]): NotificationText => {
-  const failedJobs = jobs.filter((job) => job.status === 'error')
-  const failedCount = failedJobs.length
-  const doneCount = jobs.length - failedCount
+const groupText = (group: JobGroup, jobs: Job[]): NotificationText => {
+  const doneCount = countJobs(jobs, isDoneJob)
+  const failedCount = countJobs(jobs, isFailedJob)
+  const failedText = failedCount ? `, ${failedCount} failed` : ''
 
-  if (failedCount === jobs.length) {
-    return { title: `${countText(jobs.length, 'download')} failed`, body: failedJobs[0]?.error ?? 'Unknown reason.' }
+  return { title: group.title, body: `${doneCount} of ${countText(group.size, 'video')} downloaded${failedText}` }
+}
+
+const severalDownloadsText = (downloads: Job[][]): NotificationText => {
+  const failedDownloads = downloads.filter((jobs) => jobs.every(isFailedJob))
+  const failedCount = failedDownloads.length
+  const doneCount = downloads.length - failedCount
+
+  if (failedCount === downloads.length) {
+    return {
+      title: `${countText(downloads.length, 'download')} failed`,
+      body: failedDownloads[0]?.[0]?.error ?? 'Unknown reason.',
+    }
   }
 
   return {
-    title: `${countText(jobs.length, 'download')} finished`,
-    body: failedCount ? `${doneCount} downloaded, ${failedCount} failed` : `All ${jobs.length} downloaded`,
+    title: `${countText(downloads.length, 'download')} finished`,
+    body: failedCount ? `${doneCount} downloaded, ${failedCount} failed` : `All ${downloads.length} downloaded`,
   }
 }
 
 export const finishedNotificationText = (jobs: Job[]): NotificationText => {
-  const [onlyJob] = jobs
+  const downloads = groupDownloads(jobs)
+  const [onlyDownload] = downloads
+  const [firstJob] = onlyDownload ?? []
 
-  return jobs.length === 1 && onlyJob ? jobText(onlyJob) : severalJobsText(jobs)
+  if (downloads.length !== 1 || !firstJob) return severalDownloadsText(downloads)
+
+  return firstJob.group ? groupText(firstJob.group, onlyDownload ?? []) : jobText(firstJob)
 }

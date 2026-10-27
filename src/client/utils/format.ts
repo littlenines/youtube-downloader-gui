@@ -1,5 +1,7 @@
 const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
 
+export const joinNonEmpty = (parts: string[]): string => parts.filter(Boolean).join(' · ')
+
 export const escapeHtml = (value: unknown): string =>
   String(value ?? '').replace(/[&<>"']/g, (character) => HTML_ESCAPES[character] ?? character)
 

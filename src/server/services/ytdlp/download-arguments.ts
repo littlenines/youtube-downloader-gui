@@ -24,14 +24,20 @@ const PROGRESS_TEMPLATE = [
 ].join('|')
 
 const EMPTY_TEMPLATE = '%(id&|)s'
+const PLAYLIST_FOLDER_FIELD = 'playlist_folder'
 
-const setTagArguments = (field: keyof AudioTags, value: string): string[] => {
+const setFieldArguments = (fieldName: string, value: string): string[] => {
   if (!value) return []
 
   const escapedValue = value.replace(/%/g, '%%').replace(/:/g, '\\:')
 
-  return ['--parse-metadata', `${EMPTY_TEMPLATE}${escapedValue}${EMPTY_TEMPLATE}:(?P<meta_${field}>[\\s\\S]+)`]
+  return ['--parse-metadata', `${EMPTY_TEMPLATE}${escapedValue}${EMPTY_TEMPLATE}:(?P<${fieldName}>[\\s\\S]+)`]
 }
+
+const setTagArguments = (field: keyof AudioTags, value: string): string[] => setFieldArguments(`meta_${field}`, value)
+
+const playlistFolderArguments = ({ playlistTitle }: DownloadOptions): string[] =>
+  playlistTitle ? setFieldArguments(PLAYLIST_FOLDER_FIELD, playlistTitle) : []
 
 export const playlistItemsArgument = (positions: number[]): string => {
   const ranges: [number, number][] = []
@@ -138,7 +144,11 @@ const escapeOutputTemplate = (text: string): string => text.replaceAll('%', '%%'
 
 const outputFolderTemplate = (options: DownloadOptions): string => {
   const chosenFolder = options.folder ? `${escapeOutputTemplate(options.folder)}/` : ''
-  const playlistFolder = options.playlist ? '%(playlist_title)s/%(playlist_index)03d - ' : ''
+  const playlistFolder = options.playlistTitle
+    ? `%(${PLAYLIST_FOLDER_FIELD})s/`
+    : options.playlist
+      ? '%(playlist_title)s/'
+      : ''
 
   return `${chosenFolder}${playlistFolder}`
 }
@@ -151,6 +161,7 @@ export const buildDownloadArguments = (options: DownloadOptions, folders: Downlo
   return [
     ...reportingArguments(folders),
     ...playlistArguments(options),
+    ...playlistFolderArguments(options),
     ...clipArguments(options),
     ...formatArguments,
     ...(folders.infoFile ? ['--load-info-json', folders.infoFile] : ['--', options.url]),

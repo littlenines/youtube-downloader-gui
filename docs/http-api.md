@@ -136,7 +136,7 @@ Request (`DownloadRequest`):
 | `format` (audio) | `mp3`, `m4a`, `opus`, `original`, `flac`, `wav` | `mp3` |
 | `resolution` (video) | Short side in pixels, or `null` for the best | `null` |
 | `container` (video) | `mp4`, `mkv`, `webm` | `mp4` |
-| `playlist` | Download a playlist into a numbered folder | `false` |
+| `playlist` | Download a playlist: one download per video, numbered, in a folder named after the playlist (see *Playlists* below) | `false` |
 | `playlistItems` (playlist) | Positions of the videos to download, from the entries' `position`. `null` downloads every video; an empty list is refused with `400`. | `null` |
 | `clip` (single video) | `{ startSeconds, endSeconds }`: download only that part. At least 1 second long; ignored for playlists. | `null` |
 | `coverArt`, `squareCoverArt` | Embed album art, cropped square | `true` |
@@ -144,9 +144,12 @@ Request (`DownloadRequest`):
 | `subtitles` | Embed English subtitles (not for WebM) | `false` |
 | `tags` | `{ artist, title, album }` written into the file and used as its name (`Artist - Title.mp3`). Single audio downloads only; empty fields are left as found. | `null` |
 | `folder` | A folder inside the download folder to save into. Reduced to one safe folder name; `null` saves directly in the download folder. Subscriptions use it for their channel or playlist folder. | `null` |
+| `playlistNumber`, `playlistTitle` | Set by the server for each video of a playlist: its position (only shown in the list, for the order) and the playlist's name (its folder, named by yt-dlp). Ignored with `playlist`. | `null` |
 | `later` | Wait for the "Later" time in Settings instead of starting now (the job is `scheduled`). Answers `400` when no start time is set. | `false` |
 
 Unknown values fall back to the defaults.
+
+**Playlists.** With `playlist: true`, the server lists the playlist's videos (reusing the media panel's read from the last 30 minutes, otherwise reading it again; leaving the request stops that read) and adds one job per picked video, sharing one `group`. The answer is the job of the first video. If a picked entry is a playlist itself or has no web link, the playlist is queued as one job instead, as before.
 
 ### `GET /api/downloads` → `DownloadsResponse`
 
@@ -167,7 +170,8 @@ A `Job` has:
 - `files` and `sizeBytes`.
 - `error`.
 - `warning`: for a playlist that finished but had to skip videos, how many and why.
-- `playlistPosition` for playlists.
+- `playlistPosition`: the video being downloaded, for a whole playlist queued as one job by an earlier version.
+- `group`: `{ id, title, size, url }` for a video of a playlist, shared by all its videos; `size` is how many were picked, `url` the playlist's link. Otherwise `null`. A playlist's finished videos stay in `jobs`, also across restarts, until the whole playlist is finished; `DELETE /api/downloads/:id` and `DELETE /api/downloads` leave them until then.
 
 ### Actions on one download
 
@@ -177,6 +181,10 @@ A `Job` has:
 | `POST /api/downloads/:id/resume` | Queues a paused download again; it continues where it stopped. |
 | `POST /api/downloads/pause-all` | Pauses every queued or running download, **Later** ones in their time included. `scheduled` downloads stay as they are. |
 | `POST /api/downloads/resume-all` | Queues every paused download again, oldest first. **Later** downloads keep their times, unlike with a single resume. |
+| `POST /api/download-groups/:id/pause` | Like `pause-all`, for the videos of one playlist. |
+| `POST /api/download-groups/:id/resume` | Like `resume-all`, for the videos of one playlist. |
+| `POST /api/download-groups/:id/cancel` | Cancels every unfinished video of one playlist. |
+| `DELETE /api/download-groups/:id` | Removes the finished videos of one playlist from the list, and the playlist's history entry. The files stay. |
 | `POST /api/downloads/:id/start-now` | Starts a `scheduled` download now. It then runs until it finishes, ignoring the stop time. |
 | `POST /api/downloads/:id/cancel` | Stops it (running, waiting or paused) and deletes its partial files. |
 | `POST /api/downloads/:id/retry` | Queues a failed or cancelled download again. |

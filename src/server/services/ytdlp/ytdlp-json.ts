@@ -66,5 +66,7 @@ export interface YtdlpInfo {
 export const finiteNumberOrNull = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null
 
+export const entryPageUrl = (entry: YtdlpEntry): string | null => entry.webpage_url ?? entry.url ?? null
+
 export const hasVideo = (format: YtdlpFormat): boolean => Boolean(format.vcodec) && format.vcodec !== 'none'
 export const hasAudio = (format: YtdlpFormat): boolean => Boolean(format.acodec) && format.acodec !== 'none'

@@ -2,7 +2,7 @@ import type { SubscriptionSource } from '@shared/types/subscriptions.js'
 import { downloadText } from '@server/lib/http/download-text.js'
 import { runYtdlpForJson } from '@server/services/ytdlp/run-ytdlp.js'
 import { youtubeVideoUrl } from '@server/services/ytdlp/youtube-links.js'
-import type { YtdlpInfo } from '@server/services/ytdlp/ytdlp-json.js'
+import { entryPageUrl, type YtdlpInfo } from '@server/services/ytdlp/ytdlp-json.js'
 
 export interface ListedVideo {
   id: string
@@ -66,7 +66,7 @@ export const parseYoutubeFeed = (xml: string): ListedVideo[] =>
 
 export const parsePlaylistVideos = (info: YtdlpInfo): ListedVideo[] =>
   (info.entries ?? []).flatMap((entry) => {
-    const url = entry?.url ?? entry?.webpage_url
+    const url = entry && entryPageUrl(entry)
 
     if (!entry || !url || entry._type === 'playlist') return []
 

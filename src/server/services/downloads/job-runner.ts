@@ -27,7 +27,8 @@ const finishJob = async (job: Job, { skippedItems }: DownloadResult, history: Hi
   job.stage = null
   job.activity = null
   job.sizeBytes = await totalFileSize(job.files)
-  await history.add(historyEntryFromJob(job)).catch(ignoreFailure)
+
+  if (!job.group) await history.add(historyEntryFromJob(job)).catch(ignoreFailure)
 }
 
 const VIDEO_INFO_FILE_NAME = 'video-info.json'

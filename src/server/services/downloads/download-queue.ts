@@ -1,6 +1,7 @@
-import { isActiveJob, isFinishedJob, isPausedJob, isUnfinishedJob } from '@shared/jobs.js'
+import { groupDownloads, isActiveJob, isDoneJob, isFinishedJob, isPausedJob, isUnfinishedJob } from '@shared/jobs.js'
 import type { DownloadOptions, Job } from '@shared/types/downloads.js'
 import { ignoreFailure } from '@server/lib/ignore-failure.js'
+import type { SaveOptions } from '@server/lib/throttled-save.js'
 import type { HistoryStore } from '@server/services/stores/history-store.js'
 import type { SavedJob, SavedQueue } from '@server/services/stores/queue-store.js'
 import type { SettingsStore } from '@server/services/stores/settings-store.js'
@@ -9,7 +10,14 @@ import { appDownloadEngine, type DownloadEngine } from './download-engine.js'
 import { downloadWindowFromSettings, type DownloadWindow } from './download-window.js'
 import { JobFolders } from './job-folders.js'
 import { runDownloadJob } from './job-runner.js'
-import { createQueuedJob, nowAsText, resetJobForRetry, type JobDisplayDetails } from './jobs.js'
+import {
+  createQueuedJob,
+  historyEntryFromGroup,
+  nowAsText,
+  resetJobForRetry,
+  type JobDisplayDetails,
+  type NewDownload,
+} from './jobs.js'
 import { applyWindowToJobs, moveWaitingJobs, waitForWindow } from './later-jobs.js'
 import { jobFromSavedJob, savedJobFromJob } from './saved-jobs.js'
 
@@ -40,6 +48,7 @@ export class DownloadQueue {
   private readonly savedQueue: SavedQueue
   private readonly engine: DownloadEngine
   private jobSequenceNumber = 0
+  private readonly recordedGroupFinishes = new Map<string, string>()
   private isShuttingDown = false
   private windowTimer: ReturnType<typeof setInterval> | null = null
 
@@ -59,17 +68,26 @@ export class DownloadQueue {
     return this.jobs.get(id)
   }
 
-  add(options: DownloadOptions, details: JobDisplayDetails, { later = false }: AddOptions = {}): Job {
-    const id = `${Date.now().toString(36)}-${++this.jobSequenceNumber}`
-    const job = createQueuedJob(id, options, details)
+  add(options: DownloadOptions, details: JobDisplayDetails, addOptions: AddOptions = {}): Job {
+    return this.addAll([{ options, details }], addOptions)[0]!
+  }
+
+  addAll(downloads: NewDownload[], { later = false }: AddOptions = {}): Job[] {
     const window = later ? this.downloadWindow() : null
+    const now = new Date()
+    const jobs = downloads.map(({ options, details }) => {
+      const job = createQueuedJob(`${Date.now().toString(36)}-${++this.jobSequenceNumber}`, options, details)
 
-    if (window) waitForWindow(job, window, new Date())
+      if (window) waitForWindow(job, window, now)
 
-    this.jobs.set(id, job)
+      this.jobs.set(job.id, job)
+
+      return job
+    })
+
     this.queueChanged()
 
-    return job
+    return jobs
   }
 
   restoreJobs(savedJobs: SavedJob[]): void {
@@ -94,8 +112,8 @@ export class DownloadQueue {
     return job
   }
 
-  pauseAll(): void {
-    const activeJobs = [...this.jobs.values()].filter(isActiveJob)
+  pauseAll(groupId?: string): void {
+    const activeJobs = this.jobsIn(groupId).filter(isActiveJob)
 
     if (!activeJobs.length) return
 
@@ -115,8 +133,8 @@ export class DownloadQueue {
     return job
   }
 
-  resumeAll(): void {
-    const pausedJobs = [...this.jobs.values()].filter(isPausedJob)
+  resumeAll(groupId?: string): void {
+    const pausedJobs = this.jobsIn(groupId).filter(isPausedJob)
 
     if (!pausedJobs.length) return
 
@@ -151,15 +169,21 @@ export class DownloadQueue {
 
     if (!job) return undefined
 
-    if (isUnfinishedJob(job)) {
-      this.stopJob(job, 'cancelled')
-
-      if (!this.activeRuns.has(id)) void this.jobFolders.discardPartialFiles(id)
-    }
+    if (isUnfinishedJob(job)) this.cancelJob(job)
 
     this.queueChanged()
 
     return job
+  }
+
+  cancelGroup(groupId: string): void {
+    const unfinishedJobs = this.jobsIn(groupId).filter(isUnfinishedJob)
+
+    if (!unfinishedJobs.length) return
+
+    for (const job of unfinishedJobs) this.cancelJob(job)
+
+    this.queueChanged()
   }
 
   retry(id: string): Job | undefined {
@@ -176,11 +200,55 @@ export class DownloadQueue {
   remove(id: string): void {
     const job = this.jobs.get(id)
 
-    if (job && isFinishedJob(job)) this.jobs.delete(id)
+    if (job && this.isRemovable(job, this.unfinishedGroupIds())) this.jobs.delete(id)
+  }
+
+  removeFinishedInGroup(groupId: string): void {
+    const groupJobs = this.jobsIn(groupId)
+
+    if (groupJobs.some(isUnfinishedJob)) return
+
+    for (const job of groupJobs) this.jobs.delete(job.id)
   }
 
   clearFinished(): void {
-    for (const [id, job] of this.jobs) if (isFinishedJob(job)) this.jobs.delete(id)
+    const unfinishedGroupIds = this.unfinishedGroupIds()
+
+    for (const [id, job] of this.jobs) if (this.isRemovable(job, unfinishedGroupIds)) this.jobs.delete(id)
+  }
+
+  private unfinishedGroupIds(): Set<string> {
+    return new Set([...this.jobs.values()].filter(isUnfinishedJob).flatMap((job) => (job.group ? [job.group.id] : [])))
+  }
+
+  private isRemovable(job: Job, unfinishedGroupIds: ReadonlySet<string>): boolean {
+    return isFinishedJob(job) && !unfinishedGroupIds.has(job.group?.id ?? '')
+  }
+
+  private recordFinishedGroups(): void {
+    for (const jobs of groupDownloads([...this.jobs.values()])) {
+      const group = jobs[0]?.group
+      const doneJobs = jobs.filter(isDoneJob)
+      const finishKey = doneJobs.map((job) => `${job.id}@${job.finishedAt}`).join(',')
+
+      if (!group || !doneJobs.length || jobs.some(isUnfinishedJob)) continue
+      if (this.recordedGroupFinishes.get(group.id) === finishKey) continue
+
+      this.recordedGroupFinishes.set(group.id, finishKey)
+      this.history.add(historyEntryFromGroup(group, jobs)).catch(ignoreFailure)
+    }
+  }
+
+  private jobsIn(groupId: string | undefined): Job[] {
+    const jobs = [...this.jobs.values()]
+
+    return groupId === undefined ? jobs : jobs.filter((job) => job.group?.id === groupId)
+  }
+
+  private cancelJob(job: Job): void {
+    this.stopJob(job, 'cancelled')
+
+    if (!this.activeRuns.has(job.id)) void this.jobFolders.discardPartialFiles(job.id)
   }
 
   private stopJob(job: Job, status: StoppedStatus): void {
@@ -216,16 +284,17 @@ export class DownloadQueue {
     this.stopWindowTimer()
     this.activeRuns.stopAll('pause')
     await Promise.allSettled(this.runningPromises)
-    await this.saveUnfinishedJobs()
+    await this.saveQueue({ immediately: true })
   }
 
   private queueChanged(): void {
     this.applyDownloadWindow()
+    this.recordFinishedGroups()
     this.saveAndStartJobs()
   }
 
   private saveAndStartJobs(): void {
-    void this.saveUnfinishedJobs()
+    void this.saveQueue()
     this.startQueuedJobs()
     this.updateWindowTimer()
   }
@@ -262,12 +331,13 @@ export class DownloadQueue {
     this.windowTimer = null
   }
 
-  private saveUnfinishedJobs(): Promise<void> {
+  private saveQueue(options?: SaveOptions): Promise<void> {
+    const unfinishedGroupIds = this.unfinishedGroupIds()
     const savedJobs = [...this.jobs.values()]
-      .filter(isUnfinishedJob)
+      .filter((job) => isUnfinishedJob(job) || unfinishedGroupIds.has(job.group?.id ?? ''))
       .map((job) => savedJobFromJob(job, this.jobFolders.savedFolder(job.id)))
 
-    return this.savedQueue.save(savedJobs).catch(ignoreFailure)
+    return this.savedQueue.save(savedJobs, options).catch(ignoreFailure)
   }
 
   private async runJob(job: Job): Promise<void> {
@@ -280,7 +350,7 @@ export class DownloadQueue {
       activity: 'preparing',
       runStartedAt: nowAsText(),
     } satisfies Partial<Job>)
-    void this.saveUnfinishedJobs()
+    void this.saveQueue()
 
     await runDownloadJob(job, run, { engine: this.engine, history: this.history, jobFolders: this.jobFolders })
     this.afterRun(job)

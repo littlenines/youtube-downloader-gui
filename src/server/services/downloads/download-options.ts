@@ -67,6 +67,14 @@ const MAXIMUM_FOLDER_NAME_LENGTH = 100
 const UNSAFE_FOLDER_CHARACTERS = /[<>:"/\\|?*\p{Cc}]/gu
 const WINDOWS_RESERVED_NAME = /^(con|prn|aux|nul|com\d|lpt\d)(?=\.|$)/i
 
+const MAXIMUM_PLAYLIST_TITLE_LENGTH = 200
+
+export const safePlaylistTitle = (value: unknown): string | null => {
+  const title = typeof value === 'string' ? value.trim().slice(0, MAXIMUM_PLAYLIST_TITLE_LENGTH) : ''
+
+  return sanitizeFolderName(title) ? title.replace(WINDOWS_RESERVED_NAME, '$1_') : null
+}
+
 export const sanitizeFolderName = (value: unknown): string | null => {
   if (typeof value !== 'string') return null
 
@@ -105,6 +113,8 @@ export const normalizeDownloadRequest = (request: Partial<DownloadRequest>): Dow
   subtitles: Boolean(request.subtitles),
   tags: request.kind !== 'video' && !request.playlist ? normalizeTags(request.tags) : null,
   folder: sanitizeFolderName(request.folder),
+  playlistNumber: !request.playlist && isPlaylistPosition(request.playlistNumber) ? request.playlistNumber : null,
+  playlistTitle: safePlaylistTitle(request.playlistTitle),
 })
 
 const describeFormat = (options: DownloadOptions): string => {

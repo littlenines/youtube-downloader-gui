@@ -11,6 +11,10 @@
     width: 64px;
   }
 
+  .grouped {
+    margin-left: 12px;
+  }
+
   .job-actions {
     grid-column: 1 / -1;
     justify-content: flex-end;

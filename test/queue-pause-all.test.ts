@@ -106,6 +106,38 @@ describe('DownloadQueue: pause all and resume all', async () => {
     assert.equal(runs.length, 2)
   })
 
+  it('pauses, resumes and cancels one playlist, and leaves other downloads alone', async () => {
+    const { engine, runs } = createFakeEngine()
+    const queue = new DownloadQueue({ settings: setup.settings, history, savedQueue: noSavedQueue, engine })
+    const group = { id: 'album', title: 'Album', size: 2, url: 'https://www.youtube.com/playlist?list=PL1' }
+    const single = queue.add(options, {})
+    const playlist = queue.addAll([
+      { options, details: { title: 'Song 1', group } },
+      { options, details: { title: 'Song 2', group } },
+    ])
+
+    await waitUntil(() => runs.length === 2)
+    queue.pauseAll('album')
+    assert.deepEqual([single.status, ...playlist.map((job) => job.status)], ['downloading', 'paused', 'paused'])
+
+    queue.resumeAll('album')
+    assert.deepEqual(
+      playlist.map((job) => job.status),
+      ['queued', 'queued'],
+    )
+
+    queue.cancelGroup('album')
+    runs.slice(1).forEach((run) => run.fail('killed'))
+    await waitFor(30)
+    assert.deepEqual([single.status, ...playlist.map((job) => job.status)], ['downloading', 'cancelled', 'cancelled'])
+
+    queue.removeFinishedInGroup('album')
+    assert.deepEqual(
+      queue.list().map((job) => job.id),
+      [single.id],
+    )
+  })
+
   it('saves nothing when there is nothing to pause or resume', async () => {
     const { engine } = createFakeEngine()
     const { savedQueue, saveCount } = createRecordingQueue()

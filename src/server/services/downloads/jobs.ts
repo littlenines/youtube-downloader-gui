@@ -1,13 +1,20 @@
 import { randomUUID } from 'node:crypto'
 import { basename, extname } from 'node:path'
 import { countText } from '@shared/count-text.js'
-import type { CoverRequest, DownloadOptions, HistoryEntry, Job } from '@shared/types/downloads.js'
+import { byPlaylistNumber } from '@shared/jobs.js'
+import type { CoverRequest, DownloadOptions, HistoryEntry, Job, JobGroup } from '@shared/types/downloads.js'
 import { describeDownloadOptions } from './download-options.js'
 
 export interface JobDisplayDetails {
   title?: string | undefined
   thumbnailUrl?: string | null | undefined
   videoCount?: number | undefined
+  group?: JobGroup | null | undefined
+}
+
+export interface NewDownload {
+  options: DownloadOptions
+  details: JobDisplayDetails
 }
 
 export const nowAsText = (): string => new Date().toISOString()
@@ -40,6 +47,7 @@ export const createQueuedJob = (id: string, options: DownloadOptions, details: J
     error: null,
     warning: null,
     playlistPosition: null,
+    group: details.group ?? null,
   }
 }
 
@@ -80,6 +88,22 @@ export const historyEntryFromCover = (cover: CoverRequest, file: string, sizeByt
   finishedAt: nowAsText(),
   url: cover.url,
 })
+
+export const historyEntryFromGroup = (group: JobGroup, jobs: Job[]): HistoryEntry => {
+  const doneJobs = jobs.filter((job) => job.status === 'done').sort(byPlaylistNumber)
+  const sizeBytes = doneJobs.reduce((sum, job) => sum + (job.sizeBytes ?? 0), 0)
+
+  return {
+    id: group.id,
+    title: group.title,
+    thumbnailUrl: doneJobs[0]?.thumbnailUrl ?? null,
+    label: `${doneJobs[0]?.label ?? ''} · playlist (${countText(doneJobs.length, 'video')})`,
+    files: doneJobs.flatMap((job) => job.files),
+    sizeBytes: sizeBytes || null,
+    finishedAt: nowAsText(),
+    url: group.url,
+  }
+}
 
 export const historyEntryFromJob = (job: Job): HistoryEntry => ({
   id: job.id,

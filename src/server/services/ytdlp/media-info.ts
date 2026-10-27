@@ -1,22 +1,15 @@
 import type { MediaInfo, PlaylistInfo, VideoInfo } from '@shared/types/media.js'
 import { registerPreview } from '@server/services/preview/preview-streams.js'
 import { toolSetup } from '@server/services/tools/app-tool-setup.js'
+import { rememberPlaylistListing, withPlaylistPositions } from './playlist-videos.js'
 import { runYtdlpForJson } from './run-ytdlp.js'
 import { videoInfoCache } from './video-info-cache.js'
 import { bestAudioSource, isUsableFormat, videoQualities } from './video-qualities.js'
 import { isYoutubeChannel, isYoutubeChannelLink, playlistIdFromUrl } from './youtube-links.js'
-import { finiteNumberOrNull, type YtdlpEntry, type YtdlpInfo } from './ytdlp-json.js'
+import { finiteNumberOrNull, type YtdlpInfo } from './ytdlp-json.js'
 
 const MAXIMUM_PLAYLIST_ENTRIES = 500
 const UNTITLED = '(untitled)'
-
-interface PositionedEntry {
-  entry: YtdlpEntry
-  position: number
-}
-
-const withPlaylistPositions = (entries: (YtdlpEntry | null)[]): PositionedEntry[] =>
-  entries.flatMap((entry, index) => (entry ? [{ entry, position: index + 1 }] : []))
 
 const parsePlaylistInfo = (info: YtdlpInfo, requestedUrl: string): PlaylistInfo => {
   const isChannel = isYoutubeChannel(info, requestedUrl)
@@ -90,6 +83,8 @@ export const fetchMediaInfo = async (
 
   if (mediaInfo.kind === 'video') mediaInfo.preview = registerPreview((ytdlpOutput as YtdlpInfo).formats ?? [])
   if (mediaInfo.kind === 'video' && !mediaInfo.isLive) videoInfoCache.set(mediaInfo.url, ytdlpOutput)
+  if (mediaInfo.kind === 'playlist' && !mediaInfo.isChannel)
+    rememberPlaylistListing(mediaInfo.url, ytdlpOutput as YtdlpInfo)
 
   return mediaInfo
 }

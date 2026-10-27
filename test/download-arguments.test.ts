@@ -93,11 +93,11 @@ describe('buildDownloadArguments: safety and playlists', () => {
     assert.deepEqual(commandArguments.slice(-2), ['--', '--exec=calc'])
   })
 
-  it('saves playlists into a numbered folder', () => {
+  it('saves a playlist downloaded as one job into its folder, without numbers', () => {
     const commandArguments = argumentsFor({ url: 'https://x', playlist: true })
 
     assert.ok(commandArguments.includes('--yes-playlist'))
-    assert.match(valueAfter(commandArguments, '-o') ?? '', /^%\(playlist_title\)s\/%\(playlist_index\)03d - /)
+    assert.match(valueAfter(commandArguments, '-o') ?? '', /^%\(playlist_title\)s\/%\(artist/)
     assert.ok(!commandArguments.includes('--playlist-items'))
   })
 
@@ -107,11 +107,10 @@ describe('buildDownloadArguments: safety and playlists', () => {
     assert.equal(valueAfter(commandArguments, '--playlist-items'), '1-3,7,9-10')
   })
 
-  it('counts progress among the picked videos, while files keep their playlist number', () => {
+  it('counts progress among the picked videos', () => {
     const commandArguments = argumentsFor({ url: 'https://x', playlist: true, playlistItems: [1, 3, 12] })
     const itemLine = commandArguments.find((argument) => argument.startsWith('before_dl:'))
 
     assert.match(itemLine ?? '', /%\(playlist_autonumber\|\)s\|%\(n_entries\|\)s/)
-    assert.match(valueAfter(commandArguments, '-o') ?? '', /%\(playlist_index\)03d/)
   })
 })

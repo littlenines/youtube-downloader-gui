@@ -111,5 +111,7 @@ export const savedJobFor = (overrides: Partial<SavedJob> & Pick<SavedJob, 'id' |
   later: false,
   startsAt: null,
   downloadFolder: null,
+  group: null,
+  finished: null,
   ...overrides,
 })

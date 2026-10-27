@@ -34,6 +34,8 @@ export interface DownloadRequest {
   subtitles?: boolean
   tags?: AudioTags | null
   folder?: string | null
+  playlistNumber?: number | null
+  playlistTitle?: string | null
   title?: string
   thumbnailUrl?: string | null
   videoCount?: number
@@ -62,6 +64,15 @@ export interface DownloadOptions {
   subtitles: boolean
   tags: AudioTags | null
   folder: string | null
+  playlistNumber: number | null
+  playlistTitle: string | null
+}
+
+export interface JobGroup {
+  id: string
+  title: string
+  size: number
+  url: string
 }
 
 export interface PlaylistPosition {
@@ -95,6 +106,7 @@ export interface Job {
   error: string | null
   warning: string | null
   playlistPosition: PlaylistPosition | null
+  group: JobGroup | null
 }
 
 export interface HistoryEntry {
