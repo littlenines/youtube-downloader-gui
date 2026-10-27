@@ -37,6 +37,13 @@
           <span class="count-badge" id="subscriptionCount" hidden></span>
         </button>
         <button class="button ghost" id="openFolderButton" title="Open the download folder">📁 Downloads folder</button>
+        <button
+          class="button ghost icon-only"
+          id="miniModeButton"
+          title="Mini mode: a small bar with the download progress, on top of other apps"
+          aria-label="Mini mode"
+          hidden
+        ></button>
         <button class="button ghost icon-only" id="openSettingsButton" title="Settings" aria-label="Settings">⚙</button>
       </div>
     </header>
@@ -197,6 +204,15 @@
             <input type="checkbox" id="notifyWhenFinishedCheckbox" /> Notify me when downloads finish
           </label>
           <p class="hint">Only while the app is in the background. Click the notification to bring the app back.</p>
+        </div>
+        <div id="miniModeSetting" hidden>
+          <label class="checkbox-label settings-checkbox">
+            <input type="checkbox" id="miniModeWhenMinimizingCheckbox" /> Switch to mini mode when minimizing
+          </label>
+          <p class="hint">
+            Minimizing the window shows a small bar with the download progress, on top of other apps. The mini mode
+            button at the top always works.
+          </p>
         </div>
         <div id="autoUpdateSetting" hidden>
           <label class="checkbox-label settings-checkbox">

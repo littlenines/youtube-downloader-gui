@@ -43,3 +43,6 @@ export const groupDownloads = (jobs: Job[]): JobsOfOneDownload[] => {
 
   return downloads
 }
+
+export const isWorkingWithoutProgress = (job: Job): boolean =>
+  job.status === 'downloading' && (job.activity === 'preparing' || job.activity === 'processing')

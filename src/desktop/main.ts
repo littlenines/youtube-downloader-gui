@@ -14,7 +14,8 @@ import { enableAppUpdates } from './app-updates.js'
 import { confirmCloseWhileDownloading } from './close-confirmation.js'
 import { notifyWhenDownloadsFinish } from './download-notifications.js'
 import { watchDownloads } from './download-watcher.js'
-import { createMainWindow, openWebAddressOutside, pickFolder } from './main-window.js'
+import { createMainWindow, isFromAppPage, openWebAddressOutside, pickFolder } from './main-window.js'
+import { createMiniMode, type MiniMode } from './mini-window.js'
 import { stopServing } from './shut-down.js'
 import { applyStartUpSwitches } from './start-up-switches.js'
 import { showProgressOnTaskbar } from './taskbar-progress.js'
@@ -24,14 +25,9 @@ const LOOPBACK_ADDRESS = '127.0.0.1'
 const ALLOWED_PERMISSIONS = new Set(['clipboard-read', 'clipboard-sanitized-write'])
 const ACCESS_COOKIE_LIFETIME_SECONDS = 365 * 24 * 3600
 
-let mainWindow: BrowserWindow | null = null
+let miniMode: MiniMode | null = null
 
-const focusMainWindow = (): void => {
-  if (!mainWindow) return
-  if (mainWindow.isMinimized()) mainWindow.restore()
-
-  mainWindow.focus()
-}
+const focusMainWindow = (): void => miniMode?.leave()
 
 const allowOnlyClipboardPermissions = (): void => {
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) =>
@@ -59,7 +55,7 @@ const useElectronShell = (): void => {
 
 const answerFolderPicker = (window: BrowserWindow, origin: string): void => {
   ipcMain.handle('pick-folder', (event, currentFolder: unknown) =>
-    event.senderFrame?.url.startsWith(`${origin}/`) ? pickFolder(window, currentFolder) : null,
+    isFromAppPage(event, origin) ? pickFolder(window, currentFolder) : null,
   )
 }
 
@@ -86,11 +82,13 @@ const startDesktopApp = async (): Promise<void> => {
 
   const window = createMainWindow(origin)
 
-  mainWindow = window
-  window.on('closed', () => (mainWindow = null))
+  const windowMiniMode = createMiniMode(window, origin, services)
+  const shownWindows = () => [windowMiniMode.shownWindow() ?? window]
+
+  miniMode = windowMiniMode
   answerFolderPicker(window, origin)
   watchDownloads(window, services, [
-    showProgressOnTaskbar(window),
+    showProgressOnTaskbar(window, shownWindows),
     notifyWhenDownloadsFinish(window, services, focusMainWindow),
   ])
   confirmCloseWhileDownloading(window, services)

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en" class="desktop mini-view">
+  <head>
+    <meta charset="utf-8" />
+    <title>YT Downloader</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script type="module" src="mini.js"></script>
+  </head>
+  <body>
+    <div class="mini-bar">
+      <div class="mini-grip" aria-hidden="true">⠿</div>
+      <div class="mini-content" title="Double-click to open the full window">
+        <div class="mini-title" id="miniTitle"></div>
+        <div
+          class="progress-track is-empty"
+          id="miniProgressTrack"
+          role="progressbar"
+          aria-label="Download progress"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          <div class="progress-fill" id="miniProgressFill"></div>
+        </div>
+        <div class="mini-details" id="miniDetails"></div>
+      </div>
+      <button
+        class="button ghost icon-only"
+        type="button"
+        id="miniLeaveButton"
+        title="Open the full window"
+        aria-label="Open the full window"
+      ></button>
+    </div>
+  </body>
+</html>

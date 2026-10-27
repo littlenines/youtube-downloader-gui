@@ -1,0 +1,56 @@
+.mini-view body {
+  height: 100vh;
+  overflow: hidden;
+  background: var(--panel);
+}
+
+.mini-bar {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  app-region: drag;
+}
+
+.mini-grip {
+  color: var(--text-faint);
+  font-size: 16px;
+  line-height: 1;
+  text-align: center;
+  cursor: move;
+}
+
+.mini-content,
+.mini-bar .button {
+  app-region: no-drag;
+}
+
+.mini-title,
+.mini-details {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.mini-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mini-details {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.mini-bar .progress-track {
+  margin: 5px 0 3px;
+}
+
+.mini-bar .progress-track.is-empty,
+.mini-details:empty {
+  display: none;
+}

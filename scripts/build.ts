@@ -6,7 +6,7 @@ import { DIST_DIRECTORY, PROJECT_ROOT, readPackageVersion } from './common.js'
 
 const isWatchMode = process.argv.includes('--watch')
 const isDevelopment = process.argv.includes('--dev') || isWatchMode
-const STATIC_FILES = ['index.html']
+const STATIC_FILES = ['index.html', 'mini.html']
 const appVersion = await readPackageVersion(join(PROJECT_ROOT, 'package.json'))
 
 const copyStaticFiles = async (): Promise<void> => {
@@ -65,6 +65,14 @@ const bundles: esbuild.BuildOptions[] = [
     target: 'es2022',
     entryPoints: [join(PROJECT_ROOT, 'src/client/main.ts')],
     outfile: join(DIST_DIRECTORY, 'client', 'main.js'),
+  },
+  {
+    ...sharedOptions,
+    platform: 'browser',
+    format: 'esm',
+    target: 'es2022',
+    entryPoints: [join(PROJECT_ROOT, 'src/client/mini.ts')],
+    outfile: join(DIST_DIRECTORY, 'client', 'mini.js'),
   },
   {
     ...sharedOptions,

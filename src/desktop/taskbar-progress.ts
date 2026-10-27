@@ -17,18 +17,30 @@ export const taskbarProgress = (jobs: Job[]): number => {
   return Math.max(MINIMUM_VISIBLE_PROGRESS, Math.round(progress * 100) / 100)
 }
 
-export const showProgressOnTaskbar = (window: BrowserWindow): DownloadListener => {
-  let shownProgress: number | null = null
+export const showProgressOnTaskbar = (
+  mainWindow: BrowserWindow,
+  shownWindows: () => BrowserWindow[],
+): DownloadListener => {
+  const shownProgress = new WeakMap<BrowserWindow, number>()
+  let previousWindows: BrowserWindow[] = []
 
-  window.on('focus', () => window.flashFrame(false))
+  mainWindow.on('focus', () => mainWindow.flashFrame(false))
 
   return ({ jobs, finishedJobs }) => {
     const progress = taskbarProgress(jobs)
+    const windows = shownWindows().filter((window) => !window.isDestroyed())
 
-    if (progress !== shownProgress) window.setProgressBar(progress)
+    for (const window of windows) {
+      if (!previousWindows.includes(window)) shownProgress.delete(window)
+      if (shownProgress.get(window) !== progress) window.setProgressBar(progress)
 
-    shownProgress = progress
+      shownProgress.set(window, progress)
+    }
 
-    if (finishedJobs.some((job) => job.status === 'done') && !window.isFocused()) window.flashFrame(true)
+    previousWindows = windows
+
+    const hasNewDownload = finishedJobs.some((job) => job.status === 'done')
+
+    if (hasNewDownload && windows.includes(mainWindow) && !mainWindow.isFocused()) mainWindow.flashFrame(true)
   }
 }

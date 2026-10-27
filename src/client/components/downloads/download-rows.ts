@@ -1,4 +1,4 @@
-import { isActiveJob, isFinishedJob, isPausedJob, isUnfinishedJob } from '@shared/jobs.js'
+import { isActiveJob, isFinishedJob, isPausedJob, isUnfinishedJob, isWorkingWithoutProgress } from '@shared/jobs.js'
 import type { HistoryEntry, Job } from '@shared/types/downloads.js'
 import { formatDateTime, formatStartTime } from '@client/locale.js'
 import {
@@ -42,9 +42,6 @@ const playlistPositionText = (job: Job): string => {
 
   return position?.count ? `Video ${position.index ?? '?'} of ${position.count}: ${position.title} · ` : ''
 }
-
-const isWorkingWithoutProgress = (job: Job): boolean =>
-  job.status === 'downloading' && (job.activity === 'preparing' || job.activity === 'processing')
 
 const percentText = (job: Job): string => `${Math.round(job.progress * 100)}%`
 

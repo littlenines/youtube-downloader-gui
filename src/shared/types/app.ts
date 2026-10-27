@@ -3,6 +3,7 @@ export interface Settings {
   simultaneousDownloads: number
   lowLatencyRendering: boolean
   notifyWhenFinished: boolean
+  miniModeWhenMinimizing: boolean
   installUpdatesAutomatically: boolean
   subscriptionCheckHours: number
   laterStartTime: string | null
@@ -47,5 +48,7 @@ export interface StatusResponse extends Settings {
 
 export interface DesktopBridge {
   pickFolder(currentFolder: string): Promise<string | null>
+  enterMiniMode(): Promise<void>
+  leaveMiniMode(): Promise<void>
   systemLocale: string | null
 }

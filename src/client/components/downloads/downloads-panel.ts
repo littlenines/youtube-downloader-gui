@@ -67,7 +67,7 @@ const renderDownloads = ({ jobs, history }: DownloadsResponse): void => {
 }
 
 const nextPollDelay = (isBusy: boolean): number => {
-  if (isBusy) return BUSY_POLL_MILLISECONDS
+  if (isBusy && !document.hidden) return BUSY_POLL_MILLISECONDS
 
   return isOffline ? OFFLINE_POLL_MILLISECONDS : IDLE_POLL_MILLISECONDS
 }
@@ -149,5 +149,8 @@ export const initializeDownloadsPanel = (): void => {
   listButton(pauseAllButton(), 'Pausing…', api.pauseAll)
   listButton(resumeAllButton(), 'Resuming…', api.resumeAll)
   onDownloadsChanged(() => void refreshDownloads())
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) void refreshDownloads()
+  })
   void refreshDownloads()
 }

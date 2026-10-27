@@ -12,6 +12,7 @@ const downloadFolderInput = () => findElement<HTMLInputElement>('#downloadFolder
 const simultaneousDownloadsSelect = () => findElement<HTMLSelectElement>('#simultaneousDownloadsSelect')
 const lowLatencyRenderingCheckbox = () => findElement<HTMLInputElement>('#lowLatencyRenderingCheckbox')
 const notifyWhenFinishedCheckbox = () => findElement<HTMLInputElement>('#notifyWhenFinishedCheckbox')
+const miniModeWhenMinimizingCheckbox = () => findElement<HTMLInputElement>('#miniModeWhenMinimizingCheckbox')
 const installUpdatesAutomaticallyCheckbox = () => findElement<HTMLInputElement>('#installUpdatesAutomaticallyCheckbox')
 const subscriptionCheckSelect = () => findElement<HTMLSelectElement>('#subscriptionCheckSelect')
 
@@ -22,11 +23,13 @@ const fillSettingsDialog = (status: StatusResponse): void => {
   simultaneousDownloadsSelect().value = String(status.simultaneousDownloads)
   lowLatencyRenderingCheckbox().checked = status.lowLatencyRendering
   notifyWhenFinishedCheckbox().checked = status.notifyWhenFinished
+  miniModeWhenMinimizingCheckbox().checked = status.miniModeWhenMinimizing
   installUpdatesAutomaticallyCheckbox().checked = status.installUpdatesAutomatically
   subscriptionCheckSelect().value = String(status.subscriptionCheckHours)
   fillLaterTimes(status)
   findElement('#renderingSetting').hidden = !desktopBridge || !isWindows
   findElement('#notificationSetting').hidden = !desktopBridge
+  findElement('#miniModeSetting').hidden = !desktopBridge
   findElement('#autoUpdateSetting').hidden = !status.canInstallUpdates
   findElement('#folderExample').textContent = isWindows ? 'D:\\Music\\YouTube' : '/home/you/Music/YouTube'
   findElement('#versionInfo').textContent =
@@ -102,6 +105,10 @@ export const initializeSettings = (): void => {
 
   notifyWhenFinishedCheckbox().addEventListener('change', () => {
     void saveCheckbox(notifyWhenFinishedCheckbox(), (checked) => ({ notifyWhenFinished: checked }))
+  })
+
+  miniModeWhenMinimizingCheckbox().addEventListener('change', () => {
+    void saveCheckbox(miniModeWhenMinimizingCheckbox(), (checked) => ({ miniModeWhenMinimizing: checked }))
   })
 
   installUpdatesAutomaticallyCheckbox().addEventListener('change', async () => {

@@ -31,6 +31,7 @@ export const parseSettings = (content: unknown): Settings => {
       : DEFAULT_SIMULTANEOUS_DOWNLOADS,
     lowLatencyRendering: stored.lowLatencyRendering !== false,
     notifyWhenFinished: stored.notifyWhenFinished !== false,
+    miniModeWhenMinimizing: stored.miniModeWhenMinimizing === true,
     installUpdatesAutomatically: stored.installUpdatesAutomatically === true,
     subscriptionCheckHours: isValidSubscriptionCheckHours(subscriptionCheckHours)
       ? subscriptionCheckHours
@@ -95,6 +96,10 @@ export class SettingsStore {
     if (typeof changes.lowLatencyRendering === 'boolean')
       this.settings.lowLatencyRendering = changes.lowLatencyRendering
     if (typeof changes.notifyWhenFinished === 'boolean') this.settings.notifyWhenFinished = changes.notifyWhenFinished
+
+    if (typeof changes.miniModeWhenMinimizing === 'boolean') {
+      this.settings.miniModeWhenMinimizing = changes.miniModeWhenMinimizing
+    }
 
     if (typeof changes.installUpdatesAutomatically === 'boolean') {
       this.settings.installUpdatesAutomatically = changes.installUpdatesAutomatically

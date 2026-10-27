@@ -3,6 +3,7 @@ import { initializeBatchPanel } from './components/batch.js'
 import { initializeClosingPanels } from './components/close-panels.js'
 import { initializeDownloadsPanel } from './components/downloads/downloads-panel.js'
 import { initializeMediaPanel } from './components/media/media-panel.js'
+import { initializeMiniModeButton } from './components/mini/mini-mode-button.js'
 import { initializeSearchPanel } from './components/search.js'
 import { initializeSettings } from './components/settings/settings.js'
 import { initializeSubscriptions } from './components/subscriptions.js'
@@ -29,6 +30,7 @@ const openLinkFromAddress = (): void => {
 document.documentElement.classList.toggle('desktop', Boolean(desktopBridge))
 initializeSetup()
 initializeSettings()
+initializeMiniModeButton()
 initializeMediaPanel()
 initializeSearchPanel()
 initializeBatchPanel()

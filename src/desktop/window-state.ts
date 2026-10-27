@@ -3,7 +3,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { DATA_DIRECTORY } from '@server/config.js'
 
-const WINDOW_STATE_FILE = join(DATA_DIRECTORY, 'window.json')
+const WINDOW_STATE_FILE_NAME = 'window.json'
 const DEFAULT_WINDOW_SIZE = { width: 1120, height: 860 }
 const VISIBLE_MARGIN_PIXELS = { left: 40, top: 40, right: 100, bottom: 100 }
 
@@ -15,22 +15,29 @@ export interface WindowState {
   maximized?: boolean
 }
 
-export const loadWindowState = (): WindowState => {
+export const readWindowFile = (fileName: string): unknown => {
   try {
-    const state = JSON.parse(readFileSync(WINDOW_STATE_FILE, 'utf8')) as WindowState
-
-    if (state.width > 0 && state.height > 0) return state
-  } catch {}
-
-  return { ...DEFAULT_WINDOW_SIZE }
+    return JSON.parse(readFileSync(join(DATA_DIRECTORY, fileName), 'utf8'))
+  } catch {
+    return null
+  }
 }
 
-export const saveWindowState = (window: BrowserWindow): void => {
+export const writeWindowFile = (fileName: string, content: unknown): void => {
   try {
     mkdirSync(DATA_DIRECTORY, { recursive: true })
-    writeFileSync(WINDOW_STATE_FILE, JSON.stringify({ ...window.getNormalBounds(), maximized: window.isMaximized() }))
+    writeFileSync(join(DATA_DIRECTORY, fileName), JSON.stringify(content))
   } catch {}
 }
+
+export const loadWindowState = (): WindowState => {
+  const state = readWindowFile(WINDOW_STATE_FILE_NAME) as WindowState | null
+
+  return state && state.width > 0 && state.height > 0 ? state : { ...DEFAULT_WINDOW_SIZE }
+}
+
+export const saveWindowState = (window: BrowserWindow): void =>
+  writeWindowFile(WINDOW_STATE_FILE_NAME, { ...window.getNormalBounds(), maximized: window.isMaximized() })
 
 export const isOnScreen = ({ x: left, y: top }: WindowState): boolean => {
   if (left === undefined || top === undefined) return false

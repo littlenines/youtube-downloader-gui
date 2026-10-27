@@ -90,6 +90,7 @@ export const createQueueTestSetup = async (folderPrefix: string) => {
       simultaneousDownloads: 2,
       lowLatencyRendering: true,
       notifyWhenFinished: true,
+      miniModeWhenMinimizing: false,
       installUpdatesAutomatically: false,
       subscriptionCheckHours: 1,
       laterStartTime: null,

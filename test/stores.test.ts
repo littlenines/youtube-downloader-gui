@@ -15,6 +15,7 @@ describe('parseSettings', () => {
       simultaneousDownloads: 2,
       lowLatencyRendering: true,
       notifyWhenFinished: true,
+      miniModeWhenMinimizing: false,
       installUpdatesAutomatically: false,
       subscriptionCheckHours: 0,
       laterStartTime: null,
@@ -25,6 +26,7 @@ describe('parseSettings', () => {
       simultaneousDownloads: 2,
       lowLatencyRendering: true,
       notifyWhenFinished: true,
+      miniModeWhenMinimizing: false,
       installUpdatesAutomatically: false,
       subscriptionCheckHours: 0,
       laterStartTime: null,
@@ -38,6 +40,7 @@ describe('parseSettings', () => {
       simultaneousDownloads: 3,
       lowLatencyRendering: true,
       notifyWhenFinished: true,
+      miniModeWhenMinimizing: false,
       installUpdatesAutomatically: false,
       subscriptionCheckHours: 0,
       laterStartTime: null,
@@ -50,6 +53,11 @@ describe('parseSettings', () => {
     assert.equal(parseSettings({ subscriptionCheckHours: 0 }).subscriptionCheckHours, 0)
     assert.equal(parseSettings({ subscriptionCheckHours: 5 }).subscriptionCheckHours, 0)
     assert.equal(parseSettings({ subscriptionCheckHours: '24' }).subscriptionCheckHours, 24)
+  })
+
+  it('turns mini mode on minimizing on only when it was chosen', () => {
+    assert.equal(parseSettings({ miniModeWhenMinimizing: true }).miniModeWhenMinimizing, true)
+    assert.equal(parseSettings({ miniModeWhenMinimizing: 'yes' }).miniModeWhenMinimizing, false)
   })
 })
 

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, nativeTheme, shell } from 'electron'
+import { app, BrowserWindow, dialog, nativeTheme, shell, type IpcMainInvokeEvent, type WebPreferences } from 'electron'
 import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -12,11 +12,26 @@ const moduleDirectory = dirname(fileURLToPath(import.meta.url))
 const MINIMUM_WINDOW_SIZE = { width: 520, height: 560 }
 const BACKGROUND_COLORS = { dark: '#111110', light: '#f6f6f4' }
 
+export const backgroundColor = (): string =>
+  nativeTheme.shouldUseDarkColors ? BACKGROUND_COLORS.dark : BACKGROUND_COLORS.light
+
+export const pageWebPreferences = (): WebPreferences => ({
+  preload: join(moduleDirectory, 'preload.cjs'),
+  contextIsolation: true,
+  sandbox: true,
+  nodeIntegration: false,
+  spellcheck: false,
+  additionalArguments: systemLocaleArguments(app.getSystemLocale()),
+})
+
+export const isFromAppPage = (event: IpcMainInvokeEvent, origin: string): boolean =>
+  Boolean(event.senderFrame?.url.startsWith(`${origin}/`))
+
 export const openWebAddressOutside = (url: string): void => {
   if (isWebAddress(url)) shell.openExternal(url).catch(ignoreFailure)
 }
 
-const keepNavigationInsideApp = (window: BrowserWindow, origin: string): void => {
+export const keepNavigationInsideApp = (window: BrowserWindow, origin: string): void => {
   window.webContents.setWindowOpenHandler(({ url }) => {
     openWebAddressOutside(url)
 
@@ -41,15 +56,8 @@ export const createMainWindow = (origin: string): BrowserWindow => {
     title: APP_NAME,
     icon: APP_ICON_PATH,
     show: false,
-    backgroundColor: nativeTheme.shouldUseDarkColors ? BACKGROUND_COLORS.dark : BACKGROUND_COLORS.light,
-    webPreferences: {
-      preload: join(moduleDirectory, 'preload.cjs'),
-      contextIsolation: true,
-      sandbox: true,
-      nodeIntegration: false,
-      spellcheck: false,
-      additionalArguments: systemLocaleArguments(app.getSystemLocale()),
-    },
+    backgroundColor: backgroundColor(),
+    webPreferences: pageWebPreferences(),
   })
 
   if (savedState.maximized) window.maximize()

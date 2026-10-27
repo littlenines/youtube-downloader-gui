@@ -2,6 +2,16 @@
 
 Everything that changed in YT Downloader, newest first. Download any version from the [releases page](https://github.com/littlenines/youtube-downloader-gui/releases).
 
+## Unreleased
+
+### Added
+
+- **Mini mode.** The new button next to ⚙ Settings switches the app to a small bar that stays on top of other apps, showing what is downloading, the progress, speed, time left and how many are waiting. Drag it anywhere; it remembers where. Double-click it, or click its button, to return to the full window. In Settings, **Switch to mini mode when minimizing** opens it when you minimize the window.
+
+### Fixed
+
+- **The update notice's What's new button is readable.** It was blue, like a web link, and hard to see. It now looks like the other buttons next to it.
+
 ## 1.4.1
 
 - **No changes to the app.** 1.4.1 is 1.4.0 rebuilt, after its release stopped on a test that was too strict for GitHub's Windows machines. For what's new, see 1.4.0.
