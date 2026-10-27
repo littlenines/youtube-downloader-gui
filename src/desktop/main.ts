@@ -12,6 +12,7 @@ import { toolSetup } from '@server/services/tools/app-tool-setup.js'
 import { APP_NAME } from './app-identity.js'
 import { enableAppUpdates } from './app-updates.js'
 import { confirmCloseWhileDownloading } from './close-confirmation.js'
+import { enableContextMenus } from './context-menu.js'
 import { notifyWhenDownloadsFinish } from './download-notifications.js'
 import { watchDownloads } from './download-watcher.js'
 import { createMainWindow, isFromAppPage, openWebAddressOutside, pickFolder } from './main-window.js'
@@ -77,6 +78,7 @@ const startDesktopApp = async (): Promise<void> => {
   const origin = `http://${LOOPBACK_ADDRESS}:${port}`
 
   allowOnlyClipboardPermissions()
+  enableContextMenus()
   await storeAccessCookie(origin, accessKey)
   useElectronShell()
 

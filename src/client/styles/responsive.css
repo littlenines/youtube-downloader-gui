@@ -41,7 +41,8 @@
 
 .desktop input,
 .desktop .error-text,
-.desktop .monospace {
+.desktop .monospace,
+.desktop .job-title {
   user-select: text;
 }
 
