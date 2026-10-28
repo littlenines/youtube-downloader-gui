@@ -15,6 +15,8 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 
 - **Subtitles that can't be downloaded no longer stop a video download.** When the subtitles fail, for example because YouTube refuses them for a while ("rate-limiting this connection"), the video now downloads without them, and the download says so and why, instead of failing.
 - **Subtitles are the real ones.** **Embed English subtitles** embedded YouTube's machine translation into English, even when the video had English subtitles of its own. The uploaded subtitles are now used.
+- **No white flash when the app opens maximized.** If the app was maximized when you closed it, it showed a white area for a moment when you opened it again, before the page appeared. It now appears only once the page is ready.
+- **The clock icons in Settings are visible in dark mode.** The time fields for **Later** downloads showed a dark clock on the dark background. Built-in controls (time pickers, dropdown lists) now follow the dark theme.
 - **The update notice's What's new button is readable.** It was blue, like a web link, and hard to see. It now looks like the other buttons next to it.
 
 ## 1.4.1

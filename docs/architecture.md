@@ -86,6 +86,7 @@ To measure again, start the app with `--remote-debugging-port=9333` and record f
 Facts the code depends on that its names can't say:
 
 - **Window cache.** Chromium keeps its web cache (mostly thumbnails) in `data/window`; `--disk-cache-size` caps it at 10 MB (`start-up-switches.ts`), where it otherwise grew to 17 MB and more.
+- **Maximized only once the page is ready.** A window that was maximized when the app closed opens maximized again, but `maximize()` runs in `ready-to-show`, just before `show()`: called on the hidden window, it also shows it (Electron does that), so the window appeared before the page had drawn anything and flashed white for a moment.
 - **Fixed desktop port.** The desktop app prefers port 5199 because the page's saved choices live in browser storage, which belongs to one address. Only if 5199 is taken does it use another free port.
 - **Remembered choices.** Format, container, options and the subtitle language are remembered in the page's storage; the resolution is not, because it depends on each video. In private windows, where storage is unavailable, nothing is remembered.
 - **Resolution means the short side.** A vertical 1080×1920 video counts as 1080p, and yt-dlp's `res` sort key compares the short side too, so vertical videos are picked like horizontal ones.

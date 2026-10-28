@@ -60,9 +60,11 @@ export const createMainWindow = (origin: string): BrowserWindow => {
     webPreferences: pageWebPreferences(),
   })
 
-  if (savedState.maximized) window.maximize()
+  window.once('ready-to-show', () => {
+    if (savedState.maximized) window.maximize()
 
-  window.once('ready-to-show', () => window.show())
+    window.show()
+  })
   keepNavigationInsideApp(window, origin)
   void window.loadURL(`${origin}/`)
 

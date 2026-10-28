@@ -14,6 +14,8 @@
   --error: #d6453d;
   --shadow: 0 1px 2px #0000000d, 0 8px 24px #0000000a;
   --radius: 14px;
+
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -29,6 +31,8 @@
     --accent: #f2555a;
     --accent-soft: #f2555a22;
     --shadow: 0 1px 2px #0006;
+
+    color-scheme: dark;
   }
 }
 
