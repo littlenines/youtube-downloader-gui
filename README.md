@@ -51,7 +51,7 @@
 
 - **Every resolution the video really has**, up to 4K and 8K, including HDR and 60 fps.
 - **MP4, MKV or WebM.** The estimated file size is shown before you download.
-- **English subtitles** can be added to MP4 and MKV files.
+- **Subtitles** in any language the video has, inside MP4 and MKV files or as a `.srt` file next to the video.
 
 ### Finding what to download
 
@@ -80,7 +80,8 @@
 - **Several downloads at the same time,** as many as you set in Settings.
 - **Notifications** when downloads finish while the app is in the background; click one to bring the app back.
 - **Progress on the taskbar** (Windows), and the button flashes when a download finishes in the background.
-- **Download history** with **Show in folder** for every finished file.
+- **Play** a finished download in your default player, or **Show in folder**. Every finished file stays in the download history.
+- **Mini mode** (desktop app): a small bar that stays on top of other apps and shows the download progress while you work. Settings can switch to it when you minimize.
 
 ### Simple and private
 
@@ -127,7 +128,7 @@ Click **Download tools** and wait until you see **"You're all set"**.
 1. **Paste a link** or **type a search** at the top and press <kbd>Enter</kbd>.
 2. **Choose Music or Video,** then the format and quality.
 3. Optional: edit the **tags**, tick **Download only part of it**, or pick videos from a playlist.
-4. Click **Download**. Your file appears in the **Downloads** list, with **Show in folder** when it's done.
+4. Click **Download**. Your file appears in the **Downloads** list, with **Play** and **Show in folder** when it's done.
 
 > [!TIP]
 > Your files go to the **`downloads`** folder next to the app. To save them somewhere else, open **Settings** (the ⚙️ button) and click **Browse…**.
