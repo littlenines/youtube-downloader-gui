@@ -156,7 +156,7 @@ Unknown values fall back to the defaults.
 `{ "jobs": Job[], "history": HistoryEntry[] }`
 
 - `jobs`: this session's downloads, newest first, including unfinished ones restored from the last run.
-- `history`: the 30 most recent finished downloads, kept across restarts.
+- `history`: the 30 most recent finished downloads, kept across restarts. Each entry also says `isPlaylist`: `true` for a playlist's entry, which never gets **Play**, even when only one of its videos finished. Entries saved before this field existed (1.4.0 and 1.4.1) take it from their label, which says " · playlist (" for a playlist.
 
 A `Job` has:
 
@@ -189,6 +189,7 @@ A `Job` has:
 | `POST /api/downloads/:id/cancel` | Stops it (running, waiting or paused) and deletes its partial files. |
 | `POST /api/downloads/:id/retry` | Queues a failed or cancelled download again. |
 | `POST /api/downloads/:id/reveal` | Shows the file in the file manager. Falls back to its folder, or the download folder. |
+| `POST /api/downloads/:id/play` | Opens the download's audio or video file in the default player (`playFile`). Only for a finished download that isn't a playlist (a history entry's `isPlaylist`), with exactly one file with a media extension (`playableJobFile`, `playableEntryFile`). 400 "Play opens the file on the computer running YT Downloader…" when the request comes over the network (a server started with a non-local `HOST`), since the player would open on the server; the page hides the button there too. 404 "This download has no song or video to play." when there is nothing to play; 404 "The file is no longer there…" when that file is gone or is now a folder; 400 "No app could open …" when no app can open it. |
 | `DELETE /api/downloads/:id` | Removes a finished download from the list and history. The file stays. |
 | `DELETE /api/downloads` | Clears every finished download and the history. |
 

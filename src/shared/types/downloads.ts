@@ -118,6 +118,7 @@ export interface HistoryEntry {
   sizeBytes: number | null
   finishedAt: string
   url: string
+  isPlaylist: boolean
 }
 
 export interface DownloadsResponse {

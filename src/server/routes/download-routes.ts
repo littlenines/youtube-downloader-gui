@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { playableEntryFile, playableJobFile } from '@shared/playable-file.js'
 import type { CoverRequest, DownloadRequest, DownloadsResponse } from '@shared/types/downloads.js'
 import { HttpError } from '@server/lib/http/http-error.js'
 import { readJsonBody } from '@server/lib/http/json.js'
@@ -14,9 +15,12 @@ import { historyEntryFromCover } from '@server/services/downloads/jobs.js'
 import { playlistDownloads } from '@server/services/downloads/playlist-jobs.js'
 import { saveCoverImage } from '@server/services/ytdlp/cover-image.js'
 import { listPlaylistVideos } from '@server/services/ytdlp/playlist-videos.js'
+import { isLoopbackRequest } from '@server/security/request-guard.js'
 import type { RouteDependencies } from './index.js'
-import { abortWhenClientLeaves, isLinkValue, showInFileManager, toHttpError } from './route-helpers.js'
+import { abortWhenClientLeaves, isLinkValue, playFile, showInFileManager, toHttpError } from './route-helpers.js'
 
+const PLAY_ONLY_ON_THIS_COMPUTER =
+  'Play opens the file on the computer running YT Downloader, so it only works from that computer.'
 const HISTORY_ENTRIES_SHOWN = 30
 
 const throwNoSuchDownload = (): never => {
@@ -102,6 +106,15 @@ export const registerDownloadRoutes = (router: Router, { settings, history, queu
     const lastFile = queue.find(id)?.files.at(-1) ?? history.find(id)?.files.at(-1)
 
     await showInFileManager(lastFile, settings.get().downloadFolder)
+  })
+
+  router.post('/api/downloads/:id/play', async ({ request, parameters: [id = ''] }) => {
+    if (!isLoopbackRequest(request)) throw new HttpError(400, PLAY_ONLY_ON_THIS_COMPUTER)
+
+    const job = queue.find(id)
+    const entry = job ? undefined : history.find(id)
+
+    await playFile(job ? playableJobFile(job) : entry ? playableEntryFile(entry) : null)
   })
 
   router.delete('/api/downloads/:id', async ({ parameters: [id = ''] }) => {

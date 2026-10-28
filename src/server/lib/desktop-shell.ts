@@ -6,6 +6,7 @@ import { IS_MAC, IS_WINDOWS } from '@server/config.js'
 export interface DesktopShell {
   openUrl(url: string): void
   reveal(target: string): void
+  openFile(file: string): Promise<void>
 }
 
 const launchDetached = (command: string, commandArguments: string[], options: SpawnOptions = {}): void => {
@@ -19,7 +20,7 @@ const launchDetached = (command: string, commandArguments: string[], options: Sp
 
 export const isWebAddress = (url: string): boolean => /^https?:\/\//i.test(url)
 
-const isExistingFile = (path: string) => existsSync(path) && statSync(path).isFile()
+export const isExistingFile = (path: string): boolean => existsSync(path) && statSync(path).isFile()
 
 const systemShell: DesktopShell = {
   openUrl: (url) => {
@@ -41,6 +42,10 @@ const systemShell: DesktopShell = {
       launchDetached('xdg-open', [isFile ? dirname(target) : target])
     }
   },
+  openFile: async (file) => {
+    if (IS_WINDOWS) launchDetached('explorer.exe', [`"${file}"`], { windowsVerbatimArguments: true })
+    else launchDetached(IS_MAC ? 'open' : 'xdg-open', [file])
+  },
 }
 
 let activeShell: DesktopShell = systemShell
@@ -52,3 +57,5 @@ export const useDesktopShell = (shell: DesktopShell): void => {
 export const openInBrowser = (url: string): void => activeShell.openUrl(url)
 
 export const revealInFileManager = (target: string): void => activeShell.reveal(target)
+
+export const openWithDefaultApp = (file: string): Promise<void> => activeShell.openFile(file)

@@ -102,6 +102,7 @@ describe('cover requests and history', () => {
         sizeBytes: 1234,
         finishedAt: 'string',
         url: VIDEO_URL,
+        isPlaylist: false,
       },
     )
   })

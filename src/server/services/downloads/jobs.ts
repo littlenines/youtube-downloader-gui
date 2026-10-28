@@ -87,6 +87,7 @@ export const historyEntryFromCover = (cover: CoverRequest, file: string, sizeByt
   sizeBytes,
   finishedAt: nowAsText(),
   url: cover.url,
+  isPlaylist: false,
 })
 
 export const historyEntryFromGroup = (group: JobGroup, jobs: Job[]): HistoryEntry => {
@@ -102,6 +103,7 @@ export const historyEntryFromGroup = (group: JobGroup, jobs: Job[]): HistoryEntr
     sizeBytes: sizeBytes || null,
     finishedAt: nowAsText(),
     url: group.url,
+    isPlaylist: true,
   }
 }
 
@@ -114,4 +116,5 @@ export const historyEntryFromJob = (job: Job): HistoryEntry => ({
   sizeBytes: job.sizeBytes,
   finishedAt: nowAsText(),
   url: job.options.url,
+  isPlaylist: job.options.playlist,
 })

@@ -18,12 +18,13 @@ Tests live in `test/` and cover:
 | `zip-archive.test.ts` | Reading and unpacking zip files, including file permissions, and refusing entries and symbolic links that escape the target folder. |
 | `tar-archive.test.ts` | Writing and reading tar.gz files, and unpacking them with their permissions, refusing entries that escape the target folder. |
 | `json-file.test.ts` | Validation on load, concurrent saves keeping the last value, and keeping a copy of a damaged file. |
-| `stores.test.ts` | Defaults, reading settings and history saved by earlier versions, and reading the saved queue safely. |
+| `stores.test.ts` | Defaults, reading settings and history saved by earlier versions (a playlist from before `isPlaylist` recognised by its label), and reading the saved queue safely. |
 | `queue.test.ts` | The download queue with a fake download engine: cancel then retry while the old process is still exiting, failures, success, playlists that skip videos. |
 | `queue-pause.test.ts` | Pausing and resuming in the same partial folder, cancelling a paused download, and a pause racing a finished download. |
 | `playlist-split.test.ts` | A playlist split into one download per video: positions that count unavailable videos, page links over media links, the picked videos only, falling back to one job for entries that aren't video links, file names without numbers in a folder yt-dlp names, and songs (finished ones too) kept through a restart. |
 | `queue-playlists.test.ts` | A playlist in the queue: finished songs saved until the playlist is done, one history entry for the playlist, and finished songs kept in the list while the playlist downloads. |
 | `throttled-save.test.ts` | Saving the queue: the first change at once, then the latest one per 30 seconds, and at once when the app quits. |
+| `playable-file.test.ts` | Which file Play opens: the one audio or video file of a download; nothing that isn't media (`.exe`, `.mp3.bat`, a cover image, a name without a dot); only finished downloads, never a playlist (also one where a single video finished); and `playFile`'s answers for no file, a missing file, a folder and a file no app can open. |
 | `context-menu.test.ts` | The right-click menu: the editing menu in a text field (Undo, Redo, Cut, Copy, Paste, Select all) with unavailable items greyed out, Copy for selected text and Copy link for a link, and no menu elsewhere. |
 | `taskbar-progress.test.ts` | The taskbar bar: a playlist counted as one download, and hidden when nothing downloads; sent again only when it changes, and again to a window that comes back after mini mode; the finish flash only on the unfocused main window, also a minimized one, stopped by focusing it, and none while the mini bar is shown. |
 | `mini-status.test.ts` | What the mini bar shows: a download's progress, speed and time left; several downloads rotating, with their total speed, the longest time left and what waits; a playlist named once; a bar filled by what it names, not by waiting downloads; a moving bar and the step while converting, but not while a playlist's other song still downloads; and what's left, or how it went, when nothing downloads. |
@@ -44,7 +45,7 @@ Tests live in `test/` and cover:
 | `subscription-targets.test.ts` | What a link subscribes to, recognizing channel links and their tabs, and safe folder names in the output template. |
 | `video-availability.test.ts` | Whether a new video can be downloaded yet: premieres, live streams, restricted videos and yt-dlp errors. |
 | `partial-folders.test.ts` | Removing partial folders left by a crash, while keeping ones in use or belonging to saved downloads. |
-| `request-guard.test.ts` | Refusing cross-site requests and DNS rebinding, and allowing the app's own page. |
+| `request-guard.test.ts` | Refusing cross-site requests and DNS rebinding, allowing the app's own page, and telling a request from this computer from one over the network (for Play). |
 | `access.test.ts` | The access key (cookie, access link, refusals), the Content-Security-Policy, and malformed addresses answering 400. |
 | `verified-download.test.ts` | Checksum match and mismatch, stalled downloads, reading checksum files and release tags (against a local test server). |
 | `readable-thumbnails.test.ts` | The thumbnail plugin, run by the real yt-dlp on a made-up info file (skipped when yt-dlp isn't installed): an AVIF thumbnail (any case) is skipped for the next best one, others are left alone, and an error inside it keeps the thumbnails instead of failing. Installing adds no arguments before the plugin exists and rewrites it only when it differs. |

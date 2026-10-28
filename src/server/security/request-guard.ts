@@ -1,13 +1,11 @@
 import type { IncomingMessage } from 'node:http'
+import { isLoopbackHost } from '@shared/loopback.js'
 
-const LOOPBACK_HOST_NAMES = new Set(['127.0.0.1', 'localhost', '[::1]'])
 const SAFE_METHODS = new Set(['GET', 'HEAD'])
 
 export interface RequestGuardOptions {
   loopbackOnly: boolean
 }
-
-export const isLoopbackHost = (host: string): boolean => LOOPBACK_HOST_NAMES.has(host) || host === '::1'
 
 const readHostName = (hostHeader: string | undefined): string | null => {
   try {
@@ -15,6 +13,12 @@ const readHostName = (hostHeader: string | undefined): string | null => {
   } catch {
     return null
   }
+}
+
+export const isLoopbackRequest = (request: Pick<IncomingMessage, 'headers'>): boolean => {
+  const hostName = readHostName(request.headers.host)
+
+  return hostName !== null && isLoopbackHost(hostName)
 }
 
 const isSameHost = (originHeader: string, hostHeader: string | undefined): boolean => {
@@ -32,7 +36,7 @@ export const isForbiddenRequest = (
   const hostHeader = request.headers.host
   const hostName = readHostName(hostHeader)
 
-  if (!hostName || (loopbackOnly && !LOOPBACK_HOST_NAMES.has(hostName))) return true
+  if (!hostName || (loopbackOnly && !isLoopbackHost(hostName))) return true
 
   const originHeader = request.headers.origin
 

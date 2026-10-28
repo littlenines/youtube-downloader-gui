@@ -1,4 +1,6 @@
 import { isActiveJob, isFinishedJob, isPausedJob, isUnfinishedJob, isWorkingWithoutProgress } from '@shared/jobs.js'
+import { isLoopbackHost } from '@shared/loopback.js'
+import { playableEntryFile, playableJobFile } from '@shared/playable-file.js'
 import type { HistoryEntry, Job } from '@shared/types/downloads.js'
 import { formatDateTime, formatStartTime } from '@client/locale.js'
 import {
@@ -95,6 +97,13 @@ const jobStatusText = (job: Job): string => {
 export const actionButtonHtml = (action: string, id: string, label: string, extraClass = '', title = ''): string =>
   `<button class="button small ${extraClass}" data-action="${action}" data-id="${escapeHtml(id)}" ${title ? `title="${title}"` : ''}>${label}</button>`
 
+const isPageOnThisComputer = isLoopbackHost(location.hostname)
+
+const finishedFileButtonsHtml = (id: string, playableFile: string | null): string =>
+  (playableFile && isPageOnThisComputer
+    ? actionButtonHtml('play', id, 'Play', '', 'Open in your default player')
+    : '') + actionButtonHtml('reveal', id, 'Show in folder')
+
 const removeButtonHtml = (id: string): string =>
   actionButtonHtml('remove', id, '✕', 'ghost', 'Remove from the list (the file stays)')
 
@@ -115,7 +124,7 @@ const jobActionsHtml = (job: Job): string => {
   const canRetry = job.status === 'error' || job.status === 'cancelled'
 
   return [
-    job.status === 'done' ? actionButtonHtml('reveal', job.id, 'Show in folder') : '',
+    job.status === 'done' ? finishedFileButtonsHtml(job.id, playableJobFile(job)) : '',
     isActiveJob(job) ? actionButtonHtml('pause', job.id, 'Pause') : '',
     isPausedJob(job) ? actionButtonHtml('resume', job.id, 'Resume', 'primary') : '',
     job.status === 'scheduled' ? actionButtonHtml('start-now', job.id, 'Start now', 'primary') : '',
@@ -160,7 +169,7 @@ export const historyRow = (entry: HistoryEntry): RowContent => ({
     title: entry.title,
     label: entry.label,
     status: 'done',
-    actions: actionButtonHtml('reveal', entry.id, 'Show in folder') + removeButtonHtml(entry.id),
+    actions: finishedFileButtonsHtml(entry.id, playableEntryFile(entry)) + removeButtonHtml(entry.id),
     showProgress: false,
   }),
   title: entry.title,

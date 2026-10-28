@@ -7,6 +7,7 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 ### Added
 
 - **Mini mode.** The new button next to ⚙ Settings switches the app to a small bar that stays on top of other apps, showing what is downloading, the progress, speed, time left and how many are waiting. Drag it anywhere; it remembers where. Double-click it, or click its button, to return to the full window. In Settings, **Switch to mini mode when minimizing** opens it when you minimize the window.
+- **Play.** Finished downloads have a **Play** button that opens the song or video in your default player, next to **Show in folder**.
 - **Right-click menu.** Right-clicking a text field, such as the link box, now opens the usual right-click menu: Undo, Redo, Cut, Copy, Paste and Select all. Selected text and links can be copied too, and download titles can now be selected.
 
 ### Fixed

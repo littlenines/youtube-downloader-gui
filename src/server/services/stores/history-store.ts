@@ -12,6 +12,7 @@ import {
 } from './stored-values.js'
 
 const MAXIMUM_HISTORY_ENTRIES = 300
+const LABEL_OF_A_PLAYLIST = ' · playlist ('
 
 const parseHistoryEntry = (stored: StoredRecord): HistoryEntry => ({
   id: stringOrDefault(stored.id, ''),
@@ -22,6 +23,10 @@ const parseHistoryEntry = (stored: StoredRecord): HistoryEntry => ({
   sizeBytes: numberOrNull(stored.sizeBytes ?? stored.size),
   finishedAt: stringOrDefault(stored.finishedAt, new Date(0).toISOString()),
   url: stringOrDefault(stored.url, ''),
+  isPlaylist:
+    typeof stored.isPlaylist === 'boolean'
+      ? stored.isPlaylist
+      : stringOrDefault(stored.label, '').includes(LABEL_OF_A_PLAYLIST),
 })
 
 export const parseHistory = (content: unknown): HistoryEntry[] =>

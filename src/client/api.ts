@@ -80,6 +80,7 @@ export const api = {
   resume: (id: string) => sendRequest<Job>('POST', downloadPath(id, '/resume')),
   startNow: (id: string) => sendRequest<Job>('POST', downloadPath(id, '/start-now')),
   reveal: (id: string) => sendRequest<{ ok: true }>('POST', downloadPath(id, '/reveal')),
+  play: (id: string) => sendRequest<{ ok: true }>('POST', downloadPath(id, '/play')),
   remove: (id: string) => sendRequest<{ ok: true }>('DELETE', downloadPath(id)),
   clearFinished: () => sendRequest<{ ok: true }>('DELETE', '/api/downloads'),
   pauseAll: () => sendRequest<{ ok: true }>('POST', '/api/downloads/pause-all'),

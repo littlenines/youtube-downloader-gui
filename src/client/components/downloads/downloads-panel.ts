@@ -18,6 +18,7 @@ const FOLDED_PLAYLIST_SIZE = 50
 
 const ROW_ACTIONS: Record<string, (id: string) => Promise<unknown>> = {
   reveal: api.reveal,
+  play: api.play,
   cancel: api.cancel,
   retry: api.retry,
   pause: api.pause,

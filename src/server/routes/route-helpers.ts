@@ -1,9 +1,9 @@
 import { existsSync } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
 import type { ServerResponse } from 'node:http'
-import { dirname } from 'node:path'
+import { basename, dirname } from 'node:path'
 import { isWebLink } from '@shared/links.js'
-import { revealInFileManager } from '@server/lib/desktop-shell.js'
+import { isExistingFile, openWithDefaultApp, revealInFileManager } from '@server/lib/desktop-shell.js'
 import { errorText, HttpError } from '@server/lib/http/http-error.js'
 import { ToolsMissingError } from '@server/services/tools/tool-setup.js'
 
@@ -32,4 +32,13 @@ export const showInFileManager = async (file: string | undefined, downloadFolder
 
   await mkdir(folder, { recursive: true })
   revealInFileManager(folder)
+}
+
+export const playFile = async (file: string | null): Promise<void> => {
+  if (!file) throw new HttpError(404, 'This download has no song or video to play.')
+  if (!isExistingFile(file)) throw new HttpError(404, 'The file is no longer there. Use Show in folder to find it.')
+
+  await openWithDefaultApp(file).catch(() => {
+    throw new HttpError(400, `No app could open ${basename(file)}. Use Show in folder and open it from there.`)
+  })
 }

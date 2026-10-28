@@ -51,6 +51,11 @@ const useElectronShell = (): void => {
   useDesktopShell({
     openUrl: openWebAddressOutside,
     reveal: (target) => (statSync(target).isFile() ? shell.showItemInFolder(target) : void shell.openPath(target)),
+    openFile: async (file) => {
+      const error = await shell.openPath(file)
+
+      if (error) throw new Error(error)
+    },
   })
 }
 

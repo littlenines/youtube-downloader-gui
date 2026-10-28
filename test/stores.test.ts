@@ -80,6 +80,19 @@ describe('parseHistory', () => {
     assert.equal(entry?.sizeBytes, 1000)
   })
 
+  it('recognises a playlist saved before isPlaylist existed by its label, so it gets no Play', () => {
+    const entries = parseHistory([
+      { id: 'album', label: 'MP3 · 320 kbps · playlist (1 video)', files: ['/Album/One More Time.mp3'] },
+      { id: 'song', label: 'MP3 · 320 kbps', files: ['/music/Song.mp3'] },
+      { id: 'saved', label: 'MP3 · 320 kbps · playlist (2 videos)', isPlaylist: false },
+    ])
+
+    assert.deepEqual(
+      entries.map((entry) => entry.isPlaylist),
+      [true, false, false],
+    )
+  })
+
   it('ignores content that is not a list', () => {
     assert.deepEqual(parseHistory({ not: 'a list' }), [])
   })

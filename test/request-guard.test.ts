@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { isForbiddenRequest, isLoopbackHost } from '@server/security/request-guard.js'
+import { isLoopbackHost } from '@shared/loopback.js'
+import { isForbiddenRequest, isLoopbackRequest } from '@server/security/request-guard.js'
 
 const request = (method: string, headers: Record<string, string>) => ({ method, headers })
 const local = { loopbackOnly: true }
@@ -53,5 +54,18 @@ describe('isLoopbackHost', () => {
       false,
       false,
     ])
+  })
+})
+
+describe('isLoopbackRequest', () => {
+  it('tells a request from this computer from one over the network', () => {
+    const requestTo = (host: string | undefined) => ({ headers: { host } })
+
+    assert.deepEqual(
+      ['127.0.0.1:5199', 'localhost:5199', '[::1]:5199', '192.168.1.20:5199', undefined].map((host) =>
+        isLoopbackRequest(requestTo(host)),
+      ),
+      [true, true, true, false, false],
+    )
   })
 })
