@@ -2,7 +2,7 @@
 
 1. The page sends `POST /api/downloads` with the user's choices.
 2. `normalizeDownloadRequest` validates them into `DownloadOptions`, and the queue creates a `Job`.
-3. When a slot is free (Settings → downloads at the same time), the queue waits for the tools and starts yt-dlp with `buildDownloadArguments`. The link always comes after `--`, so it can never be read as an option.
+3. When a slot is free (Settings → downloads at the same time), the queue waits for the tools and starts yt-dlp with `buildDownloadArguments`. A video whose subtitles are only a remembered language is read first, to pick its track (see *Subtitles for downloads without a panel* in `architecture.md`). The link always comes after `--`, so it can never be read as an option.
 4. Each job gets its own partial folder, `<download folder>/.yt-downloader-partial/<job id>`, passed as `-P temp:`. yt-dlp keeps everything unfinished there (stream parts, fragments, thumbnails, merge and conversion output) and moves each file to the download folder only once it is complete.
 5. yt-dlp prints marker lines that the app reads (`parseOutputLine`):
    - `VITEM`: an item starts, with its position among the videos being downloaded (`playlist_autonumber`: 2 of 2 when videos 1 and 3 were picked), the count, and the title. Files keep the position in the whole playlist (`playlist_index`, `003 - Title`).

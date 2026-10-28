@@ -1,7 +1,7 @@
 import { spawn, type SpawnOptions } from 'node:child_process'
-import { existsSync, statSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { IS_MAC, IS_WINDOWS } from '@server/config.js'
+import { isExistingFile } from './existing-file.js'
 
 export interface DesktopShell {
   openUrl(url: string): void
@@ -19,8 +19,6 @@ const launchDetached = (command: string, commandArguments: string[], options: Sp
 }
 
 export const isWebAddress = (url: string): boolean => /^https?:\/\//i.test(url)
-
-export const isExistingFile = (path: string): boolean => existsSync(path) && statSync(path).isFile()
 
 const systemShell: DesktopShell = {
   openUrl: (url) => {

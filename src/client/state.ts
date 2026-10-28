@@ -1,5 +1,13 @@
-import type { AudioFormat, AudioTags, ClipRange, Container, MediaKind } from '@shared/types/downloads.js'
+import type {
+  AudioFormat,
+  AudioTags,
+  ClipRange,
+  Container,
+  MediaKind,
+  SubtitleFormat,
+} from '@shared/types/downloads.js'
 import type { MediaInfo } from '@shared/types/media.js'
+import { DEFAULT_SUBTITLE_FORMAT, savedSubtitleLanguage, subtitleFormatOrDefault } from '@shared/subtitle-languages.js'
 
 export interface Choices {
   kind: MediaKind
@@ -8,7 +16,8 @@ export interface Choices {
   container: Container
   coverArt: boolean
   removeNonMusic: boolean
-  subtitles: boolean
+  subtitleLanguage: string | null
+  subtitleFormat: SubtitleFormat
   skipShorts: boolean
 }
 
@@ -30,15 +39,25 @@ const DEFAULT_CHOICES: Choices = {
   container: 'mp4',
   coverArt: true,
   removeNonMusic: false,
-  subtitles: false,
+  subtitleLanguage: null,
+  subtitleFormat: DEFAULT_SUBTITLE_FORMAT,
   skipShorts: true,
 }
 
+type SavedChoices = Partial<Choices> & { subtitles?: boolean }
+
 const loadChoices = (): Choices => {
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Partial<Choices>
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as SavedChoices
+    const { subtitles: _subtitles, ...savedChoices } = saved
 
-    return { ...DEFAULT_CHOICES, ...saved, resolution: null }
+    return {
+      ...DEFAULT_CHOICES,
+      ...savedChoices,
+      resolution: null,
+      subtitleLanguage: savedSubtitleLanguage(saved),
+      subtitleFormat: subtitleFormatOrDefault(saved.subtitleFormat),
+    }
   } catch {
     return { ...DEFAULT_CHOICES }
   }

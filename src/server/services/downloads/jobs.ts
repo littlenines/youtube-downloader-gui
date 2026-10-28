@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { basename, extname } from 'node:path'
 import { countText } from '@shared/count-text.js'
 import { byPlaylistNumber } from '@shared/jobs.js'
+import { languageName } from '@shared/subtitle-languages.js'
 import type { CoverRequest, DownloadOptions, HistoryEntry, Job, JobGroup } from '@shared/types/downloads.js'
 import { describeDownloadOptions } from './download-options.js'
 
@@ -77,6 +78,9 @@ export const skippedItemsWarning = (skippedItems: string[]): string | null => {
 
   return `${countText(count, 'video')} could not be downloaded. ${skippedItems[0]}`
 }
+
+export const withoutSubtitlesWarning = ({ subtitleLanguage }: DownloadOptions, reason: string): string =>
+  `Saved without ${subtitleLanguage ? `${languageName(subtitleLanguage)} ` : ''}subtitles: ${reason}`
 
 export const historyEntryFromCover = (cover: CoverRequest, file: string, sizeBytes: number | null): HistoryEntry => ({
   id: randomUUID(),

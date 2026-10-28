@@ -4,6 +4,10 @@ export type AudioFormat = 'mp3' | 'm4a' | 'opus' | 'original' | 'flac' | 'wav'
 
 export type Container = 'mp4' | 'mkv' | 'webm'
 
+export type SubtitleMatch = 'exact' | 'spoken' | 'language'
+
+export type SubtitleFormat = 'embedded' | 'srt'
+
 export type JobActivity = 'preparing' | 'downloading' | 'processing'
 
 export type JobStatus = 'scheduled' | 'queued' | 'downloading' | 'paused' | 'done' | 'error' | 'cancelled'
@@ -32,6 +36,9 @@ export interface DownloadRequest {
   squareCoverArt?: boolean
   removeNonMusic?: boolean
   subtitles?: boolean
+  subtitleLanguage?: string | null
+  subtitleMatch?: SubtitleMatch
+  subtitleFormat?: SubtitleFormat
   tags?: AudioTags | null
   folder?: string | null
   playlistNumber?: number | null
@@ -61,12 +68,16 @@ export interface DownloadOptions {
   coverArt: boolean
   squareCoverArt: boolean
   removeNonMusic: boolean
-  subtitles: boolean
+  subtitleLanguage: string | null
+  subtitleMatch: SubtitleMatch
+  subtitleFormat: SubtitleFormat
   tags: AudioTags | null
   folder: string | null
   playlistNumber: number | null
   playlistTitle: string | null
 }
+
+export type SubtitleChoice = Pick<DownloadOptions, 'subtitleLanguage' | 'subtitleMatch'>
 
 export interface JobGroup {
   id: string

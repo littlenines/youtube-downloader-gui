@@ -28,6 +28,84 @@ describe('normalizeDownloadRequest', () => {
     assert.equal(options.container, 'mp4')
     assert.equal(options.resolution, null)
   })
+
+  it('accepts a subtitle language only as a plain code, never as a pattern or "all"', () => {
+    const subtitleLanguageFor = (subtitleLanguage: string, subtitles?: boolean) =>
+      normalizeDownloadRequest({
+        url: 'https://x',
+        kind: 'video',
+        subtitleLanguage,
+        ...(subtitles ? { subtitles } : {}),
+      }).subtitleLanguage
+
+    assert.deepEqual(
+      ['zh-Hans', 'en.*', 'all', 'ALL', '-en', 'en,de', ''].map((language) => subtitleLanguageFor(language)),
+      ['zh-Hans', null, null, null, null, null, null],
+    )
+    assert.equal(subtitleLanguageFor('en.*', true), null)
+  })
+
+  it('keeps a subtitle language only for a whole video that can hold it, and only a known way to match it', () => {
+    const subtitlesFor = (request: Parameters<typeof normalizeDownloadRequest>[0]) => {
+      const { subtitleLanguage, subtitleMatch } = normalizeDownloadRequest({ url: 'https://x', ...request })
+
+      return [subtitleLanguage, subtitleMatch]
+    }
+
+    assert.deepEqual(
+      [
+        subtitlesFor({ kind: 'video', subtitleLanguage: 'de', subtitleMatch: 'spoken' }),
+        subtitlesFor({ kind: 'audio', subtitleLanguage: 'de' }),
+        subtitlesFor({ kind: 'video', container: 'webm', subtitleLanguage: 'de' }),
+        subtitlesFor({ kind: 'video', subtitleLanguage: 'de', subtitleMatch: 'any' as never }),
+        subtitlesFor({ kind: 'video', subtitleLanguage: 'de', clip: { startSeconds: 60, endSeconds: 70 } }),
+        subtitlesFor({
+          kind: 'video',
+          subtitleLanguage: 'de',
+          playlist: true,
+          clip: { startSeconds: 60, endSeconds: 70 },
+        }),
+      ],
+      [
+        ['de', 'spoken'],
+        [null, 'language'],
+        [null, 'language'],
+        ['de', 'language'],
+        [null, 'language'],
+        ['de', 'language'],
+      ],
+    )
+  })
+
+  it('embeds subtitles unless a .srt file was asked for, which WebM can have too', () => {
+    const formatFor = (request: Parameters<typeof normalizeDownloadRequest>[0]) => {
+      const { subtitleLanguage, subtitleFormat } = normalizeDownloadRequest({
+        url: 'https://x',
+        kind: 'video',
+        subtitleLanguage: 'de',
+        ...request,
+      })
+
+      return [subtitleLanguage, subtitleFormat]
+    }
+
+    assert.deepEqual(
+      [
+        formatFor({}),
+        formatFor({ subtitleFormat: 'srt' }),
+        formatFor({ subtitleFormat: 'vtt' as never }),
+        formatFor({ container: 'webm', subtitleFormat: 'srt' }),
+        formatFor({ container: 'webm' }),
+      ],
+      [
+        ['de', 'embedded'],
+        ['de', 'srt'],
+        ['de', 'embedded'],
+        ['de', 'srt'],
+        [null, 'embedded'],
+      ],
+    )
+  })
 })
 
 describe('playlist selection', () => {

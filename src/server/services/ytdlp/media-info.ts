@@ -3,6 +3,7 @@ import { registerPreview } from '@server/services/preview/preview-streams.js'
 import { toolSetup } from '@server/services/tools/app-tool-setup.js'
 import { rememberPlaylistListing, withPlaylistPositions } from './playlist-videos.js'
 import { runYtdlpForJson } from './run-ytdlp.js'
+import { subtitleTracks } from './subtitle-tracks.js'
 import { videoInfoCache } from './video-info-cache.js'
 import { bestAudioSource, isUsableFormat, videoQualities } from './video-qualities.js'
 import { isVimeoVideoPage } from './vimeo-links.js'
@@ -59,7 +60,7 @@ const parseVideoInfo = (info: YtdlpInfo, requestedUrl: string): VideoInfo => {
     preview: null,
     audio,
     qualities: videoQualities(usableFormats, audio?.sizeBytes ?? 0),
-    subtitleLanguages: Object.keys(info.subtitles ?? {}).filter((language) => language !== 'live_chat'),
+    subtitleTracks: subtitleTracks(info),
   }
 }
 
@@ -68,6 +69,9 @@ export const parseMediaInfo = (ytdlpOutput: unknown, requestedUrl: string): Medi
 
   return info._type === 'playlist' ? parsePlaylistInfo(info, requestedUrl) : parseVideoInfo(info, requestedUrl)
 }
+
+export const readVideoInfo = (url: string, signal?: AbortSignal): Promise<unknown> =>
+  runYtdlpForJson(['-J', '--no-playlist', ...linkArguments(url)], signal)
 
 export const fetchMediaInfo = async (
   url: string,

@@ -60,6 +60,7 @@ export interface YtdlpInfo {
   album?: string
   formats?: YtdlpFormat[]
   subtitles?: Record<string, unknown>
+  automatic_captions?: Record<string, unknown>
   entries?: (YtdlpEntry | null)[]
 }
 

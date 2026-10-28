@@ -35,12 +35,15 @@ dialog::backdrop {
   margin-top: 8px;
 }
 
-.dialog-content input,
-.dialog-content select {
-  padding: 8px 10px;
+.dialog-content input {
   border-radius: 9px;
   border: 1px solid var(--border);
   background: var(--panel-raised);
+}
+
+.dialog-content input,
+.dialog-content select {
+  padding: 8px 10px;
   flex: 1;
   min-width: 0;
 }

@@ -8,11 +8,13 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 
 - **Mini mode.** The new button next to ⚙ Settings switches the app to a small bar that stays on top of other apps, showing what is downloading, the progress, speed, time left and how many are waiting. Drag it anywhere; it remembers where. Double-click it, or click its button, to return to the full window. In Settings, **Switch to mini mode when minimizing** opens it when you minimize the window.
 - **Play.** Finished downloads have a **Play** button that opens the song or video in your default player, next to **Show in folder**.
+- **Subtitles in any language the video has.** The **Embed English subtitles** checkbox is now a **Subtitles** list with the languages the video really has, including the spoken language YouTube recognised itself, marked "auto-generated". It also shows for videos that only have those. The language you pick is remembered for the next video, which gets it, or the same language from another region, when it has it. Next to it, **Save as** puts the subtitles **In the video** (as before, and the default) or saves them **As a .srt file** next to it, which works with WebM too. Playlists, several links and subscriptions get it too, each video with its own best track, and their panels have a **Subtitles** list too. A part of a video (**Download only part**) gets no subtitles for now, since they would show at the wrong times.
 - **Right-click menu.** Right-clicking a text field, such as the link box, now opens the usual right-click menu: Undo, Redo, Cut, Copy, Paste and Select all. Selected text and links can be copied too, and download titles can now be selected.
 
 ### Fixed
 
-- **Subtitles that can't be downloaded no longer stop a video download.** When the English subtitles fail, for example because YouTube refuses them for a while ("rate-limiting this connection"), the video now downloads without them, and the download says so and why, instead of failing.
+- **Subtitles that can't be downloaded no longer stop a video download.** When the subtitles fail, for example because YouTube refuses them for a while ("rate-limiting this connection"), the video now downloads without them, and the download says so and why, instead of failing.
+- **Subtitles are the real ones.** **Embed English subtitles** embedded YouTube's machine translation into English, even when the video had English subtitles of its own. The uploaded subtitles are now used.
 - **The update notice's What's new button is readable.** It was blue, like a web link, and hard to see. It now looks like the other buttons next to it.
 
 ## 1.4.1

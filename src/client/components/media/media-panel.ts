@@ -3,7 +3,7 @@ import type { AudioTags } from '@shared/types/downloads.js'
 import { api, ApiError, isAbortError, TOOLS_MISSING_STATUS } from '@client/api.js'
 import { state } from '@client/state.js'
 import { errorMessage, findElement } from '@client/utils/dom.js'
-import { applyChoiceButton, applyChoiceCheckbox } from '@client/components/choices/apply-choice.js'
+import { applyChoiceButton, applyChoiceCheckbox, applySubtitleChoice } from '@client/components/choices/apply-choice.js'
 import { showPanel, whenPanelHidden } from '@client/components/panels.js'
 import { requestSetup } from '@client/components/setup/setup.js'
 import {
@@ -131,7 +131,7 @@ const handleMediaPanelChange = (event: Event): void => {
   } else if (isPlaylistCheckbox(target) && state.info?.kind === 'playlist') {
     applyPlaylistCheckbox(mediaPanel(), state.info, target)
     renderMediaOptions()
-  } else if (applyChoiceCheckbox(target)) {
+  } else if (applyChoiceCheckbox(target) || applySubtitleChoice(target)) {
     renderMediaOptions()
   }
 }

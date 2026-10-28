@@ -83,7 +83,7 @@ The response is either a `VideoInfo` or a `PlaylistInfo`:
   - `preview`: `{ token, kind }` for `GET /api/preview/:token` (`kind` is `video` or `audio`), or `null`.
   - `qualities`: one entry per resolution, best first, each with `resolution` (the short side), `framesPerSecond`, `codecs`, `hdr` and `estimatedBytes`.
   - `audio`: the best audio stream.
-  - `subtitleLanguages`.
+  - `subtitleTracks`: the subtitles the video has, each `{ language, isAutomatic }`. `language` is the code to send as `subtitleLanguage`; `isAutomatic` marks the spoken language YouTube recognised itself. Machine translations are not listed.
   - `playlistId`, when the link points into a playlist.
 - **`PlaylistInfo`** (`kind: "playlist"`) has `videoCount`, the total duration and up to 500 `entries`. Each entry has its `position` in the playlist (counting from 1), `title`, `durationSeconds` and `url`. `isChannel` is `true` for a YouTube channel link; then `entries` is empty and `videoCount` is `0`, because only the channel's name and picture are read.
 
@@ -123,7 +123,9 @@ Request (`DownloadRequest`):
   "kind": "video",
   "resolution": 1080,
   "container": "mp4",
-  "subtitles": true,
+  "subtitleLanguage": "en",
+  "subtitleMatch": "exact",
+  "subtitleFormat": "embedded",
   "title": "Shown in the list until yt-dlp reports the real title",
   "thumbnailUrl": "https://…",
   "videoCount": 1
@@ -141,7 +143,9 @@ Request (`DownloadRequest`):
 | `clip` (single video) | `{ startSeconds, endSeconds }`: download only that part. At least 1 second long; ignored for playlists. | `null` |
 | `coverArt`, `squareCoverArt` | Embed album art, cropped square | `true` |
 | `removeNonMusic` | Cut non-music parts using SponsorBlock data | `false` |
-| `subtitles` | Embed English subtitles (not for WebM) | `false` |
+| `subtitleLanguage` (whole videos) | The subtitles in this language, a code from `subtitleTracks` such as `en` or `pt-BR`. A video without them is saved without subtitles. Codes that aren't plain letters, digits, `-` and `_`, and `all`, are ignored, and so is the language for a `clip`, or for WebM unless `subtitleFormat` is `srt`. `subtitles: true` without it means `en`, as in earlier versions. | `null` |
+| `subtitleMatch` | Which track: `exact` for an uploaded track (`isAutomatic: false`) with exactly this code, `spoken` for the automatic one (`isAutomatic: true`), or `language` to let the server pick: it reads each video and takes the uploaded track or the spoken one the way the media panel does (for a live stream, or a playlist queued as one job, only an uploaded track with exactly this code). Machine translations are never fetched. | `language` |
+| `subtitleFormat` | `embedded`: inside the MP4 or MKV, as a track players can turn on. `srt`: a `.srt` file next to the video, named like it with the language added (`Title.en.srt`). | `embedded` |
 | `tags` | `{ artist, title, album }` written into the file and used as its name (`Artist - Title.mp3`). Single audio downloads only; empty fields are left as found. | `null` |
 | `folder` | A folder inside the download folder to save into. Reduced to one safe folder name; `null` saves directly in the download folder. Subscriptions use it for their channel or playlist folder. | `null` |
 | `playlistNumber`, `playlistTitle` | Set by the server for each video of a playlist: its position (only shown in the list, for the order) and the playlist's name (its folder, named by yt-dlp). Ignored with `playlist`. | `null` |

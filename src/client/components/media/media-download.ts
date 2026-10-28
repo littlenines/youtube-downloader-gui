@@ -8,6 +8,7 @@ import { state } from '@client/state.js'
 import { showToast } from '@client/utils/dom.js'
 import { runButtonAction } from '@client/components/button-action.js'
 import { chosenFormat } from '@client/components/choices/chosen-format.js'
+import { requestedSubtitles } from '@client/components/choices/subtitle-choice.js'
 import { isLaterTimeChosen } from '@client/components/settings/settings.js'
 import { selectedVideoResolution } from './media-options-html.js'
 import { selectedPlaylistItems, selectedVideoCount } from './playlist-picker.js'
@@ -50,7 +51,7 @@ export const startMediaDownload = async (
       if (later && !(await isLaterTimeChosen())) return
 
       const job = await api.startDownload({
-        ...chosenFormat(requestedResolution(info)),
+        ...chosenFormat(requestedResolution(info), requestedSubtitles(info)),
         url: info.url,
         playlist: isPlaylist,
         playlistItems: info.kind === 'playlist' ? selectedPlaylistItems(info) : null,

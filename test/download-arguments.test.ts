@@ -48,7 +48,7 @@ describe('buildDownloadArguments: video', () => {
       kind: 'video',
       resolution: 720,
       container: 'webm',
-      subtitles: true,
+      subtitleLanguage: 'en',
     })
 
     assert.equal(valueAfter(commandArguments, '-S'), 'res:720,fps,vcodec:vp9,acodec:opus')
@@ -79,10 +79,58 @@ describe('buildDownloadArguments: files and progress', () => {
     )
   })
 
-  it('asks only for English subtitles, not machine translations into English', () => {
-    const commandArguments = argumentsFor({ url: 'https://x', kind: 'video', container: 'mkv', subtitles: true })
+  const subtitleArgumentsFor = (request: Parameters<typeof argumentsFor>[0]) => {
+    const commandArguments = argumentsFor({ url: 'https://x', kind: 'video', container: 'mkv', ...request })
 
-    assert.equal(valueAfter(commandArguments, '--sub-langs'), 'en')
+    return [
+      valueAfter(commandArguments, '--sub-langs'),
+      commandArguments.includes('--write-subs'),
+      commandArguments.includes('--write-auto-subs'),
+    ]
+  }
+
+  it('asks for a picked uploaded track exactly, and never for automatic ones, which are machine translations', () => {
+    assert.deepEqual(subtitleArgumentsFor({ subtitleLanguage: 'sr', subtitleMatch: 'exact' }), ['sr', true, false])
+  })
+
+  it('asks for the spoken language as YouTube recognised it, never a translation into it', () => {
+    assert.deepEqual(subtitleArgumentsFor({ subtitleLanguage: 'ja', subtitleMatch: 'spoken' }), [
+      'ja-orig',
+      false,
+      true,
+    ])
+  })
+
+  it('asks a download whose track could not be picked for the uploaded track with that code only', () => {
+    assert.deepEqual(subtitleArgumentsFor({ subtitleLanguage: 'en-US' }), ['en-US', true, false])
+  })
+
+  it('embeds subtitles by default, leaving no subtitle file behind', () => {
+    const commandArguments = argumentsFor({ url: 'https://x', kind: 'video', container: 'mkv', subtitleLanguage: 'de' })
+
+    assert.ok(commandArguments.includes('--embed-subs'))
+    assert.equal(valueAfter(commandArguments, '--compat-options'), 'no-keep-subs')
+    assert.ok(!commandArguments.includes('--convert-subs'))
+  })
+
+  it('saves a .srt file next to the video instead when asked, also for WebM', () => {
+    for (const container of ['mkv', 'webm'] as const) {
+      const commandArguments = argumentsFor({
+        url: 'https://x',
+        kind: 'video',
+        container,
+        subtitleLanguage: 'de',
+        subtitleFormat: 'srt',
+      })
+
+      assert.equal(valueAfter(commandArguments, '--convert-subs'), 'srt')
+      assert.ok(!commandArguments.includes('--embed-subs'))
+    }
+  })
+
+  it('reads "subtitles: true" from earlier versions as English', () => {
+    assert.deepEqual(subtitleArgumentsFor({ subtitles: true }), ['en', true, false])
+    assert.ok(!argumentsFor({ url: 'https://x', kind: 'video', container: 'mkv' }).includes('--embed-subs'))
   })
 })
 

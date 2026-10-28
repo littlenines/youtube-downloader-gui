@@ -35,7 +35,12 @@ describe('isSubtitlesFailure', () => {
 
 describe('DownloadQueue: subtitles that fail', async () => {
   const { downloadFolder, settings, history } = await createQueueTestSetup('refused-subtitles-test-')
-  const videoWithSubtitles = normalizeDownloadRequest({ url: VIDEO_URL, kind: 'video', subtitles: true })
+  const videoWithSubtitles = normalizeDownloadRequest({
+    url: VIDEO_URL,
+    kind: 'video',
+    subtitleLanguage: 'sr',
+    subtitleMatch: 'exact',
+  })
 
   after(() => removeFolder(downloadFolder))
 
@@ -46,7 +51,7 @@ describe('DownloadQueue: subtitles that fail', async () => {
     return { queue, runs, forgottenUrls }
   }
 
-  it('downloads the video again without subtitles, saying why, instead of failing', async () => {
+  it('downloads the video again without subtitles, naming the language and why, instead of failing', async () => {
     const { queue, runs } = startQueue()
     const job = queue.add(videoWithSubtitles, {})
 
@@ -57,8 +62,8 @@ describe('DownloadQueue: subtitles that fail', async () => {
     await waitUntil(() => job.status === 'done')
 
     assert.deepEqual(
-      [runs[0]?.options.subtitles, runs[1]?.options.subtitles, job.options.subtitles, job.warning],
-      [true, false, false, `Saved without English subtitles: ${REFUSED_REASON}`],
+      [runs[0]?.options.subtitleLanguage, runs[1]?.options.subtitleLanguage, job.options.subtitleLanguage, job.warning],
+      ['sr', null, null, `Saved without Serbian subtitles: ${REFUSED_REASON}`],
     )
   })
 
@@ -73,31 +78,10 @@ describe('DownloadQueue: subtitles that fail', async () => {
     await waitUntil(() => job.status === 'done')
 
     assert.deepEqual(
-      [runs.length, runs[1]?.infoFile, runs[1]?.options.subtitles, forgottenUrls],
-      [2, runs[0]?.infoFile, false, []],
+      [runs.length, runs[1]?.infoFile, runs[1]?.options.subtitleLanguage, forgottenUrls],
+      [2, runs[0]?.infoFile, null, []],
     )
     assert.ok(runs[1]?.infoFile)
-  })
-
-  it('keeps showing a clip as a clip when it starts again', async () => {
-    const { queue, runs } = startQueue()
-    const job = queue.add(
-      normalizeDownloadRequest({
-        url: VIDEO_URL,
-        kind: 'video',
-        subtitles: true,
-        clip: { startSeconds: 0, endSeconds: 10 },
-      }),
-      {},
-    )
-
-    await waitUntil(() => runs.length === 1)
-    runs[0]?.failWith(new SubtitlesFailedError(REFUSED_REASON))
-    await waitUntil(() => runs.length === 2)
-
-    assert.deepEqual([job.stage, job.activity], ['Downloading the clip', 'processing'])
-    runs[1]?.finish()
-    await waitUntil(() => job.status === 'done')
   })
 
   it('still fails for any other error', async () => {

@@ -20,13 +20,22 @@ export interface FakeRun {
   emit(event: DownloadEvent): void
 }
 
-export const createFakeEngine = ({ recentVideoInfo = (): unknown => null } = {}) => {
+export const createFakeEngine = ({
+  recentVideoInfo = (): unknown => null,
+  readVideoInfo = async (_url: string, _signal: AbortSignal): Promise<unknown> => null,
+} = {}) => {
   const runs: FakeRun[] = []
   const forgottenUrls: string[] = []
+  const readUrls: string[] = []
   const engine: DownloadEngine = {
     requireTools: async () => {},
     recentVideoInfo,
     forgetVideoInfo: (url) => forgottenUrls.push(url),
+    readVideoInfo: (url, signal) => {
+      readUrls.push(url)
+
+      return readVideoInfo(url, signal)
+    },
     startDownload: (options, { partialFolder, infoFile }, onEvent) => {
       let finish!: (result: DownloadResult) => void
       let fail!: (error: Error) => void
@@ -52,7 +61,7 @@ export const createFakeEngine = ({ recentVideoInfo = (): unknown => null } = {})
     whenIdle: () => {},
   }
 
-  return { engine, runs, forgottenUrls }
+  return { engine, runs, forgottenUrls, readUrls }
 }
 
 export const waitUntil = async (condition: () => boolean, timeoutMilliseconds = 30_000): Promise<void> => {

@@ -64,6 +64,12 @@ button {
   cursor: pointer;
 }
 
+select {
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--panel-raised);
+}
+
 [hidden] {
   display: none !important;
 }

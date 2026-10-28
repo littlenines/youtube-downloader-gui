@@ -1,6 +1,7 @@
+import { isSubtitleLanguage, subtitleFormatOrDefault } from '@shared/subtitle-languages.js'
 import type { AudioFormat, Container } from '@shared/types/downloads.js'
 import { saveChoices, state, type Choices } from '@client/state.js'
-import { CHECKBOX_CHOICES } from './choice-options.js'
+import { CHECKBOX_CHOICES, SUBTITLE_FORMAT_CHOICE, SUBTITLE_LANGUAGE_CHOICE } from './choice-options.js'
 
 const updateChoices = (changes: Partial<Choices>): void => {
   Object.assign(state.choices, changes)
@@ -25,6 +26,20 @@ export const applyChoiceCheckbox = (element: HTMLElement): boolean => {
   if (!choice || !(element instanceof HTMLInputElement)) return false
 
   updateChoices({ [choice]: element.checked })
+
+  return true
+}
+
+export const applySubtitleChoice = (element: HTMLElement): boolean => {
+  if (!(element instanceof HTMLSelectElement)) return false
+
+  const { value } = element
+
+  if (element.dataset.choice === SUBTITLE_LANGUAGE_CHOICE) {
+    updateChoices({ subtitleLanguage: isSubtitleLanguage(value) ? value : null })
+  } else if (element.dataset.choice === SUBTITLE_FORMAT_CHOICE) {
+    updateChoices({ subtitleFormat: subtitleFormatOrDefault(value) })
+  } else return false
 
   return true
 }

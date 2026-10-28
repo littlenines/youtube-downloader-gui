@@ -14,6 +14,7 @@ import {
   selectedClass,
 } from '@client/components/choices/choice-html.js'
 import { audioFormatCard } from '@client/components/choices/choice-options.js'
+import { rememberedSubtitleChoiceHtml, subtitleChoiceHtml } from '@client/components/choices/subtitle-choice.js'
 import { clipEditorHtml, clipFraction } from './clip-editor.js'
 import { isWholePlaylistSelected, selectedVideoCount } from './playlist-picker.js'
 
@@ -80,23 +81,21 @@ const qualityOptionHtml = (quality: VideoQuality, isSelected: boolean): string =
 }
 
 const videoPanelHtml = (info: MediaInfo): string => {
-  if (info.kind === 'playlist') return generalResolutionListHtml() + containerControlHtml()
+  if (info.kind === 'playlist')
+    return generalResolutionListHtml() + containerControlHtml() + rememberedSubtitleChoiceHtml()
 
   if (!info.qualities.length) {
-    return '<p class="muted">No separate video qualities were found for this link. It will download in the best available format.</p>'
+    return `<p class="muted">No separate video qualities were found for this link. It will download in the best available format.</p>${subtitleChoiceHtml(info)}`
   }
 
   const pickedResolution = selectedVideoResolution(info)
   const qualityOptions = info.qualities
     .map((quality) => qualityOptionHtml(quality, quality.resolution === pickedResolution))
     .join('')
-  const subtitlesOption = info.subtitleLanguages.length
-    ? `<div class="option-list">${checkboxHtml('subtitles', 'Embed English subtitles', state.choices.container === 'webm')}</div>`
-    : ''
 
   return `<div class="section-label">Quality</div>
     <div class="quality-list">${qualityOptions}</div>
-    ${containerControlHtml()}${subtitlesOption}`
+    ${containerControlHtml()}${subtitleChoiceHtml(info)}`
 }
 
 const wholeVideoEstimatedBytes = (info: MediaInfo): number | null => {

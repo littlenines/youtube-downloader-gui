@@ -5,6 +5,7 @@ import { state } from '@client/state.js'
 import { LONG_TOAST_MILLISECONDS, showToast } from '@client/utils/dom.js'
 import { runButtonAction } from '@client/components/button-action.js'
 import { chosenFormat } from '@client/components/choices/chosen-format.js'
+import { rememberedSubtitles } from '@client/components/choices/subtitle-choice.js'
 
 export const subscribeToMedia = (info: PlaylistInfo, button: HTMLButtonElement): Promise<void> =>
   runButtonAction({
@@ -13,7 +14,7 @@ export const subscribeToMedia = (info: PlaylistInfo, button: HTMLButtonElement):
     retry: () => void subscribeToMedia(info, button),
     run: async () => {
       const subscription = await api.subscribe({
-        ...chosenFormat(state.choices.resolution),
+        ...chosenFormat(state.choices.resolution, rememberedSubtitles()),
         url: info.url,
         skipShorts: state.choices.skipShorts,
       })

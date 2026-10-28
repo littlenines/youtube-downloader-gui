@@ -1,4 +1,5 @@
 import { describeClip } from '@shared/clip-range.js'
+import { isSubtitleMatch, savedSubtitleLanguage, subtitleFormatOrDefault } from '@shared/subtitle-languages.js'
 import type {
   AudioTags,
   ClipRange,
@@ -6,6 +7,7 @@ import type {
   CoverRequest,
   DownloadOptions,
   DownloadRequest,
+  SubtitleFormat,
 } from '@shared/types/downloads.js'
 import { AUDIO_PRESETS, isAudioFormat } from '@server/services/ytdlp/audio-presets.js'
 
@@ -98,24 +100,49 @@ export const normalizeCoverRequest = (
   thumbnailUrl: typeof request.thumbnailUrl === 'string' ? request.thumbnailUrl : null,
 })
 
-export const normalizeDownloadRequest = (request: Partial<DownloadRequest>): DownloadOptions => ({
-  url: String(request.url ?? '').trim(),
-  kind: request.kind === 'video' ? 'video' : 'audio',
-  format: isAudioFormat(request.format) ? request.format : 'mp3',
-  resolution: normalizeResolution(request.resolution),
-  container: isContainer(request.container) ? request.container : 'mp4',
-  playlist: Boolean(request.playlist),
-  playlistItems: request.playlist ? normalizePlaylistItems(request.playlistItems) : null,
-  clip: request.playlist ? null : normalizeClip(request.clip),
-  coverArt: request.coverArt !== false,
-  squareCoverArt: request.squareCoverArt !== false,
-  removeNonMusic: Boolean(request.removeNonMusic),
-  subtitles: Boolean(request.subtitles),
-  tags: request.kind !== 'video' && !request.playlist ? normalizeTags(request.tags) : null,
-  folder: sanitizeFolderName(request.folder),
-  playlistNumber: !request.playlist && isPlaylistPosition(request.playlistNumber) ? request.playlistNumber : null,
-  playlistTitle: safePlaylistTitle(request.playlistTitle),
-})
+const canHaveSubtitles = (
+  { kind, container }: Pick<DownloadOptions, 'kind' | 'container'>,
+  subtitleFormat: SubtitleFormat,
+): boolean => kind === 'video' && (container !== 'webm' || subtitleFormat === 'srt')
+
+const normalizeSubtitles = (
+  request: Partial<DownloadRequest>,
+  options: Pick<DownloadOptions, 'kind' | 'container' | 'clip'>,
+): Pick<DownloadOptions, 'subtitleLanguage' | 'subtitleMatch' | 'subtitleFormat'> => {
+  const subtitleFormat = subtitleFormatOrDefault(request.subtitleFormat)
+  const canHaveThem = canHaveSubtitles(options, subtitleFormat) && !options.clip
+
+  return {
+    subtitleLanguage: canHaveThem ? savedSubtitleLanguage(request) : null,
+    subtitleMatch: isSubtitleMatch(request.subtitleMatch) ? request.subtitleMatch : 'language',
+    subtitleFormat,
+  }
+}
+
+export const normalizeDownloadRequest = (request: Partial<DownloadRequest>): DownloadOptions => {
+  const kind = request.kind === 'video' ? 'video' : 'audio'
+  const container = isContainer(request.container) ? request.container : 'mp4'
+  const clip = request.playlist ? null : normalizeClip(request.clip)
+
+  return {
+    url: String(request.url ?? '').trim(),
+    kind,
+    format: isAudioFormat(request.format) ? request.format : 'mp3',
+    resolution: normalizeResolution(request.resolution),
+    container,
+    playlist: Boolean(request.playlist),
+    playlistItems: request.playlist ? normalizePlaylistItems(request.playlistItems) : null,
+    clip,
+    coverArt: request.coverArt !== false,
+    squareCoverArt: request.squareCoverArt !== false,
+    removeNonMusic: Boolean(request.removeNonMusic),
+    ...normalizeSubtitles(request, { kind, container, clip }),
+    tags: request.kind !== 'video' && !request.playlist ? normalizeTags(request.tags) : null,
+    folder: sanitizeFolderName(request.folder),
+    playlistNumber: !request.playlist && isPlaylistPosition(request.playlistNumber) ? request.playlistNumber : null,
+    playlistTitle: safePlaylistTitle(request.playlistTitle),
+  }
+}
 
 const describeFormat = (options: DownloadOptions): string => {
   if (options.kind === 'audio') return AUDIO_PRESETS[options.format].label

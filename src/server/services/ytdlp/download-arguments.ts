@@ -1,9 +1,10 @@
 import { clipFileSuffix } from '@shared/clip-range.js'
-import type { AudioTags, Container, DownloadOptions } from '@shared/types/downloads.js'
+import type { AudioTags, Container, DownloadOptions, SubtitleFormat, SubtitleMatch } from '@shared/types/downloads.js'
 import { AUDIO_PRESETS } from './audio-presets.js'
 import { SQUARE_JPG_CONVERSION_ARGUMENT } from './thumbnail-arguments.js'
 import { OUTPUT_MARKERS } from './download-events.js'
 import type { DownloadFolders } from './download-process.js'
+import { SPOKEN_LANGUAGE_SUFFIX } from './subtitle-tracks.js'
 import { linkArguments } from './ytdlp-command.js'
 
 const CODEC_PREFERENCE: Record<Container, string> = {
@@ -123,6 +124,24 @@ const audioArguments = (options: DownloadOptions, outputFolder: string): string[
   return commandArguments
 }
 
+const SUBTITLE_FORMAT_ARGUMENTS: Record<SubtitleFormat, string[]> = {
+  embedded: ['--embed-subs', '--compat-options', 'no-keep-subs'],
+  srt: ['--convert-subs', 'srt'],
+}
+
+const subtitleSourceArguments = (subtitleLanguage: string, subtitleMatch: SubtitleMatch): string[] => {
+  if (subtitleMatch === 'spoken') {
+    return ['--write-auto-subs', '--sub-langs', `${subtitleLanguage}${SPOKEN_LANGUAGE_SUFFIX}`]
+  }
+
+  return ['--write-subs', '--sub-langs', subtitleLanguage]
+}
+
+const subtitleArguments = ({ subtitleLanguage, subtitleMatch, subtitleFormat }: DownloadOptions): string[] =>
+  subtitleLanguage
+    ? [...subtitleSourceArguments(subtitleLanguage, subtitleMatch), ...SUBTITLE_FORMAT_ARGUMENTS[subtitleFormat]]
+    : []
+
 const videoArguments = (options: DownloadOptions, outputFolder: string): string[] => {
   const canEmbedExtras = options.container !== 'webm'
   const maximumResolution = options.resolution ?? UNLIMITED_RESOLUTION
@@ -140,9 +159,7 @@ const videoArguments = (options: DownloadOptions, outputFolder: string): string[
 
   if (canEmbedExtras) commandArguments.push('--embed-thumbnail', '--embed-chapters')
 
-  if (options.subtitles && canEmbedExtras) {
-    commandArguments.push('--embed-subs', '--sub-langs', 'en', '--write-auto-subs')
-  }
+  commandArguments.push(...subtitleArguments(options))
 
   commandArguments.push('-o', `${outputFolder}%(title)s${resolutionLabel}${clipSuffix}.%(ext)s`)
 

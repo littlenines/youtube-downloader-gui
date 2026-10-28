@@ -6,7 +6,7 @@ import { formatStartTime } from '@client/locale.js'
 import { state } from '@client/state.js'
 import { errorMessage, findElement, showToast } from '@client/utils/dom.js'
 import { escapeHtml } from '@client/utils/format.js'
-import { applyChoiceButton, applyChoiceCheckbox } from './choices/apply-choice.js'
+import { applyChoiceButton, applyChoiceCheckbox, applySubtitleChoice } from './choices/apply-choice.js'
 import {
   audioFormatCardsHtml,
   audioOptionsHtml,
@@ -16,6 +16,7 @@ import {
 } from './choices/choice-html.js'
 import { audioFormatCard } from './choices/choice-options.js'
 import { chosenFormat } from './choices/chosen-format.js'
+import { rememberedSubtitleChoiceHtml, rememberedSubtitles } from './choices/subtitle-choice.js'
 import { laterButtonHtml } from './media/media-options-html.js'
 import { showPanel } from './panels.js'
 import { isLaterTimeChosen } from './settings/settings.js'
@@ -52,7 +53,7 @@ const renderBatchPanel = (): void => {
   const optionsHtml =
     state.choices.kind === 'audio'
       ? audioFormatCardsHtml() + audioOptionsHtml()
-      : generalResolutionListHtml() + containerControlHtml()
+      : generalResolutionListHtml() + containerControlHtml() + rememberedSubtitleChoiceHtml()
 
   batchPanel().innerHTML = `<div class="card">
     <div class="batch-header"><h2>${batchLinks.length} links</h2><span class="muted">All of them download with the same settings.</span></div>
@@ -73,7 +74,7 @@ const removeLink = (index: number): void => {
 
 const startBatchDownload = (url: string, later: boolean): Promise<Job> =>
   api.startDownload({
-    ...chosenFormat(state.choices.resolution),
+    ...chosenFormat(state.choices.resolution, rememberedSubtitles()),
     url,
     playlist: isPlaylistLink(url),
     title: url,
@@ -145,6 +146,8 @@ export const initializeBatchPanel = (): void => {
     else if (action === 'download-later') void downloadAll(true)
   })
   batchPanel().addEventListener('change', (event) => {
-    if (applyChoiceCheckbox(event.target as HTMLElement)) renderBatchPanel()
+    const target = event.target as HTMLElement
+
+    if (applyChoiceCheckbox(target) || applySubtitleChoice(target)) renderBatchPanel()
   })
 }

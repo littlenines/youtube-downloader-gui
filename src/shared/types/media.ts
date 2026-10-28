@@ -20,6 +20,11 @@ export interface PreviewSource {
   kind: 'video' | 'audio'
 }
 
+export interface SubtitleTrack {
+  language: string
+  isAutomatic: boolean
+}
+
 export interface VideoInfo {
   kind: 'video'
   id: string
@@ -37,7 +42,7 @@ export interface VideoInfo {
   preview: PreviewSource | null
   audio: AudioSource | null
   qualities: VideoQuality[]
-  subtitleLanguages: string[]
+  subtitleTracks: SubtitleTrack[]
 }
 
 export interface PlaylistEntry {

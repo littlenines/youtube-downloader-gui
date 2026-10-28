@@ -68,7 +68,29 @@ describe('parseMediaInfo: video', () => {
 
   it('notices a playlist in the link and ignores live chat as a subtitle', () => {
     assert.equal(info.playlistId, 'PL123')
-    assert.deepEqual(info.subtitleLanguages, ['en'])
+    assert.deepEqual(info.subtitleTracks, [{ language: 'en', isAutomatic: false }])
+  })
+
+  it('offers the uploaded subtitles, and the spoken language unless one was uploaded in it, never translations', () => {
+    const withCaptions = parseMediaInfo(
+      {
+        subtitles: { 'en-US': [], de: [] },
+        automatic_captions: { 'sr-orig': [], sr: [], en: [], 'en-orig': [], de: [], fr: [], 'de-orig': [] },
+      },
+      'https://x',
+    )
+
+    assert.deepEqual(withCaptions.kind === 'video' && withCaptions.subtitleTracks, [
+      { language: 'en-US', isAutomatic: false },
+      { language: 'de', isAutomatic: false },
+      { language: 'sr', isAutomatic: true },
+    ])
+  })
+
+  it('leaves out languages that yt-dlp would read as a pattern or as "all"', () => {
+    const odd = parseMediaInfo({ subtitles: { 'en.*': [], all: [], '-en': [], 'pt-BR': [] } }, 'https://x')
+
+    assert.deepEqual(odd.kind === 'video' && odd.subtitleTracks, [{ language: 'pt-BR', isAutomatic: false }])
   })
 
   it('treats vertical video by its short side (1080x1920 is 1080p)', () => {

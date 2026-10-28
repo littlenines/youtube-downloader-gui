@@ -97,6 +97,19 @@ describe('DownloadQueue: reusing the read from the media panel', async () => {
     assert.equal(runs.length, 2, 'only one extra attempt')
   })
 
+  it('keeps showing a clip as a clip when it reads the link again', async () => {
+    const { queue, runs } = createQueue()
+    const job = queue.add(normalizeDownloadRequest({ url: VIDEO_URL, clip: { startSeconds: 0, endSeconds: 10 } }), {})
+
+    await waitUntil(() => runs.length === 1)
+    runs[0]?.fail('HTTP Error 403: Forbidden')
+    await waitUntil(() => runs.length === 2)
+
+    assert.deepEqual([job.stage, job.activity], ['Downloading the clip', 'processing'])
+    runs[1]?.finish()
+    await waitUntil(() => job.status === 'done')
+  })
+
   it('does not download again when the failure came after the download started', async () => {
     const { queue, runs } = createQueue()
     const job = queue.add(options, {})

@@ -71,9 +71,12 @@ export const CONTAINER_OPTIONS: ContainerOption[] = [
 
 export const GENERAL_RESOLUTIONS = [null, 2160, 1440, 1080, 720, 480, 360]
 
-export const CHECKBOX_CHOICES = ['coverArt', 'removeNonMusic', 'subtitles', 'skipShorts'] as const
+export const CHECKBOX_CHOICES = ['coverArt', 'removeNonMusic', 'skipShorts'] as const
 
 export type CheckboxChoice = (typeof CHECKBOX_CHOICES)[number]
+
+export const SUBTITLE_LANGUAGE_CHOICE = 'subtitleLanguage'
+export const SUBTITLE_FORMAT_CHOICE = 'subtitleFormat'
 
 export const audioFormatCard = (format: AudioFormat): AudioFormatCard =>
   AUDIO_FORMAT_CARDS.find((card) => card.format === format) ?? AUDIO_FORMAT_CARDS[0]!
