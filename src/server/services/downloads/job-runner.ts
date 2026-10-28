@@ -7,6 +7,7 @@ import { errorText } from '@server/lib/http/http-error.js'
 import { ignoreFailure } from '@server/lib/ignore-failure.js'
 import type { HistoryStore } from '@server/services/stores/history-store.js'
 import type { DownloadResult } from '@server/services/ytdlp/download-process.js'
+import { SubtitlesFailedError } from '@server/services/ytdlp/error-messages.js'
 import type { ActiveRun } from './active-runs.js'
 import type { DownloadEngine } from './download-engine.js'
 import type { JobFolders } from './job-folders.js'
@@ -20,9 +21,14 @@ export interface JobRunnerDependencies {
   jobFolders: JobFolders
 }
 
+const startingStage = ({ options }: Job): Pick<Job, 'stage' | 'activity'> =>
+  options.clip
+    ? { stage: 'Downloading the clip', activity: 'processing' }
+    : { stage: 'Getting the video info', activity: 'preparing' }
+
 const finishJob = async (job: Job, { skippedItems }: DownloadResult, history: HistoryStore): Promise<void> => {
   job.status = 'done'
-  job.warning = skippedItemsWarning(skippedItems)
+  job.warning = skippedItemsWarning(skippedItems) ?? job.warning
   job.progress = 1
   job.stage = null
   job.activity = null
@@ -67,8 +73,7 @@ export const runDownloadJob = async (
 
     if (run.stopReason) return
 
-    job.stage = job.options.clip ? 'Downloading the clip' : 'Getting the video info'
-    job.activity = job.options.clip ? 'processing' : 'preparing'
+    Object.assign(job, startingStage(job))
 
     let hasStartedDownloading = false
 
@@ -86,15 +91,35 @@ export const runDownloadJob = async (
       return download.finished
     }
 
-    const infoFile = await writeRecentVideoInfo(engine, job, partialFolder)
-    const result = await runYtdlp(infoFile).catch((error: unknown) => {
-      if (!infoFile || run.stopReason || hasStartedDownloading) throw error
+    const startAgain = (infoFile: string | null): Promise<DownloadResult> => {
+      Object.assign(job, { ...startingStage(job), progress: 0 } satisfies Partial<Job>)
 
-      engine.forgetVideoInfo(job.options.url)
-      Object.assign(job, { stage: 'Getting the video info', activity: 'preparing', progress: 0 } satisfies Partial<Job>)
+      return runYtdlp(infoFile)
+    }
 
-      return runYtdlp(null)
-    })
+    let currentRead = await writeRecentVideoInfo(engine, job, partialFolder)
+
+    const result = await runYtdlp(currentRead)
+      .catch((error: unknown) => {
+        if (!currentRead || run.stopReason || hasStartedDownloading || error instanceof SubtitlesFailedError) {
+          throw error
+        }
+
+        engine.forgetVideoInfo(job.options.url)
+        currentRead = null
+
+        return startAgain(null)
+      })
+      .catch((error: unknown) => {
+        if (!(error instanceof SubtitlesFailedError) || run.stopReason) throw error
+
+        Object.assign(job, {
+          options: { ...job.options, subtitles: false },
+          warning: `Saved without English subtitles: ${error.message}`,
+        } satisfies Partial<Job>)
+
+        return startAgain(currentRead)
+      })
 
     if (run.stopReason === 'cancel') return
 
@@ -106,6 +131,11 @@ export const runDownloadJob = async (
     job.error = errorText(error)
     job.activity = null
   } finally {
-    if (run.stopReason === 'cancel' || isFinishedJob(job)) await jobFolders.discardPartialFiles(job.id)
+    if (run.stopReason === 'cancel' || isFinishedJob(job)) {
+      const discarding = jobFolders.discardPartialFiles(job.id)
+
+      if (job.status === 'done') void discarding.catch(ignoreFailure)
+      else await discarding
+    }
   }
 }

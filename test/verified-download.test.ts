@@ -10,6 +10,7 @@ import { parseSha256 } from '@server/lib/checksums.js'
 import { releaseTagFromLocation } from '@server/lib/github-releases.js'
 import { downloadVerifiedFile, IntegrityError } from '@server/lib/verified-download.js'
 import { createTemporaryFolder, removeFolder } from './support/temporary-folder.js'
+import { listenForFetch } from './support/listen.js'
 
 const content = Buffer.from('pretend this is ffmpeg '.repeat(2000))
 const compressed = gzipSync(content)
@@ -31,11 +32,7 @@ describe('downloadVerifiedFile', async () => {
       response.writeHead(200, { 'content-length': String(compressed.length) })
       response.end(compressed)
     })
-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
-
-    const address = server.address()
-
-    baseUrl = `http://127.0.0.1:${typeof address === 'object' && address ? address.port : 0}`
+    baseUrl = await listenForFetch(server)
   })
   after(async () => {
     server.closeAllConnections()

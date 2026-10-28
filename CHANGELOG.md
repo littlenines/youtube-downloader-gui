@@ -12,6 +12,7 @@ Everything that changed in YT Downloader, newest first. Download any version fro
 
 ### Fixed
 
+- **Subtitles that can't be downloaded no longer stop a video download.** When the English subtitles fail, for example because YouTube refuses them for a while ("rate-limiting this connection"), the video now downloads without them, and the download says so and why, instead of failing.
 - **The update notice's What's new button is readable.** It was blue, like a web link, and hard to see. It now looks like the other buttons next to it.
 
 ## 1.4.1

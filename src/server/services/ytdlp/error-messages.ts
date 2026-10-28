@@ -1,3 +1,5 @@
+const RATE_LIMIT_PATTERN = /HTTP Error 429|Too Many Requests/i
+
 const FRIENDLY_ERRORS: [pattern: RegExp, message: string][] = [
   [
     /confirm your age|age-restricted/i,
@@ -12,8 +14,16 @@ const FRIENDLY_ERRORS: [pattern: RegExp, message: string][] = [
   [/Video unavailable/i, 'This video is unavailable (removed, blocked in your country, or the link is wrong).'],
   [/Unsupported URL/i, 'That link is not a video yt-dlp supports.'],
   [/live event will begin|is upcoming/i, 'This live stream has not started yet.'],
-  [/HTTP Error 429|Too Many Requests/i, 'YouTube is rate-limiting this connection. Wait a few minutes and try again.'],
+  [RATE_LIMIT_PATTERN, 'YouTube is rate-limiting this connection. Wait a few minutes and try again.'],
 ]
+
+const SUBTITLES_FAILURE_PATTERN = /Unable to download video subtitles/i
+const SUBTITLES_FAILURE_PREFIX_PATTERN = /^Unable to download video subtitles for '[^']*':\s*/i
+const SUBTITLES_REFUSED_REASON = 'YouTube refused them for now. Download it again later to add them.'
+
+export class SubtitlesFailedError extends Error {
+  override readonly name = 'SubtitlesFailedError'
+}
 
 const ERROR_PREFIX_PATTERN = /^.*?ERROR:\s*(\[[^\]]+\]\s*[\w-]+:\s*)?/
 
@@ -30,6 +40,18 @@ export const friendlyErrorMessage = (errorOutput: string): string => {
   const friendlyMessage = FRIENDLY_ERRORS.find(([pattern]) => pattern.test(message))?.[1]
 
   return friendlyMessage ?? (message || 'yt-dlp failed.')
+}
+
+export const isSubtitlesFailure = (errorOutput: string): boolean =>
+  SUBTITLES_FAILURE_PATTERN.test(lastErrorLine(errorOutput))
+
+export const subtitlesFailureReason = (errorOutput: string): string => {
+  const message = lastErrorLine(errorOutput)
+    .replace(ERROR_PREFIX_PATTERN, '')
+    .replace(SUBTITLES_FAILURE_PREFIX_PATTERN, '')
+    .trim()
+
+  return RATE_LIMIT_PATTERN.test(message) ? SUBTITLES_REFUSED_REASON : message || 'they could not be downloaded.'
 }
 
 export const appendErrorOutput = (errorOutput: string, addition: string): string =>

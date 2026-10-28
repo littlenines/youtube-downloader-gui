@@ -33,6 +33,8 @@ Tests live in `test/` and cover:
 | `download-window.test.ts` | The download window (across midnight, without a stop time, the same start and stop), the "Later" times in settings, and what the window does to jobs: starting due ones, stopping running ones at the stop time, moving a missed start time, and moving to new times. |
 | `job-progress.test.ts` | What a download shows at each step: sizes, speed and time left while downloading, the per-format step and no old speed afterwards, picture then sound then merging, each playlist video, and short durations ("1m 5s"). |
 | `video-info-reuse.test.ts` | `ExpiringMap`'s time limit and size, and reusing the media panel's read: `--load-info-json` instead of the link, writing the read into the partial folder, one fresh attempt from the start when it fails before downloading, none after the download started, the link when the read can't be written, no yt-dlp after a Pause during the write, and never for playlists. |
+| `refused-subtitles.test.ts` | Subtitles that fail: recognised only when they are the last error, with a named error and a reason worded for subtitles (a rate limit, or the bare error); the video downloads again without them, saying why, reusing a saved read without asking YouTube again; a clip keeps its stage; any other error still fails. |
+| `partial-cleanup.test.ts` | Deleting a job's partial folder doesn't hold up a finished download, even when it never finishes, but a failed one waits for it, so a quick Retry is safe. |
 | `vimeo-links.test.ts` | Vimeo video pages are read through their player link, keeping an unlisted video's hash, in every yt-dlp call (`linkArguments`); other links are left alone, and the panel keeps the pasted link. |
 | `download-notifications.test.ts` | The notification text (a download, a failure, a playlist with skipped videos, several at once, all failed, never more saved than downloaded), waiting for a quiet moment to show a batch as one notification, and reporting each finished or failed download once, again after a retry, never a cancelled one. |
 | `queue-later.test.ts` | The queue with a fake clock: waiting until the start time, pausing at the stop time and continuing the next night in the same partial folder, Start now, changing or clearing the times, saving a setting just after the start time, saving and restoring a waiting download with how far it got, and the waiting count for the quit question. |
@@ -46,6 +48,7 @@ Tests live in `test/` and cover:
 | `video-availability.test.ts` | Whether a new video can be downloaded yet: premieres, live streams, restricted videos and yt-dlp errors. |
 | `partial-folders.test.ts` | Removing partial folders left by a crash, while keeping ones in use or belonging to saved downloads. |
 | `request-guard.test.ts` | Refusing cross-site requests and DNS rebinding, allowing the app's own page, and telling a request from this computer from one over the network (for Play). |
+| `listen.test.ts` | The test-server helper `listenForFetch` listens again when the system picks a port `fetch` refuses (`bad port`), such as 6000. |
 | `access.test.ts` | The access key (cookie, access link, refusals), the Content-Security-Policy, and malformed addresses answering 400. |
 | `verified-download.test.ts` | Checksum match and mismatch, stalled downloads, reading checksum files and release tags (against a local test server). |
 | `readable-thumbnails.test.ts` | The thumbnail plugin, run by the real yt-dlp on a made-up info file (skipped when yt-dlp isn't installed): an AVIF thumbnail (any case) is skipped for the next best one, others are left alone, and an error inside it keeps the thumbnails instead of failing. Installing adds no arguments before the plugin exists and rewrites it only when it differs. |
@@ -57,7 +60,7 @@ Tests live in `test/` and cover:
 | `release-notes.test.ts` | Finding a version's section in `CHANGELOG.md` and building the release notes from it. |
 | `locale.test.ts` | Turning the system locale into a language tag, passing it to the page, and formatting dates with it. |
 
-Shared fakes and helpers for these live in `test/support/`.
+Shared fakes and helpers for these live in `test/support/`. A test that starts an HTTP server and calls it with `fetch` uses `listenForFetch` (`test/support/listen.ts`), not `listen(0)`: some machines hand out free ports from 1024 up instead of 49152 (this one: 1024 to 15000), and `fetch` refuses 20 ports in that range ("fetch failed: bad port"), which made such tests fail now and then.
 
 Everything that needs yt-dlp, the network or a window is checked by running the app. A useful end-to-end pass:
 

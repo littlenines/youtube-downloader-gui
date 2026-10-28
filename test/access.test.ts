@@ -12,6 +12,7 @@ import {
 } from '@server/security/access-cookie.js'
 import { CONTENT_SECURITY_POLICY, serveStaticFile } from '@server/lib/static.js'
 import type { RouteDependencies } from '@server/routes/index.js'
+import { listenForFetch } from './support/listen.js'
 
 const ACCESS_KEY = 'k'.repeat(43)
 
@@ -44,11 +45,7 @@ describe('the API behind the access key', async () => {
 
   before(async () => {
     server = createApp(dependencies, { loopbackOnly: true, accessKey: ACCESS_KEY })
-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
-
-    const address = server.address()
-
-    baseUrl = `http://127.0.0.1:${typeof address === 'object' && address ? address.port : 0}`
+    baseUrl = await listenForFetch(server)
   })
   after(() => server.close())
 

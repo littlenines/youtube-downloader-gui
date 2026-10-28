@@ -7,7 +7,13 @@ import { killProcessTree } from '@server/lib/process-tree.js'
 import { ytdlpPath } from '@server/services/tools/tool-paths.js'
 import { buildDownloadArguments } from './download-arguments.js'
 import { parseOutputLine, type DownloadEvent } from './download-events.js'
-import { appendErrorOutput, friendlyErrorMessage } from './error-messages.js'
+import {
+  appendErrorOutput,
+  friendlyErrorMessage,
+  isSubtitlesFailure,
+  SubtitlesFailedError,
+  subtitlesFailureReason,
+} from './error-messages.js'
 import { readableThumbnailsArguments } from './readable-thumbnails-plugin.js'
 import { ytdlpCommonArguments, ytdlpEnvironment } from './ytdlp-command.js'
 
@@ -79,6 +85,8 @@ export const startDownload = (
       else if (wasStoppedByApp) reject(new Error('Stopped.'))
       else if (isPartlyDownloadedPlaylist) {
         resolve({ skippedItems: itemErrors.length ? itemErrors : [friendlyErrorMessage(errorOutput)] })
+      } else if (isSubtitlesFailure(errorOutput)) {
+        reject(new SubtitlesFailedError(subtitlesFailureReason(errorOutput)))
       } else reject(new Error(friendlyErrorMessage(errorOutput)))
     })
   })

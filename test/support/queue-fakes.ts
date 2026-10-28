@@ -1,4 +1,5 @@
 import type { Settings } from '@shared/types/app.js'
+import type { DownloadOptions } from '@shared/types/downloads.js'
 import type { DownloadEngine } from '@server/services/downloads/download-engine.js'
 import { normalizeDownloadRequest } from '@server/services/downloads/download-options.js'
 import type { HistoryStore } from '@server/services/stores/history-store.js'
@@ -11,9 +12,11 @@ import { createTemporaryFolder } from './temporary-folder.js'
 export interface FakeRun {
   finish(skippedItems?: string[]): void
   fail(message: string): void
+  failWith(error: Error): void
   cancelled: boolean
   partialFolder: string
   infoFile: string | null
+  options: DownloadOptions
   emit(event: DownloadEvent): void
 }
 
@@ -24,7 +27,7 @@ export const createFakeEngine = ({ recentVideoInfo = (): unknown => null } = {})
     requireTools: async () => {},
     recentVideoInfo,
     forgetVideoInfo: (url) => forgottenUrls.push(url),
-    startDownload: (_options, { partialFolder, infoFile }, onEvent) => {
+    startDownload: (options, { partialFolder, infoFile }, onEvent) => {
       let finish!: (result: DownloadResult) => void
       let fail!: (error: Error) => void
       const finished = new Promise<DownloadResult>((resolve, reject) => {
@@ -34,9 +37,11 @@ export const createFakeEngine = ({ recentVideoInfo = (): unknown => null } = {})
       const run: FakeRun = {
         finish: (skippedItems = []) => finish({ skippedItems }),
         fail: (message) => fail(new Error(message)),
+        failWith: (error) => fail(error),
         cancelled: false,
         partialFolder,
         infoFile,
+        options,
         emit: onEvent,
       }
 
