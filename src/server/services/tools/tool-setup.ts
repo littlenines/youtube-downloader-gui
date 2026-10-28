@@ -100,7 +100,7 @@ export class ToolSetup {
   }
 
   private async runSetup(): Promise<void> {
-    this.progress.state = 'running'
+    Object.assign(this.progress, { state: 'running', message: null, progress: null })
     await this.dependencies.prepareFolders()
 
     const missingSteps = this.missingSteps()

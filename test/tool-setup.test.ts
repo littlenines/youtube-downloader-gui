@@ -113,7 +113,11 @@ describe('ToolSetup', () => {
 
     await assert.rejects(setup.ensureInstalled(), /HTTP 503/)
     assert.deepEqual([setup.status().state, setup.status().message], ['error', 'Downloading yt-dlp failed (HTTP 503).'])
-    await setup.ensureInstalled()
+
+    const retry = setup.ensureInstalled()
+
+    assert.deepEqual([setup.status().state, setup.status().message], ['running', null], 'no old error while retrying')
+    await retry
     assert.equal(tool.installed, true)
     assert.equal(setup.status().state, 'ready')
   })

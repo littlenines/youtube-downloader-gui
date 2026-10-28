@@ -36,7 +36,14 @@
           🔔 <span class="subscriptions-label">Subscriptions</span>
           <span class="count-badge" id="subscriptionCount" hidden></span>
         </button>
-        <button class="button ghost" id="openFolderButton" title="Open the download folder">📁 Downloads folder</button>
+        <button
+          class="button ghost"
+          id="openFolderButton"
+          title="Open the download folder"
+          aria-label="Downloads folder"
+        >
+          📁 <span class="folder-label">Downloads folder</span>
+        </button>
         <button
           class="button ghost icon-only"
           id="miniModeButton"
@@ -66,27 +73,6 @@
           <button class="button primary" type="submit">Get</button>
         </form>
         <div class="error-text" id="linkError" hidden></div>
-        <div class="banners">
-          <div class="banner setup-banner" id="setupBanner" hidden>
-            <div class="spinner" id="setupBannerSpinner"></div>
-            <span id="setupBannerText"></span>
-            <button class="button small primary" type="button" id="setupBannerButton">Download tools</button>
-          </div>
-          <div class="banner update-banner" id="updateBanner" hidden>
-            <span id="updateBannerText"></span>
-            <button
-              class="button small primary"
-              type="button"
-              id="updateInstallButton"
-              title="Running downloads pause and continue after the restart."
-              hidden
-            ></button>
-            <a class="button small primary" id="updateDownloadLink" href="#" target="_blank" rel="noopener noreferrer"
-              >Download</a
-            >
-            <button class="button small ghost" type="button" id="updateDismissButton">Not now</button>
-          </div>
-        </div>
       </section>
 
       <section id="media" hidden></section>
@@ -105,6 +91,29 @@
         <div id="jobs"></div>
       </section>
     </main>
+
+    <div class="bottom-stack">
+      <div class="toast" id="toast" role="status" hidden></div>
+      <div class="notice update-banner" id="updateBanner" hidden>
+        <span id="updateBannerText"></span>
+        <button
+          class="button small primary"
+          type="button"
+          id="updateInstallButton"
+          title="Running downloads pause and continue after the restart."
+          hidden
+        ></button>
+        <a class="button small primary" id="updateDownloadLink" href="#" target="_blank" rel="noopener noreferrer"
+          >Download</a
+        >
+        <button class="button small ghost" type="button" id="updateDismissButton">Not now</button>
+      </div>
+      <div class="notice setup-banner" id="setupBanner" hidden>
+        <div class="spinner" id="setupBannerSpinner"></div>
+        <span class="setup-banner-text" id="setupBannerText"></span>
+        <button class="button small primary" type="button" id="setupBannerButton">Download tools</button>
+      </div>
+    </div>
 
     <dialog id="setupDialog">
       <div class="dialog-content">
@@ -232,7 +241,5 @@
     </dialog>
 
     <div class="drop-overlay" id="dropOverlay" hidden><div class="drop-message">Drop to download</div></div>
-
-    <div class="toast" id="toast" role="status" hidden></div>
   </body>
 </html>

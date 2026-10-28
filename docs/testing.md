@@ -15,6 +15,7 @@ Tests live in `test/` and cover:
 | `subtitle-track-choice.test.ts` | Subtitles for a download without a panel: the job reads the video, picks one track the way the panel does and downloads from that read; the spoken language, or none; a failed read fails the download without a second request; for a live stream, the uploaded track with that code only, from the link; no read for a track picked in the panel, a playlist, a clip or no subtitles; Pause during the read. |
 | `subtitle-files.test.ts` | The spoken language's `.srt` file is renamed from `Title.ja-orig.srt` to `Title.ja.srt`, but not over a file of that name, and other downloads' files are left alone. |
 | `subtitle-options.test.ts` | What the panels' subtitle lists offer: off for WebM only when they would go in the video, off for a clip in the video panel only (so a clip left from another video never blocks a batch), the picked track, track names with the automatic one marked, and the common languages plus a remembered one. |
+| `setup-banner.test.ts` | When the tools status shows: hidden for the quick check of installed tools at every start, shown for the weekly yt-dlp update check, missing tools, their download and a failed setup, but not while the setup dialog is open. |
 | `ytdlp-output.test.ts` | Readable error messages, the preview stream choice, and yt-dlp's progress and file lines. |
 | `search-results.test.ts` | Search results (videos, playlists, verified channels) and what is searched for each kind. |
 | `search-filters.test.ts` | Narrowing search results by length and to verified channels, the edges between lengths, results without a duration, playlists ignoring the video filters, reading the chips, and **Show all**. |
@@ -56,7 +57,7 @@ Tests live in `test/` and cover:
 | `access.test.ts` | The access key (cookie, access link, refusals), the Content-Security-Policy, and malformed addresses answering 400. |
 | `verified-download.test.ts` | Checksum match and mismatch, stalled downloads, reading checksum files and release tags (against a local test server). |
 | `readable-thumbnails.test.ts` | The thumbnail plugin, run by the real yt-dlp on a made-up info file (skipped when yt-dlp isn't installed): an AVIF thumbnail (any case) is skipped for the next best one, others are left alone, and an error inside it keeps the thumbnails instead of failing. Installing adds no arguments before the plugin exists and rewrites it only when it differs. |
-| `tool-setup.test.ts` | The setup states with fake tools: missing, installing, ready, a tool lost later, failed installs, and the update-check schedule. |
+| `tool-setup.test.ts` | The setup states with fake tools: missing, installing, ready, a tool lost later, failed installs (a retry starts without the old error), and the update-check schedule. |
 | `app-update.test.ts` | Comparing app versions and offering a newer release. |
 | `app-updater.test.ts` | Update now, its progress, clicking twice, and failed downloads and installs, with fake files (`support/updater-fakes.ts`). |
 | `app-updater-automatic.test.ts` | Installing automatically: downloading in the background, installing on closing, staying idle without a new version, and turning it off again. |

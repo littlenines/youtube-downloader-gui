@@ -90,18 +90,12 @@ dialog::backdrop {
 }
 
 .toast {
-  position: fixed;
-  left: 50%;
-  bottom: 24px;
-  transform: translateX(-50%);
   background: var(--text);
   color: var(--background);
   padding: 10px 16px;
   border-radius: 10px;
   font-size: 14px;
   box-shadow: var(--shadow);
-  z-index: 50;
-  max-width: calc(100vw - 32px);
 }
 
 .settings-checkbox {

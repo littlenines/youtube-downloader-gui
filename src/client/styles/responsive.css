@@ -28,7 +28,7 @@
     grid-column: 2;
   }
 
-  #openFolderButton,
+  .folder-label,
   .subscriptions-label {
     display: none;
   }

@@ -1,5 +1,6 @@
 import type { SetupStatus } from '@shared/types/app.js'
 import { findElement, setProgress } from '@client/utils/dom.js'
+import { isSetupBannerShown } from './setup-banner-rules.js'
 
 export const setupDialog = () => findElement<HTMLDialogElement>('#setupDialog')
 
@@ -56,10 +57,11 @@ export const renderSetupBanner = (status: SetupStatus): void => {
   const bannerButton = findElement('#setupBannerButton')
   const isRunning = status.state === 'running'
 
-  banner.hidden = setupDialog().open || status.state === 'ready' || (status.installed && !isRunning)
+  banner.hidden = !isSetupBannerShown(status, setupDialog().open)
   banner.classList.toggle('error', status.state === 'error')
   findElement('#setupBannerSpinner').hidden = !isRunning
   bannerButton.hidden = status.installed || isRunning
   bannerButton.textContent = status.state === 'error' ? 'Try again' : 'Download tools'
   findElement('#setupBannerText').textContent = bannerText(status)
+  banner.title = bannerText(status)
 }
