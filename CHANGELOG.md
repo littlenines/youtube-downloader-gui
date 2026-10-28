@@ -2,7 +2,7 @@
 
 Everything that changed in YT Downloader, newest first. Download any version from the [releases page](https://github.com/littlenines/youtube-downloader-gui/releases).
 
-## Unreleased
+## 1.5.0
 
 ### Added
 
