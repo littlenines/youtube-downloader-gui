@@ -116,7 +116,7 @@ describe('recognizing channel links', () => {
 
 describe('folders for subscriptions', () => {
   it('turns a title into one safe folder name', () => {
-    assert.equal(sanitizeFolderName('AC/DC: "Live" <2026>?'), 'AC DC Live 2026')
+    assert.equal(sanitizeFolderName('Up/Down: "Live" <2026>?'), 'Up Down Live 2026')
     assert.equal(sanitizeFolderName('../..'), null)
     assert.equal(sanitizeFolderName('Name... '), 'Name')
     assert.equal(sanitizeFolderName('CON'), 'CON_')

@@ -44,7 +44,7 @@
 - **MP3 320 kbps, original Opus, M4A, FLAC or WAV.** Pick the one that fits where you'll play it.
 - **Album art** cut square from the thumbnail and saved in the file.
 - **Save the cover image.** Save a video's thumbnail in full size as a JPG, or cropped square to use as album art.
-- **Artist, Title and Album filled in for you.** "Daft Punk - Get Lucky (Official Video)" becomes artist *Daft Punk*, title *Get Lucky*, and the file is named `Daft Punk - Get Lucky.mp3`. Change anything before downloading.
+- **Artist, Title and Album filled in for you.** "The Examples - Summer Song (Official Video)" becomes artist *The Examples*, title *Summer Song*, and the file is named `The Examples - Summer Song.mp3`. Change anything before downloading.
 - **Cut out the talking.** Intros and non-music parts can be removed automatically when the community has marked them (SponsorBlock).
 
 ### Video

@@ -82,7 +82,7 @@ describe('parseHistory', () => {
 
   it('recognises a playlist saved before isPlaylist existed by its label, so it gets no Play', () => {
     const entries = parseHistory([
-      { id: 'album', label: 'MP3 · 320 kbps · playlist (1 video)', files: ['/Album/One More Time.mp3'] },
+      { id: 'album', label: 'MP3 · 320 kbps · playlist (1 video)', files: ['/Album/First Track.mp3'] },
       { id: 'song', label: 'MP3 · 320 kbps', files: ['/music/Song.mp3'] },
       { id: 'saved', label: 'MP3 · 320 kbps · playlist (2 videos)', isPlaylist: false },
     ])

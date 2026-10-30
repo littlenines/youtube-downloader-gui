@@ -68,14 +68,19 @@ describe('parseSearchResults', () => {
 
 describe('searchArguments', () => {
   it("searches videos with ytsearch, and playlists with YouTube's playlist filter", () => {
-    assert.deepEqual(searchArguments('daft punk', 'video'), ['-J', '--flat-playlist', '--', 'ytsearch30:daft punk'])
-    assert.deepEqual(searchArguments('daft punk & co', 'playlist'), [
+    assert.deepEqual(searchArguments('the examples', 'video'), [
+      '-J',
+      '--flat-playlist',
+      '--',
+      'ytsearch30:the examples',
+    ])
+    assert.deepEqual(searchArguments('the examples & co', 'playlist'), [
       '-J',
       '--flat-playlist',
       '--playlist-items',
       '1:30',
       '--',
-      'https://www.youtube.com/results?search_query=daft+punk+%26+co&sp=EgIQAw%3D%3D',
+      'https://www.youtube.com/results?search_query=the+examples+%26+co&sp=EgIQAw%3D%3D',
     ])
   })
 })

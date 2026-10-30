@@ -14,23 +14,25 @@ const source = (fields: Partial<TagSource>): TagSource => ({
 
 describe('suggestTags', () => {
   it('uses the artist, track and album YouTube Music provides', () => {
-    assert.deepEqual(suggestTags(source({ title: 'Hello', artist: 'Adele', track: 'Hello', album: '25' })), {
-      artist: 'Adele',
-      title: 'Hello',
-      album: '25',
-    })
+    assert.deepEqual(
+      suggestTags(source({ title: 'Blue Sky', artist: 'Example Singer', track: 'Blue Sky', album: 'Debut' })),
+      { artist: 'Example Singer', title: 'Blue Sky', album: 'Debut' },
+    )
   })
 
   it('splits "Artist - Title" and removes video noise', () => {
     assert.deepEqual(
-      suggestTags(source({ title: 'Daft Punk - Get Lucky (Official Music Video)', uploader: 'DaftPunkVEVO' })),
-      { artist: 'Daft Punk', title: 'Get Lucky', album: '' },
+      suggestTags(source({ title: 'The Examples - Summer Song (Official Music Video)', uploader: 'TheExamplesVEVO' })),
+      { artist: 'The Examples', title: 'Summer Song', album: '' },
     )
     assert.equal(suggestTags(source({ title: 'Artist – Song [Official Audio] (Lyrics)' })).title, 'Song')
   })
 
   it('drops a repeated artist from the title', () => {
-    assert.equal(suggestTags(source({ title: 'Adele - Hello (Official Video)', artist: 'Adele' })).title, 'Hello')
+    assert.equal(
+      suggestTags(source({ title: 'Example Singer - Blue Sky (Official Video)', artist: 'Example Singer' })).title,
+      'Blue Sky',
+    )
   })
 
   it('falls back to the channel name without " - Topic" or "VEVO"', () => {
@@ -39,7 +41,7 @@ describe('suggestTags', () => {
       title: 'Some Song',
       album: '',
     })
-    assert.equal(suggestTags(source({ title: 'Song', uploader: 'AdeleVEVO' })).artist, 'Adele')
+    assert.equal(suggestTags(source({ title: 'Song', uploader: 'ExampleSingerVEVO' })).artist, 'ExampleSinger')
   })
 })
 
@@ -58,8 +60,8 @@ describe('extractLinks', () => {
   })
 
   it('finds nothing in a search phrase', () => {
-    assert.deepEqual(extractLinks('daft punk – get lucky'), [])
-    assert.equal(isWebLink('daft punk'), false)
+    assert.deepEqual(extractLinks('the examples – summer song'), [])
+    assert.equal(isWebLink('the examples'), false)
     assert.equal(isWebLink(' https://youtu.be/a '), true)
   })
 })

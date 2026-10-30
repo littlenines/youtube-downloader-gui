@@ -9,21 +9,21 @@ import { finishedNotificationText } from '@desktop/notification-text.js'
 
 const jobFor = (request: Partial<DownloadRequest>, changes: Partial<Job>): Job => ({
   ...createQueuedJob('job', normalizeDownloadRequest({ url: 'https://example.com/video', ...request }), {}),
-  title: 'Get Lucky',
+  title: 'Summer Song',
   ...changes,
 })
 
 describe('finishedNotificationText', () => {
   it('names a finished download and its format', () => {
     assert.deepEqual(finishedNotificationText([jobFor({ format: 'mp3' }, { status: 'done' })]), {
-      title: 'Get Lucky',
+      title: 'Summer Song',
       body: 'Downloaded · MP3 · 320 kbps',
     })
   })
 
   it('says why a download failed', () => {
     assert.deepEqual(finishedNotificationText([jobFor({}, { status: 'error', error: 'This video is private.' })]), {
-      title: 'Get Lucky',
+      title: 'Summer Song',
       body: 'Download failed: This video is private.',
     })
   })
@@ -33,13 +33,16 @@ describe('finishedNotificationText', () => {
       { playlist: true },
       {
         status: 'done',
-        title: 'Discovery',
+        title: 'Example Album',
         files: Array.from({ length: 12 }, (_, index) => `/music/${index}.mp3`),
         playlistPosition: { index: 14, count: 14, title: 'Too Long' },
       },
     )
 
-    assert.deepEqual(finishedNotificationText([playlist]), { title: 'Discovery', body: '12 of 14 videos downloaded' })
+    assert.deepEqual(finishedNotificationText([playlist]), {
+      title: 'Example Album',
+      body: '12 of 14 videos downloaded',
+    })
   })
 
   it('sums up several downloads that finished together', () => {
@@ -137,7 +140,7 @@ describe('newlyFinishedJobs', () => {
 })
 
 describe('playlists, one download per video', () => {
-  const group = { id: 'album', title: 'Discovery', size: 3, url: 'https://www.youtube.com/playlist?list=PL1' }
+  const group = { id: 'album', title: 'Example Album', size: 3, url: 'https://www.youtube.com/playlist?list=PL1' }
   const finishedAt = '2026-10-24T12:00:01.000Z'
   const video = (id: string, changes: Partial<Job>) => jobFor({}, { id, group, finishedAt, ...changes })
 
@@ -169,7 +172,10 @@ describe('playlists, one download per video', () => {
   it('names the playlist and counts its videos in one notification', () => {
     const jobs = [video('1', { status: 'done' }), video('2', { status: 'error' }), video('3', { status: 'done' })]
 
-    assert.deepEqual(finishedNotificationText(jobs), { title: 'Discovery', body: '2 of 3 videos downloaded, 1 failed' })
+    assert.deepEqual(finishedNotificationText(jobs), {
+      title: 'Example Album',
+      body: '2 of 3 videos downloaded, 1 failed',
+    })
   })
 
   it('counts a playlist as one download among others', () => {

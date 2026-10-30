@@ -13,9 +13,9 @@ const PLAYLIST_URL = 'https://www.youtube.com/playlist?list=PL1'
 
 const listing = playlistListingFromInfo({
   _type: 'playlist',
-  title: 'Discovery: Live?',
+  title: 'Example Album: Live?',
   entries: [
-    { title: 'One More Time', url: 'https://www.youtube.com/watch?v=a', thumbnails: [{ url: 'a.jpg' }] },
+    { title: 'First Track', url: 'https://www.youtube.com/watch?v=a', thumbnails: [{ url: 'a.jpg' }] },
     null,
     { title: 'Digital Love', url: 'https://cdn.example/media.m4a', webpage_url: 'https://www.youtube.com/watch?v=c' },
     { title: 'Only an id', url: 'c4' },
@@ -46,14 +46,14 @@ describe('playlistDownloads', () => {
     assert.deepEqual(
       downloads.map(({ options }) => [options.url, options.playlist, options.folder, options.playlistTitle]),
       [
-        ['https://www.youtube.com/watch?v=a', false, null, 'Discovery: Live?'],
-        ['https://www.youtube.com/watch?v=c', false, null, 'Discovery: Live?'],
+        ['https://www.youtube.com/watch?v=a', false, null, 'Example Album: Live?'],
+        ['https://www.youtube.com/watch?v=c', false, null, 'Example Album: Live?'],
       ],
     )
     assert.deepEqual(downloads[0]?.details, {
-      title: 'One More Time',
+      title: 'First Track',
       thumbnailUrl: 'a.jpg',
-      group: { id: 'group-1', title: 'Discovery: Live?', size: 2, url: PLAYLIST_URL },
+      group: { id: 'group-1', title: 'Example Album: Live?', size: 2, url: PLAYLIST_URL },
     })
   })
 
@@ -65,14 +65,18 @@ describe('playlistDownloads', () => {
 
 describe('file names of playlist songs', () => {
   it('saves a song by its name only, in a folder yt-dlp names after the playlist', () => {
-    const commandArguments = argumentsFor({ url: 'https://x', playlistNumber: 3, playlistTitle: 'Discovery: Live?' })
+    const commandArguments = argumentsFor({
+      url: 'https://x',
+      playlistNumber: 3,
+      playlistTitle: 'Example Album: Live?',
+    })
 
     assert.equal(valueAfter(commandArguments, '-o'), '%(playlist_folder)s/%(artist&{} - |)s%(track,title)s.%(ext)s')
-    assert.ok(commandArguments.includes('%(id&|)sDiscovery\\: Live?%(id&|)s:(?P<playlist_folder>[\\s\\S]+)'))
+    assert.ok(commandArguments.includes('%(id&|)sExample Album\\: Live?%(id&|)s:(?P<playlist_folder>[\\s\\S]+)'))
   })
 
   it('keeps the playlist folder inside a chosen folder, as before', () => {
-    const commandArguments = argumentsFor({ url: 'https://x', folder: 'Mixes', playlistTitle: 'Discovery' })
+    const commandArguments = argumentsFor({ url: 'https://x', folder: 'Mixes', playlistTitle: 'Example Album' })
 
     assert.match(valueAfter(commandArguments, '-o') ?? '', /^Mixes\/%\(playlist_folder\)s\//)
   })
@@ -85,20 +89,20 @@ describe('file names of playlist songs', () => {
   })
 
   it('names a whole playlist downloaded as one job by its title too, when known', () => {
-    const commandArguments = argumentsFor({ url: 'https://x', playlist: true, playlistTitle: 'Discovery' })
+    const commandArguments = argumentsFor({ url: 'https://x', playlist: true, playlistTitle: 'Example Album' })
 
     assert.match(valueAfter(commandArguments, '-o') ?? '', /^%\(playlist_folder\)s\//)
   })
 
   it('never lets a playlist name lead out of the download folder, or be a Windows device name', () => {
-    assert.deepEqual(['..', '.', ' . ', '/../', '  ', 'CON', 'Discovery: Live?'].map(safePlaylistTitle), [
+    assert.deepEqual(['..', '.', ' . ', '/../', '  ', 'CON', 'Example Album: Live?'].map(safePlaylistTitle), [
       null,
       null,
       null,
       null,
       null,
       'CON_',
-      'Discovery: Live?',
+      'Example Album: Live?',
     ])
   })
 })
@@ -114,8 +118,8 @@ describe('a playlist song after closing the app', () => {
   it('keeps its playlist and name', () => {
     const job = restored(createQueuedJob('job-1', download?.options ?? playlistOptions, download?.details ?? {}))
 
-    assert.deepEqual(job?.group, { id: 'group-4', title: 'Discovery: Live?', size: 1, url: PLAYLIST_URL })
-    assert.deepEqual([job?.status, job?.options.playlistTitle], ['queued', 'Discovery: Live?'])
+    assert.deepEqual(job?.group, { id: 'group-4', title: 'Example Album: Live?', size: 1, url: PLAYLIST_URL })
+    assert.deepEqual([job?.status, job?.options.playlistTitle], ['queued', 'Example Album: Live?'])
   })
 
   it('keeps being done, with its file, so the playlist still counts it', () => {

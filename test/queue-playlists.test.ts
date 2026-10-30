@@ -6,7 +6,7 @@ import type { HistoryStore } from '@server/services/stores/history-store.js'
 import { createFakeEngine, createQueueTestSetup, createRecordingQueue, waitUntil } from './support/queue-fakes.js'
 import { removeFolder } from './support/temporary-folder.js'
 
-const group = { id: 'album', title: 'Discovery', size: 2, url: 'https://www.youtube.com/playlist?list=PL1' }
+const group = { id: 'album', title: 'Example Album', size: 2, url: 'https://www.youtube.com/playlist?list=PL1' }
 
 describe('DownloadQueue: playlists', async () => {
   const { downloadFolder, settings, options } = await createQueueTestSetup('queue-playlists-test-')
@@ -20,8 +20,8 @@ describe('DownloadQueue: playlists', async () => {
     const { savedQueue, lastSavedJobs } = createRecordingQueue()
     const queue = new DownloadQueue({ settings, history, savedQueue, engine })
     const [first, second] = queue.addAll([
-      { options: { ...options, playlistNumber: 1 }, details: { title: 'One More Time', group } },
-      { options: { ...options, playlistNumber: 2 }, details: { title: 'Aerodynamic', group } },
+      { options: { ...options, playlistNumber: 1 }, details: { title: 'First Track', group } },
+      { options: { ...options, playlistNumber: 2 }, details: { title: 'Second Track', group } },
     ])
 
     const runFor = (job: typeof first) => runs.find((run) => job && run.partialFolder.endsWith(job.id))
@@ -33,7 +33,7 @@ describe('DownloadQueue: playlists', async () => {
     const { runs, runFor, first, second, lastSavedJobs } = createPlaylistQueue()
 
     await waitUntil(() => runs.length === 2)
-    runFor(first)?.emit({ type: 'file', file: '/music/One More Time.mp3' })
+    runFor(first)?.emit({ type: 'file', file: '/music/First Track.mp3' })
     runFor(first)?.finish()
     await waitUntil(() => first?.status === 'done')
     await waitUntil(() => lastSavedJobs()?.some((savedJob) => savedJob.finished?.status === 'done') === true)
@@ -47,18 +47,18 @@ describe('DownloadQueue: playlists', async () => {
     const { runs, runFor, first, second, historyEntries } = createPlaylistQueue()
 
     await waitUntil(() => runs.length === 2)
-    runFor(first)?.emit({ type: 'file', file: '/music/One More Time.mp3' })
+    runFor(first)?.emit({ type: 'file', file: '/music/First Track.mp3' })
     runFor(first)?.finish()
     await waitUntil(() => first?.status === 'done')
     assert.equal(historyEntries.length, 0, 'nothing while the playlist is still downloading')
 
-    runFor(second)?.emit({ type: 'file', file: '/music/Aerodynamic.mp3' })
+    runFor(second)?.emit({ type: 'file', file: '/music/Second Track.mp3' })
     runFor(second)?.finish()
     await waitUntil(() => second?.status === 'done' && historyEntries.length === 1)
 
     assert.deepEqual(
       historyEntries.map((entry) => [entry.id, entry.title, entry.files, entry.url]),
-      [['album', 'Discovery', ['/music/One More Time.mp3', '/music/Aerodynamic.mp3'], group.url]],
+      [['album', 'Example Album', ['/music/First Track.mp3', '/music/Second Track.mp3'], group.url]],
     )
   })
 

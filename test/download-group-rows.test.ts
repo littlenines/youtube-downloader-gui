@@ -11,7 +11,7 @@ import {
   VIDEOS_SHOWN_AT_ONCE,
 } from '@client/components/downloads/download-groups.js'
 
-const group = { id: 'album', title: 'Discovery', size: 3, url: 'https://www.youtube.com/playlist?list=PL1' }
+const group = { id: 'album', title: 'Example Album', size: 3, url: 'https://www.youtube.com/playlist?list=PL1' }
 
 const videoJob = (id: string, playlistNumber: number, changes: Partial<Job> = {}): Job => ({
   ...createQueuedJob(id, normalizeDownloadRequest({ url: 'https://x', playlistNumber }), {

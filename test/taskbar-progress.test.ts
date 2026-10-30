@@ -6,7 +6,7 @@ import { normalizeDownloadRequest } from '@server/services/downloads/download-op
 import { createQueuedJob } from '@server/services/downloads/jobs.js'
 import { showProgressOnTaskbar, taskbarProgress } from '@desktop/taskbar-progress.js'
 
-const group = { id: 'album', title: 'Discovery', size: 4, url: 'https://www.youtube.com/playlist?list=PL1' }
+const group = { id: 'album', title: 'Example Album', size: 4, url: 'https://www.youtube.com/playlist?list=PL1' }
 
 const jobWith = (id: string, changes: Partial<Job>, isInPlaylist = true): Job => ({
   ...createQueuedJob(id, normalizeDownloadRequest({ url: 'https://x' }), isInPlaylist ? { group } : {}),

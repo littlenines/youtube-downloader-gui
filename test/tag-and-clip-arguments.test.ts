@@ -9,16 +9,15 @@ describe('buildDownloadArguments: edited tags', () => {
     normalizeDownloadRequest({ url: 'https://x', kind, format: 'mp3', tags })
 
   it('sets each filled-in tag and names the file after them', () => {
-    const commandArguments = buildDownloadArguments(tagged({ artist: 'Daft Punk', title: 'Get Lucky', album: '' }), {
-      downloadFolder: '/downloads',
-      partialFolder: PARTIAL_FOLDER,
-      infoFile: null,
-    })
+    const commandArguments = buildDownloadArguments(
+      tagged({ artist: 'The Examples', title: 'Summer Song', album: '' }),
+      { downloadFolder: '/downloads', partialFolder: PARTIAL_FOLDER, infoFile: null },
+    )
     const metadata = commandArguments.filter((_, index) => commandArguments[index - 1] === '--parse-metadata')
 
     assert.deepEqual(metadata, [
-      '%(id&|)sDaft Punk%(id&|)s:(?P<meta_artist>[\\s\\S]+)',
-      '%(id&|)sGet Lucky%(id&|)s:(?P<meta_title>[\\s\\S]+)',
+      '%(id&|)sThe Examples%(id&|)s:(?P<meta_artist>[\\s\\S]+)',
+      '%(id&|)sSummer Song%(id&|)s:(?P<meta_title>[\\s\\S]+)',
     ])
     assert.equal(valueAfter(commandArguments, '-o'), '%(meta_artist,artist&{} - |)s%(meta_title,track,title)s.%(ext)s')
   })
